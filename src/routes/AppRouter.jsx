@@ -6,6 +6,7 @@ import Home from '../Home'
 import ForgotPassword from '../app/forgotPassword/ForgotPassword'
 import RecoverPassword from '../app/forgotPassword/RecoverPassword'
 import Perfil from '../app/Perfil'
+import IoTControll from '../app/IoTControll'
 
 const AppRouter = () => {
   return (
@@ -17,7 +18,7 @@ const AppRouter = () => {
         <Route path='/forgotPassword' element={<ForgotPassword />} />
         <Route path='/recoverPassword' element={<RecoverPassword />} />
         <Route path='/perfil' element={<Perfil />} />
-        <Route path='/control-IoT' element={<Perfil />} />
+        <Route path='/control-IoT' element={<IoTControll />} />
 
         
     </Routes>

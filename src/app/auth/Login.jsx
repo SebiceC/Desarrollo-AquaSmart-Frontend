@@ -96,8 +96,8 @@ const Login = () => {
                 otp
             });
 
-            if (response.data.access) {
-                localStorage.setItem('token', response.data.access);
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
                 localStorage.setItem('refresh', response.data.refresh);
                 navigate('/home');
             } else {

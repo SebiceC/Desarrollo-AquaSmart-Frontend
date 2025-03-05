@@ -3,24 +3,57 @@ import axios from 'axios';
 import InputItem from '../../components/InputItem';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
+import Swal from "sweetalert2";
 
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
 const RecoverPassword = () => {
     const [document, setDocument] = useState('');
-    const [new_password, setNewPassword] = useState('');
-    const [confirm_password, setConfirmPassword] = useState('');
+    const [formData, setFormData] = useState({
+        new_password: "",
+        confirm_password: "",
+    });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-
     const navigate = useNavigate();
-
-
     const location = useLocation();
     const params = new URLSearchParams(location.search);
     const documentParam = params.get('document');
+
+    const [passwordValidations, setPasswordValidations] = useState({
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        number: false,
+        specialChar: false,
+    });
+
+    const validatePassword = (password) => {
+        const validations = {
+            length: password.length >= 8 && password.length <= 20,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password),
+            specialChar: /[@$!%*?&]/.test(password),
+        };
+
+        setPasswordValidations(validations);
+
+        return Object.values(validations).every(Boolean);
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        if (name === "new_password") {
+            validatePassword(value);
+        }
+    };
+
+
 
     useEffect(() => {
         if (documentParam) {
@@ -35,6 +68,15 @@ const RecoverPassword = () => {
         setError('');
         setSuccess('');
 
+        const { new_password, confirm_password } = formData;
+
+        if (!validatePassword(new_password)) {
+            setError(
+                "La contraseña debe cumplir con todos los requisitos."
+            );
+            return;
+        }
+
         if (new_password !== confirm_password) {
             setError('Las contraseñas no coinciden.');
             return;
@@ -45,10 +87,12 @@ const RecoverPassword = () => {
                 document,
                 new_password
             });
-
+            Swal.fire({
+                title: "CONTRASEÑA ACTUALIZADA",
+                text: "Ahora puedes iniciar sesión con tu nueva contraseña",
+                icon: "success"
+              });
             setSuccess('Contraseña restablecida correctamente.');
-            setNewPassword('');
-            setConfirmPassword('');
             navigate('/login')
         } catch (err) {
             if (err.response) {
@@ -70,7 +114,7 @@ const RecoverPassword = () => {
     };
 
     return (
-        <div className='w-full h-full min-h-screen bg-[#DCF2F1] flex flex-col items-center justify-center gap-10'>
+        <div className='w-full h-full min-h-screen bg-[#DCF2F1] flex flex-col items-center justify-center gap-10 py-5'>
             <div className='flex justify-center'>
                 <img src="/img/logo.png" alt="Logo" className='w-[60%] lg:w-[50%]' />
             </div>
@@ -87,20 +131,21 @@ const RecoverPassword = () => {
                 <form className='flex flex-col items-center w-full' onSubmit={handleRecover}>
                     <InputItem
                         id="document"
-                        labelName="Documento"
                         placeholder="Cargando documento..."
                         type="text"
                         value={document}
-                        disabled={true} // Bloquea el campo
+                        disabled={true}
+                        className="hidden" // Bloquea el campo
                     />
                     <div className="relative w-full flex justify-center">
                         <InputItem
                             id="new_password"
+                            name="new_password"
                             labelName="Nueva contraseña"
                             placeholder="Ingresa tu nueva contraseña"
-                            type="password"
-                            value={new_password}
-                            onChange={(e) => setNewPassword(e.target.value)}
+                            type={showPassword ? "text" : "password"}
+                            value={formData.new_password}
+                            onChange={handleChange}
                         />
                         <button
                             type="button"
@@ -113,11 +158,12 @@ const RecoverPassword = () => {
                     <div className="relative w-full flex justify-center">
                         <InputItem
                             id="confirm_password"
+                            name="confirm_password"
                             labelName="Confirma tu contraseña"
                             placeholder="Confirma tu nueva contraseña"
-                            type="password"
-                            value={confirm_password}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            type={showPassword ? "text" : "password"}
+                            value={formData.confirm_password}
+                            onChange={handleChange}
                         />
                         <button
                             type="button"
@@ -126,9 +172,27 @@ const RecoverPassword = () => {
                         >
                             {showPassword ? <EyeSlashIcon className="h-6 w-6 text-gray-500" /> : <EyeIcon className="h-6 w-6 text-gray-500" />}
                         </button>
-                    </div>
 
-                    <button type="submit" className="w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out">
+                    </div>
+                    <ul className="mt-2 text-sm">
+                        <li className={passwordValidations.length ? "text-black" : "text-black"}>
+                            {passwordValidations.length ? "✔" : "✖"} Máximo 20 caracteres, mínimo 8 caracteres
+                        </li>
+                        <li className={passwordValidations.uppercase ? "text-black" : "text-black"}>
+                            {passwordValidations.uppercase ? "✔" : "✖"} Al menos una letra mayúscula
+                        </li>
+                        <li className={passwordValidations.lowercase ? "text-black" : "text-black"}>
+                            {passwordValidations.lowercase ? "✔" : "✖"} Al menos una letra minúscula
+                        </li>
+                        <li className={passwordValidations.number ? "text-black" : "text-black"}>
+                            {passwordValidations.number ? "✔" : "✖"} Al menos un número
+                        </li>
+                        <li className={passwordValidations.specialChar ? "text-black" : "text-black"}>
+                            {passwordValidations.specialChar ? "✔" : "✖"} Al menos un carácter especial (@$!%*?&)
+                        </li>
+                    </ul>
+
+                    <button type="submit" className="w-[50%] sm:w-[48%] mt-4 bg-[#365486] text-white py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out">
                         GUARDAR CONTRASEÑA
                     </button>
                 </form>
