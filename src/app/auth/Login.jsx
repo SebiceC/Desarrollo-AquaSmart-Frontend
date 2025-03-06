@@ -4,6 +4,7 @@ import InputItem from '../../components/InputItem';
 import { useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 
+
 const Login = () => {
     const [document, setDocument] = useState('');
     const [password, setPassword] = useState('');
