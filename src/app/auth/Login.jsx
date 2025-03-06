@@ -96,8 +96,8 @@ const Login = () => {
                 otp
             });
 
-            if (response.data.access) {
-                localStorage.setItem('token', response.data.access);
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
                 localStorage.setItem('refresh', response.data.refresh);
                 navigate('/home');
             } else {
@@ -164,7 +164,7 @@ const Login = () => {
                         </div>
                         <div className="flex flex-col items-center gap-2">
                             <a href="/forgotPassword" className='font-semibold text-sm hover:underline'>OLVIDÉ MI CONTRASEÑA</a>
-                            <a href="#" className='font-semibold text-sm hover:underline'>SOY USUARIO NUEVO</a>
+                            <a href="/preRegister" className='font-semibold text-sm hover:underline'>SOY USUARIO NUEVO</a>
                         </div>
                         <button type="submit" className="w-[50%] mt-4 bg-[#365486] text-white py-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300">
                             INICIAR SESIÓN
