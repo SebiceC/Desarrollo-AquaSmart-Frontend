@@ -3,6 +3,8 @@ import { FaUser, FaPhone, FaEnvelope, FaSignOutAlt } from "react-icons/fa";
 import NavBar from "../components/NavBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
+
 
 const Perfil = () => {
     const [error, setError] = useState('');
@@ -64,8 +66,10 @@ const Perfil = () => {
             <NavBar />
             <div className="flex justify-center items-center h-[calc(100vh-4rem)] mt-16">
                 <div className="bg-gray-200 rounded-2xl p-8 shadow-md w-80 text-center relative">
-                    <div className="absolute top-4 right-4 text-gray-600 cursor-pointer hover:text-gray-800">
-                        <FaSignOutAlt onClick={handleLogout} size={20} />
+                    <div className="absolute top-4 right-4 text-gray-600 cursor-pointer flex flex-col items-center">
+                        
+                        <LogOut onClick={handleLogout} size={28} />
+                        <span className="text-xs">Cerrar sesión</span>
                     </div>
 
                     <div className="flex justify-center">
@@ -98,7 +102,7 @@ const Perfil = () => {
                         <p className="text-gray-600 mt-4">Cargando perfil...</p>
                     )}
 
-                    <button className="w-[50%] mt-4 bg-[#365486] text-white py-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300">
+                    <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300">
                         Editar
                     </button>
 
