@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import NavBar from "../components/NavBar"; // Asegúrate de que la ruta sea correcta
+import NavBar from "./NavBar.jsx"; // Asegúrate de que la ruta sea correcta
 
 describe("NavBar Component", () => {
     test("renders logo and notification icon", () => {

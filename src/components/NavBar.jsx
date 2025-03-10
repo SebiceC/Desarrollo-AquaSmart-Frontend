@@ -9,7 +9,8 @@ function NavBar() {
     const [user, setUser] = useState(null)
     const [error, setError] = useState('');
     const navigate = useNavigate()
-    const API_URL = import.meta.env.VITE_APP_API_URL;
+    const API_URL = process.env.VITE_APP_API_URL || "http://localhost:5000";
+
 
 
     const fetchProfile = async () => {
