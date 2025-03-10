@@ -3,10 +3,11 @@ import axios from 'axios';
 import InputItem from '../../components/InputItem';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
-import Swal from "sweetalert2";
+import { PiAsteriskSimpleBold } from 'react-icons/pi';
+import Modal from '../../components/Modal';
 
 
-const API_URL = import.meta.env.VITE_APP_API_URL;
+
 
 const RecoverPassword = () => {
     const [document, setDocument] = useState('');
@@ -17,10 +18,24 @@ const RecoverPassword = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalProps, setModalProps] = useState({});
     const navigate = useNavigate();
     const location = useLocation();
     const params = new URLSearchParams(location.search);
     const documentParam = params.get('document');
+
+    const API_URL = import.meta.env.VITE_APP_API_URL;
+
+    const openModal = (title, message, btnMessage, onCloseAction) => {
+        setModalProps({
+            title,
+            children: message,
+            btnMessage,
+            onClose: onCloseAction,
+        });
+        setShowModal(true);
+    };
 
     const [passwordValidations, setPasswordValidations] = useState({
         length: false,
@@ -87,13 +102,13 @@ const RecoverPassword = () => {
                 document,
                 new_password
             });
-            Swal.fire({
-                title: "CONTRASEÑA ACTUALIZADA",
-                text: "Ahora puedes iniciar sesión con tu nueva contraseña",
-                icon: "success"
-              });
+            openModal(
+                "CAMBIO DE CONTRASEÑA EXITOSO",
+                "",
+                "INICIAR SESIÓN",
+                () => navigate("/login") // Redirigir al cerrar el modal
+            );
             setSuccess('Contraseña restablecida correctamente.');
-            navigate('/login')
         } catch (err) {
             if (err.response) {
                 const errorData = err.response.data;
@@ -118,7 +133,7 @@ const RecoverPassword = () => {
             <div className='flex justify-center'>
                 <img src="/img/logo.png" alt="Logo" className='w-[60%] lg:w-[50%]' />
             </div>
-            <div className="w-[70%] lg:w-[30%] bg-white p-6 border-1 border-[#003F88] rounded-lg mx-auto flex flex-col justify-center items-center">
+            <div className="w-[83%] sm:w-[70%] lg:w-[30%] bg-white p-6 border-1 border-[#003F88] rounded-lg mx-auto flex flex-col justify-center items-center">
                 <h1 className='text-4xl font-bold pb-8 text-center'>CAMBIO DE CONTRASEÑA</h1>
 
                 {error && (
@@ -141,36 +156,54 @@ const RecoverPassword = () => {
                         <InputItem
                             id="new_password"
                             name="new_password"
-                            labelName="Nueva contraseña"
-                            placeholder="Ingresa tu nueva contraseña"
+                            labelName={
+                                <>
+                                    Nueva contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                                </>
+                            }
+                            placeholder="Ingresa la nueva contraseña"
                             type={showPassword ? "text" : "password"}
                             value={formData.new_password}
                             onChange={handleChange}
+                            maxLength={20}
                         />
                         <button
                             type="button"
-                            className="absolute right-12 top-8"
+                            className="absolute right-10 sm:right-12 top-8"
                             onClick={() => setShowPassword(!showPassword)}
                         >
-                            {showPassword ? <EyeSlashIcon className="h-6 w-6 text-gray-500" /> : <EyeIcon className="h-6 w-6 text-gray-500" />}
+                            {showPassword ? (
+                                <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                            ) : (
+                                <EyeIcon className="h-6 w-6 text-gray-500" />
+                            )}
                         </button>
                     </div>
                     <div className="relative w-full flex justify-center">
                         <InputItem
                             id="confirm_password"
                             name="confirm_password"
-                            labelName="Confirma tu contraseña"
-                            placeholder="Confirma tu nueva contraseña"
+                            labelName={
+                                <>
+                                    Confirmar contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                                </>
+                            }
+                            placeholder="Confirma la contraseña"
                             type={showPassword ? "text" : "password"}
                             value={formData.confirm_password}
                             onChange={handleChange}
+                            maxLength={20}
                         />
                         <button
                             type="button"
-                            className="absolute right-12 top-8"
+                            className="absolute right-10 sm:right-12 top-8"
                             onClick={() => setShowPassword(!showPassword)}
                         >
-                            {showPassword ? <EyeSlashIcon className="h-6 w-6 text-gray-500" /> : <EyeIcon className="h-6 w-6 text-gray-500" />}
+                            {showPassword ? (
+                                <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                            ) : (
+                                <EyeIcon className="h-6 w-6 text-gray-500" />
+                            )}
                         </button>
 
                     </div>
@@ -192,11 +225,12 @@ const RecoverPassword = () => {
                         </li>
                     </ul>
 
-                    <button type="submit" className="w-[50%] sm:w-[48%] mt-4 bg-[#365486] text-white py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out">
+                    <button type="submit" className="w-[50%] sm:w-[48%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out">
                         GUARDAR CONTRASEÑA
                     </button>
                 </form>
             </div>
+            {showModal && <Modal showModal={showModal} {...modalProps} />}
         </div>
     );
 };

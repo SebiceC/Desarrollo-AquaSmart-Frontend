@@ -1,24 +1,53 @@
-import React, { useState } from 'react';
-import { ChevronDown, Upload } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { ChevronDown, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const PreRegister = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    lastName: '',
-    personType: '',
-    phone: '',
-    email: '',
-    id: '',
-    password: '',
-    confirmPassword: '',
-    attachments: [], 
+    first_name: "",
+    document_type: "",
+    last_name: "",
+    address: "",
+    person_type: "",
+    phone: "",
+    email: "",
+    document: "",
+    password: "",
+    confirmPassword: "",
+    attachments: [],
   });
+
+  const [documentTypes, setDocumentTypes] = useState([]); // Estado para los tipos de documento
+  const [personTypes, setPersonTypes] = useState([]); // Estado para los tipos de persona
+
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Obtener los tipos de documento y persona desde el backend
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const documentTypesResponse = await axios.get(
+          "https://desarrollo-aquasmart-backend.onrender.com/api/document-types"
+        );
+        const personTypesResponse = await axios.get(
+          "https://desarrollo-aquasmart-backend.onrender.com/api/person-types"
+        );
+
+        setDocumentTypes(documentTypesResponse.data);
+        setPersonTypes(personTypesResponse.data);
+      } catch (error) {
+        console.error("Error al obtener las opciones:", error);
+      }
+    };
+
+    fetchOptions();
+  }, []);
+
+  // Manejar cambios en los archivos seleccionados
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
 
@@ -26,112 +55,225 @@ const PreRegister = () => {
     if (formData.attachments.length + newFiles.length > 5) {
       setErrors((prev) => ({
         ...prev,
-        attachments: 'Máximo 5 archivos permitidos',
+        attachments: "Máximo 5 archivos permitidos",
+      }));
+      return;
+    }
+
+    // Validar tipo de archivo (solo PDF)
+    const invalidFileType = newFiles.find((file) => file.type !== "application/pdf");
+    if (invalidFileType) {
+      setErrors((prev) => ({
+        ...prev,
+        attachments: `El archivo ${invalidFileType.name} no es un PDF`,
       }));
       return;
     }
 
     // Validar tamaño de cada archivo
-    const invalidFile = newFiles.find((file) => file.size > 500000); // 500KB en bytes
-    if (invalidFile) {
+    const invalidFileSize = newFiles.find((file) => file.size > 500000); // 500KB en bytes
+    if (invalidFileSize) {
       setErrors((prev) => ({
         ...prev,
-        attachments: `El archivo ${invalidFile.name} excede los 500KB`,
+        attachments: `El archivo ${invalidFileSize.name} excede los 500KB`,
       }));
       return;
     }
 
-    
     setFormData((prev) => ({
       ...prev,
       attachments: [...prev.attachments, ...newFiles],
     }));
-    setErrors((prev) => ({ ...prev, attachments: '' })); // Limpiar errores
+    setErrors((prev) => ({ ...prev, attachments: "" })); // Limpiar errores
   };
 
+  // Eliminar un archivo seleccionado
   const handleRemoveFile = (index) => {
     const updatedFiles = formData.attachments.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, attachments: updatedFiles }));
   };
 
+  // Manejar cambios en los campos del formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Validar la longitud máxima de los campos
+    let maxLength;
+    switch (name) {
+      case "first_name":
+      case "last_name":
+        maxLength = 20;
+        break;
+      case "person_type":
+        maxLength = 10;
+        break;
+      case "phone":
+        maxLength = 13;
+        break;
+      case "email":
+        maxLength = 50;
+        break;
+      case "document":
+        maxLength = 15;
+        break;
+      case "password":
+      case "confirmPassword":
+        maxLength = 20;
+        break;
+      default:
+        maxLength = null;
+    }
+
+    if (maxLength && value.length > maxLength) {
+      return; // No actualizar el estado si se excede la longitud máxima
+    }
+
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
-    // Limpiar el error cuando el usuario comienza a escribir
     setErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: '',
+      [name]: "",
     }));
   };
 
+  // Validar el formulario
   const validateForm = () => {
     const newErrors = {};
-    const { name, lastName, personType, phone, email, id, password, confirmPassword, attachments } = formData;
+    const { first_name, last_name, document_type, person_type, phone, email, address, document, password, confirmPassword, attachments } = formData;
 
     // Validación para nombres (solo letras y espacios)
     const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/;
-    if (!name) {
-      newErrors.name = 'ERROR, campo vacío';
-    } else if (!nameRegex.test(name)) {
-      newErrors.name = 'Solo se permiten letras y espacios';
+    if (!first_name) {
+      newErrors.first_name = "ERROR, campo vacío";
+    } else if (!nameRegex.test(first_name)) {
+      newErrors.first_name = "Solo se permiten letras y espacios";
+    } else if (first_name.length > 20) {
+      newErrors.first_name = "Máximo 20 caracteres";
     }
 
     // Validación para apellidos (misma que nombres)
-    if (!lastName) {
-      newErrors.lastName = 'ERROR, campo vacío';
-    } else if (!nameRegex.test(lastName)) {
-      newErrors.lastName = 'Solo se permiten letras y espacios';
+    if (!last_name) {
+      newErrors.last_name = "ERROR, campo vacío";
+    } else if (!nameRegex.test(last_name)) {
+      newErrors.last_name = "Solo se permiten letras y espacios";
+    } else if (last_name.length > 20) {
+      newErrors.last_name = "Máximo 20 caracteres";
+    }
+
+    if (!address) {
+      newErrors.address = "ERROR, campo vacío";
     }
 
     // Validación para teléfono (solo números)
     const numberRegex = /^\d+$/;
     if (!phone) {
-      newErrors.phone = 'ERROR, campo vacío';
+      newErrors.phone = "ERROR, campo vacío";
     } else if (!numberRegex.test(phone)) {
-      newErrors.phone = 'Solo se permiten números';
+      newErrors.phone = "Solo se permiten números";
+    } else if (phone.length > 13) {
+      newErrors.phone = "Máximo 13 caracteres";
     }
 
     // Validación para identificación (solo números)
-    if (!id) {
-      newErrors.id = 'ERROR, campo vacío';
-    } else if (!numberRegex.test(id)) {
-      newErrors.id = 'Solo se permiten números';
+    if (!document) {
+      newErrors.document = "ERROR, campo vacío";
+    } else if (!numberRegex.test(document)) {
+      newErrors.document = "Solo se permiten números";
+    } else if (document.length > 15) {
+      newErrors.document = "Máximo 15 caracteres";
     }
 
     // Validación para correo electrónico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
-      newErrors.email = 'ERROR, campo vacío';
+      newErrors.email = "ERROR, campo vacío";
     } else if (!emailRegex.test(email)) {
-      newErrors.email = 'Formato de correo electrónico inválido';
+      newErrors.email = "Formato de correo electrónico inválido";
+    } else if (email.length > 50) {
+      newErrors.email = "Máximo 50 caracteres";
     }
 
-    // Resto de validaciones
-    if (!personType) newErrors.personType = 'ERROR, campo vacío';
-    if (!password) newErrors.password = 'ERROR, campo vacío';
+    // Validación para la contraseña
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[._!@#$%^&*])(?=.{8,})/;
+    if (!password) {
+      newErrors.password = "ERROR, campo vacío";
+    } else if (!passwordRegex.test(password)) {
+      newErrors.password =
+        "La contraseña debe tener al menos 8 caracteres, una mayúscula y un carácter especial";
+    } else if (password.length > 20) {
+      newErrors.password = "Máximo 20 caracteres";
+    }
+
+    if (!person_type) newErrors.person_type = "ERROR, campo vacío";
+    if (!document_type) newErrors.document_type = "ERROR, campo vacío";
+
+    // Validación para confirmar contraseña
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'ERROR, campo vacío';
+      newErrors.confirmPassword = "ERROR, campo vacío";
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden.';
+      newErrors.confirmPassword = "Las contraseñas no coinciden.";
+    } else if (confirmPassword.length > 20) {
+      newErrors.confirmPassword = "Máximo 20 caracteres";
     }
 
     // Validación de archivos
     if (attachments.length === 0) {
-      newErrors.attachments = 'Debe adjuntar al menos un archivo';
+      newErrors.attachments = "Debe adjuntar al menos un archivo";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  // Manejar el envío del formulario con Axios
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setSuccessMessage('Formulario enviado con éxito.');
-    
+
+    // Crear un objeto FormData para enviar los archivos
+    const formDataToSend = new FormData();
+
+    // Agregar los campos del formulario al FormData
+    Object.keys(formData).forEach((key) => {
+      if (key !== "attachments") {
+        formDataToSend.append(key, formData[key]);
+      }
+    });
+
+    // Agregar los archivos al FormData
+    formData.attachments.forEach((file, index) => {
+      formDataToSend.append("attachments", file); // Django espera el nombre "attachments"
+    });
+
+    try {
+      const response = await axios.post(
+        "https://desarrollo-aquasmart-backend.onrender.com/api/users/pre-register",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // Importante para enviar archivos
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        // Mostrar el modal de éxito
+        setShowSuccessModal(true);
+      } else {
+        throw new Error("Error al enviar el formulario");
+      }
+    } catch (error) {
+      console.error("Error al enviar el formulario:", error);
+      setShowErrorModal(true); // Mostrar el modal de error
+    }
+  };
+
+  // Manejar la confirmación del modal
+  const handleConfirm = () => {
+    setShowModal(false); // Cerrar el modal
+    navigate("/Login"); // Redirigir al usuario a la página de inicio de sesión
   };
 
   return (
@@ -143,7 +285,9 @@ const PreRegister = () => {
 
       {/* Formulario */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h2 className="text-center text-xl font-medium mb-8">Formulario de Pre registro de usuario</h2>
+        <h2 className="text-center text-xl font-medium mb-8">
+          Formulario de Pre registro de usuario
+        </h2>
 
         <form onSubmit={handleSubmit}>
           {/* Datos Personales */}
@@ -156,122 +300,194 @@ const PreRegister = () => {
               {/* Primera columna */}
               <div className="space-y-4">
                 <div>
+                  <label>Nombre: </label>
                   <input
                     type="text"
                     placeholder="Nombre"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.name ? 'bg-red-100' : 'bg-white'
+                      errors.first_name ? "bg-red-100" : "bg-white"
                     }`}
-                    name="name"
-                    value={formData.name}
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleChange}
+                    maxLength={20} // Limitar a 20 caracteres
                   />
-                  {errors.name && <p className="text-[#F90000]">{errors.name}</p>}
+                  {errors.first_name && (
+                    <p className="text-[#F90000]">{errors.first_name}</p>
+                  )}
                 </div>
 
                 <div className="relative">
+                  <label>Tipo de persona: </label>
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
                   <div className="relative">
                     <select
                       className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                        errors.personType ? 'bg-red-100' : 'bg-white'
+                        errors.person_type ? "bg-red-100" : "bg-white"
                       }`}
-                      name="personType"
-                      value={formData.personType}
+                      name="person_type"
+                      value={formData.person_type}
                       onChange={handleChange}
                     >
                       <option value="">SELECCIÓN DE TIPO DE PERSONA</option>
-                      <option value="natural">Persona Natural</option>
-                      <option value="juridica">Persona Jurídica</option>
+                      {personTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   </div>
-                  {errors.personType && <p className="text-[#F90000]">{errors.personType}</p>}
+                  {errors.person_type && (
+                    <p className="text-[#F90000]">{errors.person_type}</p>
+                  )}
                 </div>
 
                 <div>
+                  <label>Correo: </label>
                   <input
                     type="email"
-                    placeholder="Correo electrónico"
+                    placeholder="xxxxxxx@example.com"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.email ? 'bg-red-100' : 'bg-white'
+                      errors.email ? "bg-red-100" : "bg-white"
                     }`}
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
+                    maxLength={50} // Limitar a 50 caracteres
                   />
                   {errors.email && <p className="text-[#F90000]">{errors.email}</p>}
                 </div>
 
                 <div>
+                  <label>Direccion de residencia</label>
+                  <input
+                    type="text"
+                    placeholder="Callexx#xx-xx"
+                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
+                      errors.address ? "bg-red-100" : "bg-white"
+                    }`}
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    maxLength={70}
+                  />
+                  {errors.address && (
+                    <p className="text-[#F90000]">{errors.address}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label>Contraseña: </label>
                   <input
                     type="password"
                     placeholder="Contraseña"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.password ? 'bg-red-100' : 'bg-white'
+                      errors.password ? "bg-red-100" : "bg-white"
                     }`}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
+                    maxLength={20} // Limitar a 20 caracteres
                   />
-                  {errors.password && <p className="text-[#F90000]">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="text-[#F90000]">{errors.password}</p>
+                  )}
                 </div>
               </div>
 
               {/* Segunda columna */}
               <div className="space-y-4">
                 <div>
+                  <label>Apellido: </label>
                   <input
                     type="text"
                     placeholder="Apellido"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.lastName ? 'bg-red-100' : 'bg-white'
+                      errors.last_name ? "bg-red-100" : "bg-white"
                     }`}
-                    name="lastName"
-                    value={formData.lastName}
+                    name="last_name"
+                    value={formData.last_name}
                     onChange={handleChange}
+                    maxLength={20} // Limitar a 20 caracteres
                   />
-                  {errors.lastName && <p className="text-[#F90000]">{errors.lastName}</p>}
+                  {errors.last_name && (
+                    <p className="text-[#F90000]">{errors.last_name}</p>
+                  )}
                 </div>
 
                 <div>
+                  <label>Telefono: </label>
                   <input
                     type="tel"
-                    placeholder="Teléfono"
+                    placeholder="Telefono"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.phone ? 'bg-red-100' : 'bg-white'
+                      errors.phone ? "bg-red-100" : "bg-white"
                     }`}
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
+                    maxLength={13} // Limitar a 13 caracteres
                   />
                   {errors.phone && <p className="text-[#F90000]">{errors.phone}</p>}
                 </div>
 
+                <div className="relative">
+                  <label>Tipo de documento: </label>
+                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
+                  <div className="relative">                
+                    <select
+                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                        errors.document_type ? "bg-red-100" : "bg-white"
+                      }`}
+                      name="document_type"
+                      value={formData.document_type}
+                      onChange={handleChange}
+                    >
+                      <option value="">TIPO DE DOCUMENTO</option>
+                      {documentTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                  </div>
+                  {errors.document_type && (
+                    <p className="text-[#F90000]">{errors.document_type}</p>
+                  )}
+                </div>
+
                 <div>
+                  <label>No. de identificacion: </label>
                   <input
                     type="text"
                     placeholder="Identificación"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.id ? 'bg-red-100' : 'bg-white'
+                      errors.document ? "bg-red-100" : "bg-white"
                     }`}
-                    name="id"
-                    value={formData.id}
+                    name="document"
+                    value={formData.document}
                     onChange={handleChange}
+                    maxLength={15} // Limitar a 15 caracteres
                   />
-                  {errors.id && <p className="text-[#F90000]">{errors.id}</p>}
+                  {errors.document && (
+                    <p className="text-[#F90000]">{errors.document}</p>
+                  )}
                 </div>
 
                 <div>
+                  <label>Confirmar Contraseña: </label>
                   <input
                     type="password"
                     placeholder="Confirmar Contraseña"
                     className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.confirmPassword ? 'bg-red-100' : 'bg-white'
+                      errors.confirmPassword ? "bg-red-100" : "bg-white"
                     }`}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    maxLength={20} // Limitar a 20 caracteres
                   />
                   {errors.confirmPassword && (
                     <p className="text-[#F90000]">{errors.confirmPassword}</p>
@@ -292,6 +508,7 @@ const PreRegister = () => {
                     className="hidden"
                     onChange={handleFileChange}
                     multiple
+                    accept="application/pdf" // Aceptar solo archivos PDF
                   />
                   <Upload className="ml-2 w-4 h-4" />
                 </label>
@@ -349,29 +566,53 @@ const PreRegister = () => {
 
               <button
                 type="button"
-                onClick={() => navigate("/Login")} 
+                onClick={() => navigate("/Login")}
                 className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer"
               >
                 Iniciar Sesion
               </button>
             </div>
-
-            {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 backdrop-blur-sm">
-                    <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] sm:w-[400px]">
-                        <h2 className="text-xl font-bold mb-4">Pre registro exitoso</h2>
-                        <p>Formulario enviado exitosamente</p>
-                        <button onClick={handleConfirm} className="bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663]">
-                            ACEPTAR
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            
           </div>
         </form>
       </div>
+      {showErrorModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-left w-[90%] sm:w-[400px]">
+            <h2 className="text-2xl mb-4">ERROR</h2>{" "}
+            <p className="text-md mb-4">
+              Error en envío de formulario, por favor intente más tarde.
+            </p>
+            <div className="flex justify-end">
+              {" "}
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-400"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-left w-[90%] sm:w-[400px]">
+            <h2 className="text-2xl mb-4">ÉXITO</h2>{" "}
+            <p className="text-md mb-4">
+              ENVÍO DEL FORMULARIO REALIZADO CON ÉXITO
+            </p>
+            <div className="flex justify-end">
+              {" "}
+              <button
+                onClick={() => setShowSuccessModal(false)} // Cerrar el modal
+                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-400"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

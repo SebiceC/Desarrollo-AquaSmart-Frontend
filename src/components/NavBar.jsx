@@ -81,15 +81,15 @@ function NavBar() {
                     <Menu size={28} />
                 </button>
 
-                <div className={`fixed right-0 top-0 h-full w-64 bg-[#DCF2F1] shadow-lg p-5 transform ${menuOpen ? "translate-x-0" : "translate-x-full"} transition-transform duration-300 ease-in-out lg:hidden`}>
+                <div className={`fixed right-0 top-0 h-full w-[80%] sm:w-[50%] bg-[#DCF2F1] rounded-l-3xl p-5 border-l-[#365486] border-1 transform ${menuOpen ? "translate-x-0" : "translate-x-full"} transition-transform duration-300 ease-in-out lg:hidden`}>
                     <button onClick={() => setMenuOpen(false)} className="absolute top-3 right-3">
                         <X size={24} />
                     </button>
                     {user ? (
                         <>
                             <div className="flex items-center space-x-2 mb-10">
-                                <User size={24} />
                                 <span className="font-semibold text-lg">{user.first_name + " " + user.last_name}</span>
+                                <User size={32} />
                             </div>
                         </>
 
