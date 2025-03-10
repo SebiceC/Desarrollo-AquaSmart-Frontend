@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InputField from "../../components/InputField";
-import { validateField } from "../../components/ValidationRules"; // Importar el componente de validación
+import InputField from "../../components/InputField"; // Componente reutilizable
+import { validateField } from "../../components/ValidationRules"; // Validación modular
 
 const PreRegister = () => {
   const [formData, setFormData] = useState({
@@ -148,13 +148,13 @@ const PreRegister = () => {
     });
 
     // Agregar los archivos al FormData
-    formData.attachments.forEach((file, index) => {
-      formDataToSend.append("attachments", file); // Django espera el nombre "attachments"
+    formData.attachments.forEach((file) => {
+      formDataToSend.append("attachments", file);
     });
 
     try {
       const response = await axios.post(
-        "https://desarrollo-aquasmart-backend.onrender.com/api/users/pre-register",
+        "http://127.0.0.1:8000/api/users/pre-register",
         formDataToSend,
         {
           headers: {
@@ -163,15 +163,14 @@ const PreRegister = () => {
         }
       );
 
-      if (response.status === 200) {
-        // Mostrar el modal de éxito
+      if (response.status === 201) {
         setShowSuccessModal(true);
       } else {
         throw new Error("Error al enviar el formulario");
       }
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
-      setShowErrorModal(true); // Mostrar el modal de error
+      setShowErrorModal(true);
     }
   };
 
@@ -222,9 +221,9 @@ const PreRegister = () => {
                       onChange={handleChange}
                     >
                       <option value="">SELECCIÓN DE TIPO DE PERSONA</option>
-                      {personTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
+                      {personTypes.map((type, index) => (
+                        <option key={index} value={type.personTypeId}>
+                          {type.typeName}
                         </option>
                       ))}
                     </select>
