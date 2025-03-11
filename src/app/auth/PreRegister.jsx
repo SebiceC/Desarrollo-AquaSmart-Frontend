@@ -7,6 +7,7 @@ import { validateField } from "../../components/ValidationRules"; // Validación
 import Modal from "../../components/Modal"; // Importar el componente Modal
 
 const PreRegister = () => {
+  const API_URL = import.meta.env.VITE_APP_API_URL;
   const [formData, setFormData] = useState({
     first_name: "",
     document_type: "",
@@ -34,10 +35,10 @@ const PreRegister = () => {
     const fetchOptions = async () => {
       try {
         const documentTypesResponse = await axios.get(
-          "https://desarrollo-aquasmart-backend.onrender.com/api/users/list-document-type"
+          `${API_URL}/users/list-document-type`
         );
         const personTypesResponse = await axios.get(
-          "https://desarrollo-aquasmart-backend.onrender.com/api/users/list-person-type"
+          `${API_URL}/users/list-person-type`
         );
 
         setDocumentTypes(documentTypesResponse.data);
@@ -152,7 +153,7 @@ const PreRegister = () => {
 
     try {
       const response = await axios.post(
-        "https://desarrollo-aquasmart-backend.onrender.com/api/users/pre-register",
+        `${API_URL}/users/pre-register`,
         formDataToSend,
         {
           headers: {
