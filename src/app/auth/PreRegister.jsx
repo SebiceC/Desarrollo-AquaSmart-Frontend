@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputField from "../../components/InputField"; // Componente reutilizable
 import { validateField } from "../../components/ValidationRules"; // Validación modular
+import Modal from "../../components/Modal"; // Importar el componente Modal
 
 const PreRegister = () => {
   const [formData, setFormData] = useState({
@@ -26,6 +27,7 @@ const PreRegister = () => {
   const [errors, setErrors] = useState({});
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
 
   // Obtener los tipos de documento y persona desde el backend
   useEffect(() => {
@@ -137,17 +139,13 @@ const PreRegister = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Crear un objeto FormData para enviar los archivos
     const formDataToSend = new FormData();
-
-    // Agregar los campos del formulario al FormData
     Object.keys(formData).forEach((key) => {
       if (key !== "attachments") {
         formDataToSend.append(key, formData[key]);
       }
     });
 
-    // Agregar los archivos al FormData
     formData.attachments.forEach((file) => {
       formDataToSend.append("attachments", file);
     });
@@ -158,7 +156,7 @@ const PreRegister = () => {
         formDataToSend,
         {
           headers: {
-            "Content-Type": "multipart/form-data", // Importante para enviar archivos
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -170,7 +168,11 @@ const PreRegister = () => {
       }
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
-      setShowErrorModal(true);
+      if (error.response && error.response.status === 409) {
+        setShowDuplicateIdModal(true); // Mostrar modal específico para duplicados
+      } else {
+        setShowErrorModal(true); // Mostrar modal de error genérico
+      }
     }
   };
 
@@ -422,44 +424,33 @@ const PreRegister = () => {
         </form>
       </div>
 
-      {/* Modales de éxito y error */}
-      {showErrorModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-left w-[90%] sm:w-[400px]">
-            <h2 className="text-2xl mb-4">ERROR</h2>
-            <p className="text-md mb-4">
-              Error en envío de formulario, por favor intente más tarde.
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowErrorModal(false)}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-400"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modales */}
+      <Modal
+        showModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="ERROR"
+        btnMessage="Aceptar"
+      >
+        <p>Error en envío de formulario, por favor intente más tarde.</p>
+      </Modal>
 
-      {showSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-left w-[90%] sm:w-[400px]">
-            <h2 className="text-2xl mb-4">ÉXITO</h2>
-            <p className="text-md mb-4">
-              ENVÍO DEL FORMULARIO REALIZADO CON ÉXITO
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-400"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        showModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="ÉXITO"
+        btnMessage="Aceptar"
+      >
+        <p>ENVÍO DEL FORMULARIO REALIZADO CON ÉXITO</p>
+      </Modal>
+
+      <Modal
+        showModal={showDuplicateIdModal}
+        onClose={() => setShowDuplicateIdModal(false)}
+        title="Error de Pre Registro"
+        btnMessage="Aceptar"
+      >
+        <p>Error en el envío del formulario, ya que el número de identificación ya cuenta con un pre-registro realizado.</p>
+      </Modal>
     </div>
   );
 };
