@@ -197,28 +197,28 @@ const PreRegister = () => {
   };
 
   return (
-    <div className="w-full h-full min-h-screen bg-white">
+    <div classNamepr="w-full h-full min-h-screen bg-white">
       {/* Barra superior (logo) */}
-      <div className="h-full bg-[#DCF2F1] flex mx-auto justify-center py-4">
-        <img src="/img/logo.png" alt="Logo" className="w-[80%] max-w-[400px]" />
+      <div classNamepr="h-full bg-[#DCF2F1] flex mx-auto justify-center py-4">
+        <img src="/img/logo.png" alt="Logo" classNamepr="w-[80%] max-w-[400px]" />
       </div>
 
       {/* Formulario */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:border-0 border-4 border-gray-300 rounded-lg my-8">
-        <h2 className="text-center text-xl font-medium mb-8">
+      <div classNamepr="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:border-0 border-4 border-gray-300 rounded-lg my-8">
+        <h2 classNamepr="text-center text-xl font-medium mb-8">
           Formulario de Pre registro de usuario
         </h2>
 
         <form onSubmit={handleSubmit}>
           {/* Datos Personales */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium mb-4">
-              Datos Personales<span className="text-red-500">*</span>
+          <div classNamepr="mb-6">
+            <h3 classNamepr="text-sm font-medium mb-4">
+              Datos Personales<span classNamepr="text-red-500">*</span>
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div classNamepr="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Primera columna */}
-              <div className="space-y-4">
+              <div classNamepr="space-y-4">
                 <InputItem
                   label="Nombre: "
                   type="text"
@@ -276,13 +276,13 @@ const PreRegister = () => {
               </div>
 
               {/* Segunda columna */}
-              <div className="space-y-4">
-                <div className="relative">
+              <div classNamepr="space-y-4">
+                <div classNamepr="relative">
                   <label>Tipo de persona: </label>
-                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
-                  <div className="relative">
+                  <span classNamepr="absolute left-0 top-0 text-red-500 -ml-3">*</span>
+                  <div classNamepr="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                      classNamepr={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
                         errors.person_type ? "bg-red-100" : "bg-white"
                       }`}
                       name="person_type"
@@ -296,19 +296,19 @@ const PreRegister = () => {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <ChevronDown classNamepr="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   </div>
                   {errors.person_type && (
-                    <p className="text-[#F90000]">{errors.person_type}</p>
+                    <p classNamepr="text-[#F90000]">{errors.person_type}</p>
                   )}
                 </div>
 
-                <div className="relative">
+                <div classNamepr="relative">
                   <label>Tipo de documento: </label>
-                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
-                  <div className="relative">
+                  <span classNamepr="absolute left-0 top-0 text-red-500 -ml-3">*</span>
+                  <div classNamepr="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                      classNamepr={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
                         errors.document_type ? "bg-red-100" : "bg-white"
                       }`}
                       name="document_type"
@@ -322,10 +322,10 @@ const PreRegister = () => {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <ChevronDown classNamepr="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   </div>
                   {errors.document_type && (
-                    <p className="text-[#F90000]">{errors.document_type}</p>
+                    <p classNamepr="text-[#F90000]">{errors.document_type}</p>
                   )}
                 </div>
 
@@ -366,38 +366,38 @@ const PreRegister = () => {
           </div>
 
           {/* Sección de carga de archivos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div classNamepr="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <div className="flex items-center">
-                <label className="border border-gray-300 rounded px-3 py-2 bg-gray-50 text-sm cursor-pointer flex items-center">
+              <div classNamepr="flex items-center">
+                <label classNamepr="border border-gray-300 rounded px-3 py-2 bg-gray-50 text-sm cursor-pointer flex items-center">
                   <span>Seleccionar archivos</span>
                   <input
                     type="file"
-                    className="hidden"
+                    classNamepr="hidden"
                     onChange={handleFileChange}
                     multiple
                     accept="application/pdf" // Aceptar solo archivos PDF
                   />
-                  <Upload className="ml-2 w-4 h-4" />
+                  <Upload classNamepr="ml-2 w-4 h-4" />
                 </label>
-                <span className="ml-2 text-sm text-gray-500">
+                <span classNamepr="ml-2 text-sm text-gray-500">
                   {formData.attachments.length}/5 archivos seleccionados
                 </span>
               </div>
 
               {formData.attachments.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium">Archivos seleccionados:</p>
-                  <ul className="mt-2 space-y-2">
+                <div classNamepr="mt-4">
+                  <p classNamepr="text-sm font-medium">Archivos seleccionados:</p>
+                  <ul classNamepr="mt-2 space-y-2">
                     {formData.attachments.map((file, index) => (
-                      <li key={index} className="flex items-center justify-between text-sm">
+                      <li key={index} classNamepr="flex items-center justify-between text-sm">
                         <span>
                           {file.name} - {(file.size / 1024).toFixed(2)}KB
                         </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveFile(index)}
-                          className="text-red-500 hover:text-red-700"
+                          classNamepr="text-red-500 hover:text-red-700"
                         >
                           ×
                         </button>
@@ -408,12 +408,12 @@ const PreRegister = () => {
               )}
 
               {errors.attachments && (
-                <p className="text-[#F90000] mt-2">{errors.attachments}</p>
+                <p classNamepr="text-[#F90000] mt-2">{errors.attachments}</p>
               )}
 
-              <div className="mt-4 text-sm">
+              <div classNamepr="mt-4 text-sm">
                 <p>Anexar los siguientes documentos:</p>
-                <ul className="list-disc pl-5 text-sm">
+                <ul classNamepr="list-disc pl-5 text-sm">
                   <li>Cédula</li>
                   <li>NIT (en caso de persona jurídica)</li>
                   <li>Escrituras</li>
@@ -424,10 +424,10 @@ const PreRegister = () => {
             </div>
 
             {/* Botón de registro */}
-            <div className="flex flex-col items-center md:items-end space-y-8 py-2">
+            <div classNamepr="flex flex-col items-center md:items-end space-y-8 py-2">
               <button
                 type="submit"
-                className="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
+                classNamepr="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
               >
                 Registro
               </button>
@@ -435,7 +435,7 @@ const PreRegister = () => {
               <button
                 type="button"
                 onClick={() => navigate("/Login")}
-                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#cce7e3] transition-colors"
+                classNamepr="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#cce7e3] transition-colors"
               >
                 Iniciar Sesion
               </button>
