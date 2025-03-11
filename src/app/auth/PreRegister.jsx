@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InputField from "../../components/InputField"; // Componente reutilizable
+import InputItem from "../../components/InputItem"; // Componente reutilizable
 import { validateField } from "../../components/ValidationRules"; // Validación modular
 import Modal from "../../components/Modal"; // Importar el componente Modal
 
@@ -135,6 +135,24 @@ const PreRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Función para limpiar el formulario
+  const resetForm = () => {
+    setFormData({
+      first_name: "",
+      document_type: "",
+      last_name: "",
+      address: "",
+      person_type: "",
+      phone: "",
+      email: "",
+      document: "",
+      password: "",
+      confirmPassword: "",
+      attachments: [],
+    });
+    setErrors({});
+  };
+
   // Manejar el envío del formulario con Axios
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -163,6 +181,7 @@ const PreRegister = () => {
       );
 
       if (response.status === 201) {
+        resetForm(); // Limpiamos el formulario
         setShowSuccessModal(true);
       } else {
         throw new Error("Error al enviar el formulario");
@@ -170,9 +189,9 @@ const PreRegister = () => {
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
       if (error.response && error.response.status === 409) {
-        setShowDuplicateIdModal(true); // Mostrar modal específico para duplicados
+        setShowDuplicateIdModal(true);
       } else {
-        setShowErrorModal(true); // Mostrar modal de error genérico
+        setShowErrorModal(true);
       }
     }
   };
@@ -180,12 +199,12 @@ const PreRegister = () => {
   return (
     <div className="w-full h-full min-h-screen bg-white">
       {/* Barra superior (logo) */}
-      <div className="h-full bg-[#DCF2F1] flex mx-auto justify-center">
-        <img src="/img/logo.png" alt="Logo" className="w-[15%] lg:w-[30%]" />
+      <div className="h-full bg-[#DCF2F1] flex mx-auto justify-center py-4">
+        <img src="/img/logo.png" alt="Logo" className="w-[80%] max-w-[400px]" />
       </div>
 
       {/* Formulario */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:border-0 border-4 border-gray-300 rounded-lg my-8">
         <h2 className="text-center text-xl font-medium mb-8">
           Formulario de Pre registro de usuario
         </h2>
@@ -200,7 +219,7 @@ const PreRegister = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Primera columna */}
               <div className="space-y-4">
-                <InputField
+                <InputItem
                   label="Nombre: "
                   type="text"
                   name="first_name"
@@ -211,6 +230,53 @@ const PreRegister = () => {
                   error={errors.first_name}
                 />
 
+                <InputItem
+                  label="Apellido: "
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  placeholder="Apellido"
+                  maxLength={20}
+                  error={errors.last_name}
+                />
+
+                <InputItem
+                  label="Correo: "
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="xxxxxxx@example.com"
+                  maxLength={50}
+                  error={errors.email}
+                />
+
+                <InputItem
+                  label="Telefono: "
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Telefono"
+                  maxLength={10}
+                  error={errors.phone}
+                />
+
+                <InputItem
+                  label="Direccion de residencia"
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Callexx#xx-xx"
+                  maxLength={35}
+                  error={errors.address}
+                />
+              </div>
+
+              {/* Segunda columna */}
+              <div className="space-y-4">
                 <div className="relative">
                   <label>Tipo de persona: </label>
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
@@ -236,64 +302,6 @@ const PreRegister = () => {
                     <p className="text-[#F90000]">{errors.person_type}</p>
                   )}
                 </div>
-
-                <InputField
-                  label="Correo: "
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="xxxxxxx@example.com"
-                  maxLength={50}
-                  error={errors.email}
-                />
-
-                <InputField
-                  label="Direccion de residencia"
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Callexx#xx-xx"
-                  maxLength={70}
-                  error={errors.address}
-                />
-
-                <InputField
-                  label="Contraseña: "
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Contraseña"
-                  maxLength={20}
-                  error={errors.password}
-                />
-              </div>
-
-              {/* Segunda columna */}
-              <div className="space-y-4">
-                <InputField
-                  label="Apellido: "
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  placeholder="Apellido"
-                  maxLength={20}
-                  error={errors.last_name}
-                />
-
-                <InputField
-                  label="Telefono: "
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Telefono"
-                  maxLength={13}
-                  error={errors.phone}
-                />
 
                 <div className="relative">
                   <label>Tipo de documento: </label>
@@ -321,7 +329,7 @@ const PreRegister = () => {
                   )}
                 </div>
 
-                <InputField
+                <InputItem
                   label="No. de identificacion: "
                   type="text"
                   name="document"
@@ -332,7 +340,18 @@ const PreRegister = () => {
                   error={errors.document}
                 />
 
-                <InputField
+                <InputItem
+                  label="Contraseña: "
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Contraseña"
+                  maxLength={20}
+                  error={errors.password}
+                />
+
+                <InputItem
                   label="Confirmar Contraseña: "
                   type="password"
                   name="confirmPassword"
@@ -405,10 +424,10 @@ const PreRegister = () => {
             </div>
 
             {/* Botón de registro */}
-            <div className="flex flex-col items-end space-y-2">
+            <div className="flex flex-col items-center md:items-end space-y-8 py-2">
               <button
                 type="submit"
-                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer"
+                className="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
               >
                 Registro
               </button>
@@ -416,7 +435,7 @@ const PreRegister = () => {
               <button
                 type="button"
                 onClick={() => navigate("/Login")}
-                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer"
+                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#cce7e3] transition-colors"
               >
                 Iniciar Sesion
               </button>
@@ -428,7 +447,10 @@ const PreRegister = () => {
       {/* Modales */}
       <Modal
         showModal={showErrorModal}
-        onClose={() => setShowErrorModal(false)}
+        onClose={() => {
+          setShowErrorModal(false);
+          resetForm();
+        }}
         title="ERROR"
         btnMessage="Aceptar"
       >
@@ -437,7 +459,10 @@ const PreRegister = () => {
 
       <Modal
         showModal={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={() => {
+          setShowSuccessModal(false);
+          resetForm();
+        }}
         title="ÉXITO"
         btnMessage="Aceptar"
       >
@@ -446,7 +471,10 @@ const PreRegister = () => {
 
       <Modal
         showModal={showDuplicateIdModal}
-        onClose={() => setShowDuplicateIdModal(false)}
+        onClose={() => {
+          setShowDuplicateIdModal(false);
+          resetForm();
+        }}
         title="Error de Pre Registro"
         btnMessage="Aceptar"
       >

@@ -22,9 +22,9 @@ export const validateField = (name, value, formData) => {
           errors[name] = "ERROR, campo vacío";
         } else if (!numberRegex.test(value)) {
           errors[name] = "Solo se permiten números";
-        } else if (name === "phone" && value.length > 13) {
-          errors[name] = "Máximo 13 caracteres";
-        } else if (name === "document" && value.length > 15) {
+        } else if (name === "phone" && value.length > 10) {
+          errors[name] = "Máximo 10 caracteres";
+        } else if (name === "document" && value.length > 10) {
           errors[name] = "Máximo 15 caracteres";
         }
         break;
@@ -42,8 +42,10 @@ export const validateField = (name, value, formData) => {
   
       case "address":
         if (!value) {
-          errors[name] = "ERROR, campo vacío";
-        }
+          errors[name] = "ERROR, campo vacío";   
+      } else if (value.length > 35) {
+        errors[name] = "Máximo 20 caracteres";
+      }
         break;
   
       case "password":
