@@ -34,10 +34,10 @@ const PreRegister = () => {
     const fetchOptions = async () => {
       try {
         const documentTypesResponse = await axios.get(
-          "http://127.0.0.1:8000/api/users/list-document-type"
+          "https://desarrollo-aquasmart-backend.onrender.com/api/users/list-document-type"
         );
         const personTypesResponse = await axios.get(
-          "http://127.0.0.1:8000/api/users/list-person-type"
+          "https://desarrollo-aquasmart-backend.onrender.com/api/users/list-person-type"
         );
 
         setDocumentTypes(documentTypesResponse.data);
@@ -152,7 +152,7 @@ const PreRegister = () => {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/users/pre-register",
+        "https://desarrollo-aquasmart-backend.onrender.com/api/users/pre-register",
         formDataToSend,
         {
           headers: {
