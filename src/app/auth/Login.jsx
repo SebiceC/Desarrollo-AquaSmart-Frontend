@@ -245,7 +245,7 @@ const Login = () => {
                 )}
               </button>
             </div>
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-2 mt-2">
               <a
                 href="/forgotPassword"
                 className="font-semibold text-sm hover:underline"
