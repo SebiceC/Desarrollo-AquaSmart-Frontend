@@ -23,7 +23,7 @@ const Login = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = process.env.VITE_APP_API_URL || "http://localhost:5000";
+  const API_URL = ;
 
 
   const openModal = (title, message, btnMessage, onCloseAction) => {
