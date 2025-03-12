@@ -24,7 +24,7 @@ export const validateField = (name, value, formData) => {
           errors[name] = "Solo se permiten números";
         } else if (name === "phone" && value.length > 10) {
           errors[name] = "Máximo 10 caracteres";
-        } else if (name === "document" && value.length > 10) {
+        } else if (name === "document" && value.length > 15) {
           errors[name] = "Máximo 15 caracteres";
         }
         break;
