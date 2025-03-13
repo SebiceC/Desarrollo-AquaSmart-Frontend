@@ -188,7 +188,7 @@ const PreRegister = () => {
       }
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
-      if (error.response && error.response.status === 409) {
+      if (error.response && error.response.status === 400) {
         setShowDuplicateIdModal(true);
       } else {
         setShowErrorModal(true);

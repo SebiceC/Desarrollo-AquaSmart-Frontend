@@ -99,6 +99,7 @@ const ForgotPassword = () => {
             setOtpError("¡Campos vacíos, por favor completarlos!");
             return;
         }
+        startTimer();
 
         try {
             const response = await axios.post(`${API_URL}/users/generate-otp`, {

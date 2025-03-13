@@ -24,10 +24,18 @@ export const validateField = (name, value, formData) => {
           errors[name] = "Solo se permiten números";
         } else if (name === "phone" && value.length > 10) {
           errors[name] = "Máximo 10 caracteres";
-        } else if (name === "document" && value.length > 10) {
+        } else if (name === "document" && value.length > 15) {
           errors[name] = "Máximo 15 caracteres";
         }
+          else if (name === "document" && value.length < 5) {
+          errors[name] = "Mínimo 5 caracteres";
+       }
+      
+      else if (name === "phone" && value.length < 8) {
+      errors[name] = "Mínimo 8 caracteres";
+      }
         break;
+        
   
       case "email":
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
