@@ -2,8 +2,12 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import InputItem from "../../components/InputItem"; // Componente reutilizable
+import { validateField } from "../../components/ValidationRules"; // Validación modular
+import Modal from "../../components/Modal"; // Importar el componente Modal
 
 const PreRegister = () => {
+  const API_URL = import.meta.env.VITE_APP_API_URL;
   const [formData, setFormData] = useState({
     first_name: "",
     document_type: "",
@@ -18,15 +22,21 @@ const PreRegister = () => {
     attachments: [],
   });
 
+<<<<<<< HEAD
   const [documentTypes, setDocumentTypes] = useState([]); // Estado para los tipos de documento
   const [personTypes, setPersonTypes] = useState([]); // Estado para los tipos de persona
   const API_URL =
     globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
 
+=======
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [personTypes, setPersonTypes] = useState([]);
+>>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
 
   // Obtener los tipos de documento y persona desde el backend
   useEffect(() => {
@@ -100,51 +110,23 @@ const PreRegister = () => {
   // Manejar cambios en los campos del formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Validar la longitud máxima de los campos
-    let maxLength;
-    switch (name) {
-      case "first_name":
-      case "last_name":
-        maxLength = 20;
-        break;
-      case "person_type":
-        maxLength = 10;
-        break;
-      case "phone":
-        maxLength = 13;
-        break;
-      case "email":
-        maxLength = 50;
-        break;
-      case "document":
-        maxLength = 15;
-        break;
-      case "password":
-      case "confirmPassword":
-        maxLength = 20;
-        break;
-      default:
-        maxLength = null;
-    }
-
-    if (maxLength && value.length > maxLength) {
-      return; // No actualizar el estado si se excede la longitud máxima
-    }
-
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
+
+    // Validar el campo en tiempo real
+    const fieldErrors = validateField(name, value, formData);
     setErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: "",
+      [name]: fieldErrors[name] || "",
     }));
   };
 
-  // Validar el formulario
+  // Validar el formulario completo
   const validateForm = () => {
     const newErrors = {};
+<<<<<<< HEAD
     const {
       first_name,
       last_name,
@@ -158,84 +140,20 @@ const PreRegister = () => {
       confirmPassword,
       attachments,
     } = formData;
+=======
+>>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
 
-    // Validación para nombres (solo letras y espacios)
-    const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/;
-    if (!first_name) {
-      newErrors.first_name = "ERROR, campo vacío";
-    } else if (!nameRegex.test(first_name)) {
-      newErrors.first_name = "Solo se permiten letras y espacios";
-    } else if (first_name.length > 20) {
-      newErrors.first_name = "Máximo 20 caracteres";
-    }
-
-    // Validación para apellidos (misma que nombres)
-    if (!last_name) {
-      newErrors.last_name = "ERROR, campo vacío";
-    } else if (!nameRegex.test(last_name)) {
-      newErrors.last_name = "Solo se permiten letras y espacios";
-    } else if (last_name.length > 20) {
-      newErrors.last_name = "Máximo 20 caracteres";
-    }
-
-    if (!address) {
-      newErrors.address = "ERROR, campo vacío";
-    }
-
-    // Validación para teléfono (solo números)
-    const numberRegex = /^\d+$/;
-    if (!phone) {
-      newErrors.phone = "ERROR, campo vacío";
-    } else if (!numberRegex.test(phone)) {
-      newErrors.phone = "Solo se permiten números";
-    } else if (phone.length > 13) {
-      newErrors.phone = "Máximo 13 caracteres";
-    }
-
-    // Validación para identificación (solo números)
-    if (!document) {
-      newErrors.document = "ERROR, campo vacío";
-    } else if (!numberRegex.test(document)) {
-      newErrors.document = "Solo se permiten números";
-    } else if (document.length > 15) {
-      newErrors.document = "Máximo 15 caracteres";
-    }
-
-    // Validación para correo electrónico
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      newErrors.email = "ERROR, campo vacío";
-    } else if (!emailRegex.test(email)) {
-      newErrors.email = "Formato de correo electrónico inválido";
-    } else if (email.length > 50) {
-      newErrors.email = "Máximo 50 caracteres";
-    }
-
-    // Validación para la contraseña
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[._!@#$%^&*])(?=.{8,})/;
-    if (!password) {
-      newErrors.password = "ERROR, campo vacío";
-    } else if (!passwordRegex.test(password)) {
-      newErrors.password =
-        "La contraseña debe tener al menos 8 caracteres, una mayúscula y un carácter especial";
-    } else if (password.length > 20) {
-      newErrors.password = "Máximo 20 caracteres";
-    }
-
-    if (!person_type) newErrors.person_type = "ERROR, campo vacío";
-    if (!document_type) newErrors.document_type = "ERROR, campo vacío";
-
-    // Validación para confirmar contraseña
-    if (!confirmPassword) {
-      newErrors.confirmPassword = "ERROR, campo vacío";
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden.";
-    } else if (confirmPassword.length > 20) {
-      newErrors.confirmPassword = "Máximo 20 caracteres";
-    }
+    Object.keys(formData).forEach((key) => {
+      if (key !== "attachments") {
+        const fieldErrors = validateField(key, formData[key], formData);
+        if (fieldErrors[key]) {
+          newErrors[key] = fieldErrors[key];
+        }
+      }
+    });
 
     // Validación de archivos
-    if (attachments.length === 0) {
+    if (formData.attachments.length === 0) {
       newErrors.attachments = "Debe adjuntar al menos un archivo";
     }
 
@@ -243,24 +161,38 @@ const PreRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Función para limpiar el formulario
+  const resetForm = () => {
+    setFormData({
+      first_name: "",
+      document_type: "",
+      last_name: "",
+      address: "",
+      person_type: "",
+      phone: "",
+      email: "",
+      document: "",
+      password: "",
+      confirmPassword: "",
+      attachments: [],
+    });
+    setErrors({});
+  };
+
   // Manejar el envío del formulario con Axios
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // Crear un objeto FormData para enviar los archivos
     const formDataToSend = new FormData();
-
-    // Agregar los campos del formulario al FormData
     Object.keys(formData).forEach((key) => {
       if (key !== "attachments") {
         formDataToSend.append(key, formData[key]);
       }
     });
 
-    // Agregar los archivos al FormData
-    formData.attachments.forEach((file, index) => {
-      formDataToSend.append("attachments", file); // Django espera el nombre "attachments"
+    formData.attachments.forEach((file) => {
+      formDataToSend.append("attachments", file);
     });
 
     try {
@@ -269,38 +201,36 @@ const PreRegister = () => {
         formDataToSend,
         {
           headers: {
-            "Content-Type": "multipart/form-data", // Importante para enviar archivos
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      if (response.status === 200) {
-        // Mostrar el modal de éxito
+      if (response.status === 201) {
+        resetForm(); // Limpiamos el formulario
         setShowSuccessModal(true);
       } else {
         throw new Error("Error al enviar el formulario");
       }
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
-      setShowErrorModal(true); // Mostrar el modal de error
+      if (error.response && error.response.status === 400) {
+        setShowDuplicateIdModal(true);
+      } else {
+        setShowErrorModal(true);
+      }
     }
-  };
-
-  // Manejar la confirmación del modal
-  const handleConfirm = () => {
-    setShowModal(false); // Cerrar el modal
-    navigate("/Login"); // Redirigir al usuario a la página de inicio de sesión
   };
 
   return (
     <div className="w-full h-full min-h-screen bg-white">
       {/* Barra superior (logo) */}
-      <div className="h-full bg-[#DCF2F1] flex mx-auto justify-center">
-        <img src="/img/logo.png" alt="Logo" className="w-[15%] lg:w-[30%]" />
+      <div className="h-full bg-[#DCF2F1] flex mx-auto justify-center py-4">
+        <img src="/img/logo.png" alt="Logo" className="w-[80%] max-w-[400px]" />
       </div>
 
       {/* Formulario */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:border-0 border-4 border-gray-300 rounded-lg my-8">
         <h2 className="text-center text-xl font-medium mb-8">
           Formulario de Pre registro de usuario
         </h2>
@@ -315,24 +245,64 @@ const PreRegister = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Primera columna */}
               <div className="space-y-4">
-                <div>
-                  <label>Nombre: </label>
-                  <input
-                    type="text"
-                    placeholder="Nombre"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.first_name ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    maxLength={20} // Limitar a 20 caracteres
-                  />
-                  {errors.first_name && (
-                    <p className="text-[#F90000]">{errors.first_name}</p>
-                  )}
-                </div>
+                <InputItem
+                  label="Nombre: "
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  placeholder="Nombre"
+                  maxLength={20}
+                  error={errors.first_name}
+                />
 
+                <InputItem
+                  label="Apellido: "
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  placeholder="Apellido"
+                  maxLength={20}
+                  error={errors.last_name}
+                />
+
+                <InputItem
+                  label="Correo: "
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="xxxxxxx@example.com"
+                  maxLength={50}
+                  error={errors.email}
+                />
+
+                <InputItem
+                  label="Telefono: "
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Telefono"
+                  maxLength={10}
+                  error={errors.phone}
+                />
+
+                <InputItem
+                  label="Direccion de residencia"
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Callexx#xx-xx"
+                  maxLength={35}
+                  error={errors.address}
+                />
+              </div>
+
+              {/* Segunda columna */}
+              <div className="space-y-4">
                 <div className="relative">
                   <label>Tipo de persona: </label>
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">
@@ -348,11 +318,16 @@ const PreRegister = () => {
                       onChange={handleChange}
                     >
                       <option value="">SELECCIÓN DE TIPO DE PERSONA</option>
+<<<<<<< HEAD
                       {personTypes.map((type) => (
                         <option
                           key={type.personTypeId}
                           value={type.personTypeId}
                         >
+=======
+                      {personTypes.map((type, index) => (
+                        <option key={index} value={type.personTypeId}>
+>>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
                           {type.typeName}
                         </option>
                       ))}
@@ -364,6 +339,7 @@ const PreRegister = () => {
                   )}
                 </div>
 
+<<<<<<< HEAD
                 <div>
                   <label>Correo: </label>
                   <input
@@ -462,6 +438,11 @@ const PreRegister = () => {
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">
                     *
                   </span>
+=======
+                <div className="relative">
+                  <label>Tipo de documento: </label>
+                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
+>>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
                   <div className="relative">
                     <select
                       className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
@@ -472,11 +453,16 @@ const PreRegister = () => {
                       onChange={handleChange}
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
+<<<<<<< HEAD
                       {documentTypes.map((type) => (
                         <option
                           key={type.documentTypeId}
                           value={type.documentTypeId}
                         >
+=======
+                      {documentTypes.map((type, index) => (
+                        <option key={index} value={type.documentTypeId}>
+>>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
                           {type.typeName}
                         </option>
                       ))}
@@ -488,41 +474,38 @@ const PreRegister = () => {
                   )}
                 </div>
 
-                <div>
-                  <label>No. de identificacion: </label>
-                  <input
-                    type="text"
-                    placeholder="Identificación"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.document ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="document"
-                    value={formData.document}
-                    onChange={handleChange}
-                    maxLength={15} // Limitar a 15 caracteres
-                  />
-                  {errors.document && (
-                    <p className="text-[#F90000]">{errors.document}</p>
-                  )}
-                </div>
+                <InputItem
+                  label="No. de identificacion: "
+                  type="text"
+                  name="document"
+                  value={formData.document}
+                  onChange={handleChange}
+                  placeholder="Identificación"
+                  maxLength={15}
+                  error={errors.document}
+                />
 
-                <div>
-                  <label>Confirmar Contraseña: </label>
-                  <input
-                    type="password"
-                    placeholder="Confirmar Contraseña"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.confirmPassword ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    maxLength={20} // Limitar a 20 caracteres
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-[#F90000]">{errors.confirmPassword}</p>
-                  )}
-                </div>
+                <InputItem
+                  label="Contraseña: "
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Contraseña"
+                  maxLength={20}
+                  error={errors.password}
+                />
+
+                <InputItem
+                  label="Confirmar Contraseña: "
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirmar Contraseña"
+                  maxLength={20}
+                  error={errors.confirmPassword}
+                />
               </div>
             </div>
           </div>
@@ -589,10 +572,10 @@ const PreRegister = () => {
             </div>
 
             {/* Botón de registro */}
-            <div className="flex flex-col items-end space-y-2">
+            <div className="flex flex-col items-center md:items-end space-y-8 py-2">
               <button
                 type="submit"
-                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer"
+                className="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
               >
                 Registro
               </button>
@@ -600,7 +583,7 @@ const PreRegister = () => {
               <button
                 type="button"
                 onClick={() => navigate("/Login")}
-                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer"
+                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#cce7e3] transition-colors"
               >
                 Iniciar Sesion
               </button>
@@ -608,44 +591,43 @@ const PreRegister = () => {
           </div>
         </form>
       </div>
-      {showErrorModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-left w-[90%] sm:w-[400px]">
-            <h2 className="text-2xl mb-4">ERROR</h2>{" "}
-            <p className="text-md mb-4">
-              Error en envío de formulario, por favor intente más tarde.
-            </p>
-            <div className="flex justify-end">
-              {" "}
-              <button
-                onClick={() => setShowErrorModal(false)}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-400"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-90 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-left w-[90%] sm:w-[400px]">
-            <h2 className="text-2xl mb-4">ÉXITO</h2>{" "}
-            <p className="text-md mb-4">
-              ENVÍO DEL FORMULARIO REALIZADO CON ÉXITO
-            </p>
-            <div className="flex justify-end">
-              {" "}
-              <button
-                onClick={() => setShowSuccessModal(false)} // Cerrar el modal
-                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-400"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
+      {/* Modales */}
+      <Modal
+        showModal={showErrorModal}
+        onClose={() => {
+          setShowErrorModal(false);
+          resetForm();
+        }}
+        title="ERROR"
+        btnMessage="Aceptar"
+      >
+        <p>Error en envío de formulario, por favor intente más tarde.</p>
+      </Modal>
+
+      <Modal
+        showModal={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          resetForm();
+        }}
+        title="ÉXITO"
+        btnMessage="Aceptar"
+      >
+        <p>ENVÍO DEL FORMULARIO REALIZADO CON ÉXITO</p>
+      </Modal>
+
+      <Modal
+        showModal={showDuplicateIdModal}
+        onClose={() => {
+          setShowDuplicateIdModal(false);
+          resetForm();
+        }}
+        title="Error de Pre Registro"
+        btnMessage="Aceptar"
+      >
+        <p>Error en el envío del formulario, ya que el número de identificación ya cuenta con un pre-registro realizado.</p>
+      </Modal>
     </div>
   );
 };
