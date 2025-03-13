@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/setupTests.js"],
-
+  testEnvironment: "jsdom",
   transform: {
     "^.+\\.(js|jsx)$": "babel-jest",
   },
@@ -11,4 +11,16 @@ module.exports = {
   moduleNameMapper: {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
   },
+  reporters: [
+    "default",
+    [
+      "jest-html-reporter",
+      {
+        pageTitle: "Reporte de Pruebas",
+        outputPath: "./test-report.html",
+        includeFailureMsg: true,
+        includeConsoleLog: true,
+      },
+    ],
+  ],
 };

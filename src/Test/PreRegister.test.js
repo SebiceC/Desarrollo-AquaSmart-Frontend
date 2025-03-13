@@ -34,7 +34,7 @@ describe("Validaciones del formulario", () => {
       newErrors.first_name = "Máximo 20 caracteres";
 
     if (!last_name) newErrors.last_name = "ERROR, campo vacío";
-    else if (!nameRegex.test(last_name))
+    else if (!nameRegex.test())
       newErrors.last_name = "Solo se permiten letras y espacios";
     else if (last_name.length > 20)
       newErrors.last_name = "Máximo 20 caracteres";

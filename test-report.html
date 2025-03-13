@@ -1,0 +1,678 @@
+<html><head><meta charset="utf-8"/><title>Reporte de Pruebas</title><style type="text/css">:root {
+  --text-primary: #111;
+  --text-secondary: #4f4f4f;
+  --success: #006633;
+  --success-bright: #80ffbf;
+  --danger: #cc071e;
+  --danger-bright: #fbdfe0;
+  --warning: #995c00;
+  --warning-bright: #ffeea8;
+  --panel: #eee;
+  --border: #949494;
+  --disabled: #6b6b6b;
+}
+
+html,
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+}
+body {
+  padding: 2rem 1rem;
+}
+.jesthtml-content {
+  margin: 0 auto;
+  max-width: 70rem;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+#title {
+  margin: 0;
+  flex-grow: 1;
+}
+#logo {
+  height: 4rem;
+}
+#timestamp {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+#metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.additional-information-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/** SUMMARY */
+#summary {
+  color: var(--text-primary);
+  display: flex;
+  font-family: monospace;
+  font-size: 1rem;
+}
+#summary > div {
+  margin-right: 0.5rem;
+  background: var(--panel);
+  padding: 1rem;
+  min-width: 15rem;
+}
+#summary > div:last-child {
+  margin-right: 0;
+}
+@media only screen and (max-width: 720px) {
+  #summary {
+    flex-direction: column;
+  }
+  #summary > div {
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  #summary > div:first-child {
+    margin-top: 0;
+  }
+}
+
+.summary-total {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.summary-passed {
+  color: var(--success);
+  border-left: 0.4rem solid var(--success);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-failed,
+.summary-obsolete-snapshots {
+  color: var(--danger);
+  border-left: 0.4rem solid var(--danger);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-pending {
+  color: var(--warning);
+  border-left: 0.4rem solid var(--warning);
+  padding-left: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+.summary-empty {
+  color: var(--disabled);
+  border-left: 0.4rem solid var(--disabled);
+  margin-bottom: 0.15rem;
+}
+
+.test-result {
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+.test-result:last-child {
+  border: 0;
+}
+.test-result.passed {
+  background-color: var(--success-bright);
+  color: var(--success);
+}
+.test-result.failed {
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.test-result.pending {
+  background-color: var(--warning-bright);
+  color: var(--warning);
+}
+
+.test-info {
+  display: flex;
+  justify-content: space-between;
+}
+.test-suitename {
+  width: 20%;
+  text-align: left;
+  font-weight: bold;
+  word-break: break-word;
+}
+.test-title {
+  width: 40%;
+  text-align: left;
+  font-style: italic;
+}
+.test-status {
+  width: 20%;
+  text-align: right;
+}
+.test-duration {
+  width: 10%;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.failureMessages {
+  padding: 0 1rem;
+  margin-top: 1rem;
+  border-top: 1px dashed var(--danger);
+}
+.failureMessages.suiteFailure {
+  border-top: none;
+}
+.failureMsg {
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.suite-container {
+  margin-bottom: 1rem;
+}
+.suite-info {
+  padding: 1rem;
+  background-color: var(--panel);
+  color: var(--text-secondary);
+  border: 0.15rem solid;
+  border-color: var(--panel);
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+.suite-info:hover {
+  border-color: var(--border);
+  cursor: pointer;
+}
+.suite-info .suite-path {
+  word-break: break-all;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+}
+.suite-info .suite-time {
+  margin-left: 1rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+}
+.suite-info .suite-time.warn {
+  background-color: var(--danger);
+  color: #fff;
+}
+.suite-info:before {
+  content: "\2303";
+  display: inline-block;
+  margin-right: 1rem;
+  transform: rotate(180deg) translateY(0.15rem);
+}
+.suite-container[open] .suite-info:before {
+  transform: rotate(0deg) translateY(0.15rem);
+}
+
+/* CONSOLE LOGS */
+.suite-consolelog {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--panel);
+}
+.suite-consolelog-header {
+  font-weight: bold;
+}
+.suite-consolelog-item {
+  padding: 0.5rem;
+}
+.suite-consolelog-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-consolelog-item-origin {
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+.suite-consolelog-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+
+/* OBSOLETE SNAPSHOTS */
+.suite-obsolete-snapshots {
+  margin-bottom: 0.25rem;
+  padding: 1rem;
+  background-color: var(--danger-bright);
+  color: var(--danger);
+}
+.suite-obsolete-snapshots-header {
+  font-weight: bold;
+}
+.suite-obsolete-snapshots-item {
+  padding: 0.5rem;
+}
+.suite-obsolete-snapshots-item pre {
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+.suite-obsolete-snapshots-item-message {
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0 0.5rem;
+}
+</style></head><body><main class="jesthtml-content"><header><h1 id="title">Reporte de Pruebas</h1></header><section id="metadata-container"><div id="timestamp">Started: 2025-03-13 11:33:25</div><div id="summary"><div id="suite-summary"><div class="summary-total">Suites (4)</div><div class="summary-passed ">3 passed</div><div class="summary-failed ">1 failed</div><div class="summary-pending  summary-empty">0 pending</div></div><div id="test-summary"><div class="summary-total">Tests (16)</div><div class="summary-passed ">14 passed</div><div class="summary-failed ">2 failed</div><div class="summary-pending  summary-empty">0 pending</div></div></div></section><details id="suite-1" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\PreRegister.test.js</div><div class="suite-time">1.127s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error cuando los campos están vacíos</div><div class="test-status">passed</div><div class="test-duration">0.007s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si los nombres contienen caracteres inválidos</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si el teléfono o documento contienen caracteres no numéricos</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si el correo tiene un formato inválido</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si la contraseña no cumple con los requisitos</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si las contraseñas no coinciden</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">No debe devolver un error si las contraseñas coinciden</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si no se adjuntan archivos</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un objeto vacío si todos los campos son válidos</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">Debe devolver un error si el teléfono o documento contienen caracteres no numéricos</div><div class="test-status">passed</div><div class="test-duration"> </div></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Validaciones del formulario</div><div class="test-title">No debe devolver errores si el teléfono y el documento son completamente numéricos</div><div class="test-status">passed</div><div class="test-duration">0.001s</div></div></div></div></details><details id="suite-2" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js</div><div class="suite-time">1.143s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">AuthProvider Component - Doble Inicio de Sesión</div><div class="test-title">Se activa modal con: Tu sesión ha sido cerrada porque iniciaste sesión en otro dispositivo.</div><div class="test-status">passed</div><div class="test-duration">0.092s</div></div></div></div><div class="suite-consolelog"><div class="suite-consolelog-header">Console Log</div><div class="suite-consolelog-item"><pre class="suite-consolelog-item-origin">    at warn (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\app\context\AuthProvider.jsx:51:21)
+    at call (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\app\context\AuthProvider.jsx:2:1)
+    at Generator.tryCatch (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\app\context\AuthProvider.jsx:2:1)
+    at Generator._invoke [as throw] (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\app\context\AuthProvider.jsx:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\app\context\AuthProvider.jsx:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\app\context\AuthProvider.jsx:2:1)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)</pre><pre class="suite-consolelog-item-message">Sesión cerrada en otro dispositivo.</pre></div><div class="suite-consolelog-item"><pre class="suite-consolelog-item-origin">    at FakeTimers._checkFakeTimers (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@jest\fake-timers\build\modernFakeTimers.js:152:28)
+    at FakeTimers.advanceTimersByTime (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@jest\fake-timers\build\modernFakeTimers.js:93:14)
+    at Object.advanceTimersByTime (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-runtime\build\index.js:2027:26)
+    at advanceTimersByTime (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:44:12)
+    at call (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at Generator.tryCatch (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at Generator._invoke [as next] (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at _next (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at new Promise (&lt;anonymous&gt;)
+    at C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1
+    at C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@testing-library\react\dist\act-compat.js:48:24
+    at Object.&lt;anonymous&gt;.process.env.NODE_ENV.exports.act (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\react\cjs\react.development.js:1081:22)
+    at C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@testing-library\react\dist\act-compat.js:47:25
+    at _callee2$ (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:43:14)
+    at call (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at Generator.tryCatch (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at Generator._invoke [as next] (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Sesion.test.js:2:1)</pre><pre class="suite-consolelog-item-message">A function to advance timers was called but the timers APIs are not replaced with fake timers. Call `jest.useFakeTimers()` in this test file or enable fake timers for all tests by setting 'fakeTimers': {'enableGlobally': true} in Jest configuration file.
+Stack Trace:
+
+      42 |     // Simulamos el segundo chequeo de sesión fallido
+      43 |     await act(async () =&gt; {
+    &gt; 44 |       jest.advanceTimersByTime(1200000); // Adelantar 20 minutos para la validación periódica
+         |            ^
+      45 |     });
+      46 |
+      47 |     // Ahora el modal debe aparecer con el mensaje correcto
+
+      Error: 
+      at FakeTimers._checkFakeTimers (node_modules/@jest/fake-timers/build/modernFakeTimers.js:158:13)
+      at FakeTimers.advanceTimersByTime (node_modules/@jest/fake-timers/build/modernFakeTimers.js:93:14)
+      at advanceTimersByTime (src/Test/Sesion.test.js:44:12)
+      at call (src/Test/Sesion.test.js:2:1)
+      at Generator.tryCatch (src/Test/Sesion.test.js:2:1)
+      at Generator._invoke [as next] (src/Test/Sesion.test.js:2:1)
+      at asyncGeneratorStep (src/Test/Sesion.test.js:2:1)
+      at asyncGeneratorStep (src/Test/Sesion.test.js:2:1)
+      at _next (src/Test/Sesion.test.js:2:1)
+      at src/Test/Sesion.test.js:2:1
+      at node_modules/@testing-library/react/dist/act-compat.js:48:24
+      at Object.&lt;anonymous&gt;.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:1081:22)
+      at node_modules/@testing-library/react/dist/act-compat.js:47:25
+      at _callee2$ (src/Test/Sesion.test.js:43:14)
+      at call (src/Test/Sesion.test.js:2:1)
+      at Generator.tryCatch (src/Test/Sesion.test.js:2:1)
+      at Generator._invoke [as next] (src/Test/Sesion.test.js:2:1)
+      at asyncGeneratorStep (src/Test/Sesion.test.js:2:1)
+      at asyncGeneratorStep (src/Test/Sesion.test.js:2:1)</pre></div></div></details><details id="suite-3" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\Login.test.js</div><div class="suite-time">1.382s</div></summary><div class="suite-tests"><div class="test-result passed"><div class="test-info"><div class="test-suitename">Login Component</div><div class="test-title">validates document and password fields</div><div class="test-status">passed</div><div class="test-duration">0.082s</div></div></div></div></details><details id="suite-4" class="suite-container" open=""><summary class="suite-info"><div class="suite-path">C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js</div><div class="suite-time">3.542s</div></summary><div class="suite-tests"><div class="test-result failed"><div class="test-info"><div class="test-suitename">Perfil Component</div><div class="test-title">logs out the user and redirects to login page</div><div class="test-status">failed</div><div class="test-duration">1.133s</div></div><div class="failureMessages"> <pre class="failureMsg">Error: Unable to find an element with the text: /login/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class="w-full min-h-screen bg-white"
+    &gt;
+      &lt;header
+        class="w-full fixed top-0 bg-[#DCF2F1] z-50"
+      &gt;
+        &lt;nav
+          class="px-5 py-2 flex justify-between items-center"
+        &gt;
+          &lt;div
+            class="flex items-center gap-5"
+          &gt;
+            &lt;svg
+              class="lucide lucide-bell"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            &gt;
+              &lt;path
+                d="M10.268 21a2 2 0 0 0 3.464 0"
+              /&gt;
+              &lt;path
+                d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+              /&gt;
+            &lt;/svg&gt;
+            &lt;a
+              data-discover="true"
+              href="/home"
+            &gt;
+              &lt;img
+                alt="Logo"
+                class="w-[250px]"
+                src="/img/logo.png"
+              /&gt;
+            &lt;/a&gt;
+          &lt;/div&gt;
+          &lt;ul
+            class="hidden lg:flex space-x-4 font-semibold"
+          &gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/perfil"
+              &gt;
+                Perfil
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/control-IoT"
+              &gt;
+                Control IoT
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/gestionDatos"
+              &gt;
+                Gestión de datos
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/facturacion"
+              &gt;
+                Facturación
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/historialConsumo"
+              &gt;
+                Historial de consumo
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/predicciones"
+              &gt;
+                Predicciones
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/permisos"
+              &gt;
+                Permisos
+              &lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/ul&gt;
+          &lt;button
+            class="lg:hidden"
+          &gt;
+            &lt;svg
+              class="lucide lucide-menu"
+              fill="none"
+              height="28"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="28"
+              xmlns="http://www.w3.org/2000/svg"
+            &gt;
+              &lt;line
+                x1="4"
+                x2="20"
+                y1="12"
+                y2="12"
+              /&gt;
+              &lt;line
+                x1="4"
+                x2="20"
+                y1="6"
+                y2="6"
+              /&gt;
+              &lt;line
+                x1="4"
+                x2="20"
+                y1="18"
+                y2="18"
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/button&gt;
+          &lt;div
+            class="fixed right-0 top-0 h-full w-[80%] sm:w-[50%] bg-[#DCF2F1] rounded-l-3xl p-5 border-l-[#365486] border-1 transform translate-x-full transition-transform durati...
+    at waitForWrapper (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@testing-library\dom\dist\wait-for.js:163:27)
+    at _callee$ (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:39:18)
+    at call (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at Generator.tryCatch (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at Generator._invoke [as next] (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)</pre></div></div><div class="test-result passed"><div class="test-info"><div class="test-suitename">Perfil Component</div><div class="test-title">shows error message if no token is present</div><div class="test-status">passed</div><div class="test-duration">0.037s</div></div></div><div class="test-result failed"><div class="test-info"><div class="test-suitename">Perfil Component</div><div class="test-title">shows error message on server error</div><div class="test-status">failed</div><div class="test-duration">1.03s</div></div><div class="failureMessages"> <pre class="failureMsg">Error: Unable to find an element with the text: Error en el servidor. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+&lt;body&gt;
+  &lt;div&gt;
+    &lt;div
+      class="w-full min-h-screen bg-white"
+    &gt;
+      &lt;header
+        class="w-full fixed top-0 bg-[#DCF2F1] z-50"
+      &gt;
+        &lt;nav
+          class="px-5 py-2 flex justify-between items-center"
+        &gt;
+          &lt;div
+            class="flex items-center gap-5"
+          &gt;
+            &lt;svg
+              class="lucide lucide-bell"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            &gt;
+              &lt;path
+                d="M10.268 21a2 2 0 0 0 3.464 0"
+              /&gt;
+              &lt;path
+                d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
+              /&gt;
+            &lt;/svg&gt;
+            &lt;a
+              data-discover="true"
+              href="/home"
+            &gt;
+              &lt;img
+                alt="Logo"
+                class="w-[250px]"
+                src="/img/logo.png"
+              /&gt;
+            &lt;/a&gt;
+          &lt;/div&gt;
+          &lt;ul
+            class="hidden lg:flex space-x-4 font-semibold"
+          &gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    bg-[#003F88] text-white"
+                data-discover="true"
+                href="/perfil"
+              &gt;
+                Perfil
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/control-IoT"
+              &gt;
+                Control IoT
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/gestionDatos"
+              &gt;
+                Gestión de datos
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/facturacion"
+              &gt;
+                Facturación
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/historialConsumo"
+              &gt;
+                Historial de consumo
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/predicciones"
+              &gt;
+                Predicciones
+              &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;a
+                class="w-full text-center px-3 py-5 font-semibold transition-all duration-300 ease-in-out 
+                    hover:text-white hover:bg-[#003F88]"
+                data-discover="true"
+                href="/permisos"
+              &gt;
+                Permisos
+              &lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/ul&gt;
+          &lt;button
+            class="lg:hidden"
+          &gt;
+            &lt;svg
+              class="lucide lucide-menu"
+              fill="none"
+              height="28"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="28"
+              xmlns="http://www.w3.org/2000/svg"
+            &gt;
+              &lt;line
+                x1="4"
+                x2="20"
+                y1="12"
+                y2="12"
+              /&gt;
+              &lt;line
+                x1="4"
+                x2="20"
+                y1="6"
+                y2="6"
+              /&gt;
+              &lt;line
+                x1="4"
+                x2="20"
+                y1="18"
+                y2="18"
+              /&gt;
+            &lt;/svg&gt;
+          &lt;/button&gt;
+          &lt;div
+            class="fixed right-0 top-0 h-full w-[80%] sm:w-[50%] bg-[#DCF2F1] rounded-l-3xl p-5 border-l-[#365486] border-1 transform translate-x-full transition-transform duration-300 ease-...
+    at waitForWrapper (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@testing-library\dom\dist\wait-for.js:163:27)
+    at C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\@testing-library\dom\dist\query-helpers.js:86:33
+    at findByText (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:77:25)
+    at call (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at Generator.tryCatch (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at Generator._invoke [as next] (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at asyncGeneratorStep (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at _next (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at new Promise (&lt;anonymous&gt;)
+    at Object.&lt;anonymous&gt; (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\src\Test\CierreSesion.test.js:2:1)
+    at Promise.then.completed (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\run.js:316:40)
+    at _runTest (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\run.js:252:3)
+    at _runTestsForDescribeBlock (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\run.js:126:9)
+    at _runTestsForDescribeBlock (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\run.js:121:9)
+    at run (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-runner\build\runTest.js:444:34)
+    at Object.worker (C:\Users\osdo-\Documents\Desarrollo-AquaSmart-Frontend\node_modules\jest-runner\build\testWorker.js:106:12)</pre></div></div></div></details></main></body></html>
