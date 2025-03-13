@@ -20,6 +20,8 @@ const PreRegister = () => {
 
   const [documentTypes, setDocumentTypes] = useState([]); // Estado para los tipos de documento
   const [personTypes, setPersonTypes] = useState([]); // Estado para los tipos de persona
+  const API_URL =
+    globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
 
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
@@ -31,10 +33,10 @@ const PreRegister = () => {
     const fetchOptions = async () => {
       try {
         const documentTypesResponse = await axios.get(
-          "https://desarrollo-aquasmart-backend.onrender.com/api/document-types"
+          `${API_URL}/users/list-document-type`
         );
         const personTypesResponse = await axios.get(
-          "https://desarrollo-aquasmart-backend.onrender.com/api/person-types"
+          `${API_URL}/users/list-person-type`
         );
 
         setDocumentTypes(documentTypesResponse.data);
@@ -61,7 +63,9 @@ const PreRegister = () => {
     }
 
     // Validar tipo de archivo (solo PDF)
-    const invalidFileType = newFiles.find((file) => file.type !== "application/pdf");
+    const invalidFileType = newFiles.find(
+      (file) => file.type !== "application/pdf"
+    );
     if (invalidFileType) {
       setErrors((prev) => ({
         ...prev,
@@ -141,7 +145,19 @@ const PreRegister = () => {
   // Validar el formulario
   const validateForm = () => {
     const newErrors = {};
-    const { first_name, last_name, document_type, person_type, phone, email, address, document, password, confirmPassword, attachments } = formData;
+    const {
+      first_name,
+      last_name,
+      document_type,
+      person_type,
+      phone,
+      email,
+      address,
+      document,
+      password,
+      confirmPassword,
+      attachments,
+    } = formData;
 
     // Validación para nombres (solo letras y espacios)
     const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$/;
@@ -249,7 +265,7 @@ const PreRegister = () => {
 
     try {
       const response = await axios.post(
-        "https://desarrollo-aquasmart-backend.onrender.com/api/users/pre-register",
+        `${API_URL}/users/pre-register`,
         formDataToSend,
         {
           headers: {
@@ -319,7 +335,9 @@ const PreRegister = () => {
 
                 <div className="relative">
                   <label>Tipo de persona: </label>
-                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
+                  <span className="absolute left-0 top-0 text-red-500 -ml-3">
+                    *
+                  </span>
                   <div className="relative">
                     <select
                       className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
@@ -331,8 +349,11 @@ const PreRegister = () => {
                     >
                       <option value="">SELECCIÓN DE TIPO DE PERSONA</option>
                       {personTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
+                        <option
+                          key={type.personTypeId}
+                          value={type.personTypeId}
+                        >
+                          {type.typeName}
                         </option>
                       ))}
                     </select>
@@ -356,7 +377,9 @@ const PreRegister = () => {
                     onChange={handleChange}
                     maxLength={50} // Limitar a 50 caracteres
                   />
-                  {errors.email && <p className="text-[#F90000]">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-[#F90000]">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -429,13 +452,17 @@ const PreRegister = () => {
                     onChange={handleChange}
                     maxLength={13} // Limitar a 13 caracteres
                   />
-                  {errors.phone && <p className="text-[#F90000]">{errors.phone}</p>}
+                  {errors.phone && (
+                    <p className="text-[#F90000]">{errors.phone}</p>
+                  )}
                 </div>
 
                 <div className="relative">
                   <label>Tipo de documento: </label>
-                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
-                  <div className="relative">                
+                  <span className="absolute left-0 top-0 text-red-500 -ml-3">
+                    *
+                  </span>
+                  <div className="relative">
                     <select
                       className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
                         errors.document_type ? "bg-red-100" : "bg-white"
@@ -446,8 +473,11 @@ const PreRegister = () => {
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
                       {documentTypes.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
+                        <option
+                          key={type.documentTypeId}
+                          value={type.documentTypeId}
+                        >
+                          {type.typeName}
                         </option>
                       ))}
                     </select>
@@ -522,7 +552,10 @@ const PreRegister = () => {
                   <p className="text-sm font-medium">Archivos seleccionados:</p>
                   <ul className="mt-2 space-y-2">
                     {formData.attachments.map((file, index) => (
-                      <li key={index} className="flex items-center justify-between text-sm">
+                      <li
+                        key={index}
+                        className="flex items-center justify-between text-sm"
+                      >
                         <span>
                           {file.name} - {(file.size / 1024).toFixed(2)}KB
                         </span>

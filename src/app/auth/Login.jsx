@@ -7,8 +7,6 @@ import { IoIosWarning } from "react-icons/io";
 import Modal from "../../components/Modal";
 import { PiAsteriskSimpleBold } from "react-icons/pi";
 
-
-
 const Login = () => {
   const [document, setDocument] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +22,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
+  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
 
   const openModal = (title, message, btnMessage, onCloseAction) => {
     setModalProps({
@@ -110,35 +109,35 @@ const Login = () => {
 
   const handleRequestNewToken = async () => {
     if (!document.trim() || !phone.trim()) {
-        setOtpError("¡Campos vacíos, por favor completarlos!");
-        return;
+      setOtpError("¡Campos vacíos, por favor completarlos!");
+      return;
     }
 
     try {
-        const response = await axios.post(`${API_URL}/users/generate-otp`, {
-            document,
-            phone,
-        });
+      const response = await axios.post(`${API_URL}/users/generate-otp`, {
+        document,
+        phone,
+      });
 
-        if (response.data.error) {
-            throw new Error(response.data.error);
-        }
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
     } catch (err) {
-        openModal(
-            "ERROR",
-            "Error al generar token, intente mas tarde!.",
-            "ACEPTAR",
-            handleConfirm
-        );
-        if (err.response) {
-            setOtpError(err.response.data.error || "Error en el servidor");
-        } else if (err.request) {
-            setOtpError("No hay respuesta del servidor. Verifica tu conexión.");
-        } else {
-            setOtpError("Error desconocido. Intenta de nuevo.");
-        }
+      openModal(
+        "ERROR",
+        "Error al generar token, intente mas tarde!.",
+        "ACEPTAR",
+        handleConfirm
+      );
+      if (err.response) {
+        setOtpError(err.response.data.error || "Error en el servidor");
+      } else if (err.request) {
+        setOtpError("No hay respuesta del servidor. Verifica tu conexión.");
+      } else {
+        setOtpError("Error desconocido. Intenta de nuevo.");
+      }
     }
-};
+  };
 
   // Manejar el envío del token
   const handleTokenSubmit = async () => {
@@ -204,7 +203,11 @@ const Login = () => {
               id="document"
               labelName={
                 <>
-                  Cédula de Ciudadanía <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                  Cédula de Ciudadanía{" "}
+                  <PiAsteriskSimpleBold
+                    size={12}
+                    className="inline text-red-500"
+                  />
                 </>
               }
               placeholder="Ingresa tu Cédula de Ciudadanía"
@@ -224,7 +227,11 @@ const Login = () => {
                 id="password"
                 labelName={
                   <>
-                    Contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                    Contraseña{" "}
+                    <PiAsteriskSimpleBold
+                      size={12}
+                      className="inline text-red-500"
+                    />
                   </>
                 }
                 placeholder="Ingresa tu contraseña"
@@ -309,10 +316,11 @@ const Login = () => {
             <button
               onClick={startTimer}
               disabled={isDisabled}
-              className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${isDisabled
+              className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${
+                isDisabled
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-[#365486] hover:bg-[#344663]"
-                }`}
+              }`}
             >
               SOLICITAR NUEVO TOKEN
             </button>
