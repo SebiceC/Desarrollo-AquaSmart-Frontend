@@ -27,13 +27,8 @@ export const validateField = (name, value, formData) => {
         } else if (name === "document" && value.length > 15) {
           errors[name] = "Máximo 15 caracteres";
         }
-          else if (name === "document" && value.length < 5) {
-          errors[name] = "Mínimo 5 caracteres";
-       }
-      
-      else if (name === "phone" && value.length < 8) {
-      errors[name] = "Mínimo 8 caracteres";
-      }
+
+
         break;
         
   
@@ -57,12 +52,12 @@ export const validateField = (name, value, formData) => {
         break;
   
       case "password":
-        const passwordRegex = /^(?=.*[A-Z])(?=.*[._!@#$%^&*])(?=.{8,})/;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[._!@#$%^&*])(?=.*\d)(?=.{8,})/;
         if (!value) {
           errors[name] = "ERROR, campo vacío";
         } else if (!passwordRegex.test(value)) {
           errors[name] =
-            "La contraseña debe tener al menos 8 caracteres, una mayúscula y un carácter especial";
+            "La contraseña debe tener al menos 8 caracteres, una mayúscula, un numero y un carácter especial";
         } else if (value.length > 20) {
           errors[name] = "Máximo 20 caracteres";
         }

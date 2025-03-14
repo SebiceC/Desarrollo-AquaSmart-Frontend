@@ -24,6 +24,7 @@ const PreRegister = () => {
 
   const [documentTypes, setDocumentTypes] = useState([]);
   const [personTypes, setPersonTypes] = useState([]);
+  const [filteredDocumentTypes, setFilteredDocumentTypes] = useState([]);
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -50,6 +51,28 @@ const PreRegister = () => {
 
     fetchOptions();
   }, []);
+
+  // Filtrar los tipos de documento según el tipo de persona seleccionado
+
+  useEffect(() => {
+    if (formData.person_type === "1") {
+      // Si es "Natural", excluir el tipo de documento 4 (NIT)
+      setFilteredDocumentTypes(
+        documentTypes.filter((type) => type.documentTypeId !== 5)
+      );
+    } else if (formData.person_type === "2") {
+      // Si es "Jurídica", solo permitir el tipo de documento 4 (NIT)
+      setFilteredDocumentTypes(
+        documentTypes.filter((type) => type.documentTypeId === 5)
+      );
+    } else {
+      // Si no se ha seleccionado un tipo de persona, mostrar todos los tipos de documento
+      setFilteredDocumentTypes(documentTypes);
+    }
+  }, [formData.person_type, documentTypes]);
+
+
+
 
   // Manejar cambios en los archivos seleccionados
   const handleFileChange = (e) => {
@@ -314,9 +337,10 @@ const PreRegister = () => {
                       name="document_type"
                       value={formData.document_type}
                       onChange={handleChange}
+                      disabled={!formData.person_type} // Deshabilitar si no se ha seleccionado un tipo de persona
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
-                      {documentTypes.map((type, index) => (
+                      {filteredDocumentTypes.map((type, index) => (
                         <option key={index} value={type.documentTypeId}>
                           {type.typeName}
                         </option>
