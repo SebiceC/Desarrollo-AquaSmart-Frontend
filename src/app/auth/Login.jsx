@@ -66,6 +66,8 @@ const Login = () => {
           setError("Contraseña incorrecta.");
         } else if (err.response.status === 404) {
           setError("Usuario no encontrado.");
+        } else if (err.response.status === 403) {
+          setError("Usuario inhabilitado.");
         } else if (err.response.status === 500) {
           setError("Error en el servidor. Inténtalo más tarde.");
         }
