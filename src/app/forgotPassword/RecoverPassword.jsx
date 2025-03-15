@@ -51,7 +51,7 @@ const RecoverPassword = () => {
             uppercase: /[A-Z]/.test(password),
             lowercase: /[a-z]/.test(password),
             number: /\d/.test(password),
-            specialChar: /[@$!%*?&]/.test(password),
+            specialChar: /[!@#$%^&*()_+-={}|:;"'<>,.?/]/.test(password),
         };
 
         setPasswordValidations(validations);

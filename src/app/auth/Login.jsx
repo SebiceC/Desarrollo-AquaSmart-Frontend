@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import InputItem from "../../components/InputItem";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,7 @@ const Login = () => {
   const [document, setDocument] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(Array(6).fill(""));
   const [error, setError] = useState("");
   const [otpError, setOtpError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -22,8 +22,9 @@ const Login = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const navigate = useNavigate();
-
   const API_URL = import.meta.env.VITE_APP_API_URL;
+
+  const inputRefs = useRef([]);
 
   const openModal = (title, message, btnMessage, onCloseAction) => {
     setModalProps({
@@ -34,23 +35,14 @@ const Login = () => {
     });
     setShowModal(true);
   };
-  // Función para manejar el login con validaciones
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Validación de campos vacíos
-    if (!document.trim() || !password.trim()) {
-      setError("¡Campos vacíos, por favor completarlos!");
-      return;
-    }
-
-    setError(""); // Limpiar error anterior
+    if (!document.trim() || !password.trim()) return setError("¡Campos vacíos, por favor completarlos!");
 
     try {
-      const response = await axios.post(`${API_URL}/users/login`, {
-        document,
-        password,
-      });
+      await axios.post(`${API_URL}/users/login`, { document, password });
 
       openModal(
         "TOKEN ENVIADO",
@@ -59,39 +51,34 @@ const Login = () => {
         handleConfirm
       );
     } catch (err) {
-      if (err.response) {
-        if (err.response.status === 400) {
-          setError(err.response.data.error.detail);
-        } else if (err.response.status === 401) {
-          setError("Contraseña incorrecta.");
-        } else if (err.response.status === 404) {
-          setError("Usuario no encontrado.");
-        } else if (err.response.status === 403) {
-          setError("Usuario inhabilitado.");
-        } else if (err.response.status === 500) {
-          setError("Error en el servidor. Inténtalo más tarde.");
-        }
-      } else {
-        setError("Error de conexión.");
-      }
+      const errorMap = {
+        400: Array.isArray(err.response?.data?.error?.detail)
+          ? err.response.data.error.detail.join(" ")
+          : err.response?.data?.error?.detail || "Solicitud incorrecta.",
+        401: "Contraseña incorrecta.",
+        403: err.response?.data?.error?.detail || "Tu cuenta está inactiva. Contacta con soporte.",
+        404: err.response?.data?.error?.details || "Usuario no encontrado.",
+        429: "Demasiados intentos fallidos. Inténtalo más tarde.",
+        500: "Error en el servidor. Inténtalo más tarde.",
+      };
+
+      setError(errorMap[err.response?.status] || (err.request ? "Error de conexión. No se recibió respuesta del servidor." : "Error desconocido al procesar la solicitud."));
       console.log(err);
     }
   };
 
-  // Manejar la confirmación del modal para mostrar el formulario de token
+
   const handleConfirm = () => {
     setShowModal(false);
     setShowTokenForm(true);
     startTimer();
   };
 
-  // Iniciar el temporizador de 5 minutos
   const startTimer = () => {
     setTimeLeft(300);
     setIsDisabled(true);
   };
 
-  // Manejar la cuenta regresiva
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setInterval(() => {
@@ -103,55 +90,22 @@ const Login = () => {
     }
   }, [timeLeft]);
 
-  // Formatear tiempo en MM:SS
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  const handleRequestNewToken = async () => {
-    if (!document.trim() || !phone.trim()) {
-        setOtpError("¡Campos vacíos, por favor completarlos!");
-        return;
-    }
-
-    try {
-        const response = await axios.post(`${API_URL}/users/generate-otp`, {
-            document,
-            phone,
-        });
-
-        if (response.data.error) {
-            throw new Error(response.data.error);
-        }
-    } catch (err) {
-        openModal(
-            "ERROR",
-            "Error al generar token, intente mas tarde!.",
-            "ACEPTAR",
-            handleConfirm
-        );
-        if (err.response) {
-            setOtpError(err.response.data.error || "Error en el servidor");
-        } else if (err.request) {
-            setOtpError("No hay respuesta del servidor. Verifica tu conexión.");
-        } else {
-            setOtpError("Error desconocido. Intenta de nuevo.");
-        }
-    }
-};
-
-  // Manejar el envío del token
   const handleTokenSubmit = async () => {
-    if (!otp.trim() || !document.trim()) {
+    const otpValue = otp.join("").trim();
+    if (!otpValue || !document.trim()) {
       setOtpError("¡Token no ingresado!");
       return;
     }
     try {
       const response = await axios.post(
         `${API_URL}/users/validate-otp`,
-        { document: String(document), otp },
+        { document: String(document), otp: otpValue },
         { headers: { "Content-Type": "application/json" } }
       );
 
@@ -162,22 +116,45 @@ const Login = () => {
           "INICIO DE SESIÓN EXITOSO",
           "Bienvenido a la plataforma.",
           "CONTINUAR",
-          () => navigate("/home") // Redirigir al cerrar el modal
+          () => navigate("/home")
         );
       } else {
         throw new Error("El token ingresado es incorrecto.");
       }
     } catch (err) {
-      if (err.response) {
-        if (err.response.status === 400) {
-          console.error("Error del servidor:", err.response.data);
-          setOtpError(err.response.data?.detail || "Error al validar OTP");
-        }
+      if (err.response?.status === 400) {
+        setOtpError(err.response.data?.detail || "Error al validar OTP");
       } else {
         setOtpError("Error de conexión con el servidor");
       }
     }
   };
+
+  const handleChange = (e, index) => {
+    const value = e.target.value.replace(/\D/g, ""); // Solo números
+    if (!value) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    if (index < 5 && value) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      const newOtp = [...otp];
+      newOtp[index] = "";
+      setOtp(newOtp);
+
+      if (index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
+
 
   return (
     <div className="w-full h-full min-h-screen bg-[#DCF2F1] flex flex-col items-center justify-center gap-10">
@@ -195,12 +172,13 @@ const Login = () => {
             className="flex flex-col items-center w-full"
           >
             {error && (
-              <span className="w-[83%] text-md text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5">
-                <IoIosWarning size={26} />
+              <span className="w-[83%] text-sm text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                <IoIosWarning size={26} className="flex-shrink-0" />
                 {error}
-                <IoIosWarning size={26} />
+                <IoIosWarning size={26} className="flex-shrink-0" />
               </span>
             )}
+
 
             <InputItem
               id="document"
@@ -270,36 +248,34 @@ const Login = () => {
           </form>
         </div>
       ) : (
-        <div className="bg-white p-8 rounded-lg shadow-lg w-[400px] border border-blue-400 flex flex-col justify-center mx-auto items-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[40%] lg:w-[28%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
           <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
           <p className="text-center mt-2">
             Introduce el token que fue enviado por SMS a tu teléfono.
           </p>
 
           {otpError && (
-            <span className="w-full text-md text-center py-1 my-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-3 items-center justify-center mx-auto px-5">
-              <IoIosWarning size={26} />
+            <span className="w-[90%] text-md text-center py-1 my-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+              <IoIosWarning size={26} className="flex-shrink-0" />
               {otpError}
-              <IoIosWarning size={26} />
+              <IoIosWarning size={26} className="flex-shrink-0" />
             </span>
           )}
-          <div className="flex justify-center gap-2 mt-4">
+          <div className="flex justify-center gap-1 mt-4">
             {[...Array(6)].map((_, i) => (
               <input
                 key={i}
-                type="tel" // Asegura que solo se ingresen números en móviles
+                ref={(el) => (inputRefs.current[i] = el)}
+                type="tel"
                 maxLength="1"
-                className="w-12 h-12 text-center border border-gray-400 rounded-md"
+                className="w-12 h-12 text-lg text-center border border-gray-400 rounded-md"
                 value={otp[i] || ""}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, ""); // Elimina cualquier caracter no numérico
-                  let newOtp = otp.split("");
-                  newOtp[i] = value;
-                  setOtp(newOtp.join("").trim());
-                }}
+                onChange={(e) => handleChange(e, i)}
+                onKeyDown={(e) => handleKeyDown(e, i)}
               />
             ))}
           </div>
+
 
           <p className="text-center text-gray-600 mt-2">
             {timeLeft > 0
@@ -312,8 +288,8 @@ const Login = () => {
               onClick={startTimer}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${isDisabled
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-[#365486] hover:bg-[#344663]"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#365486] hover:bg-[#344663]"
                 }`}
             >
               SOLICITAR NUEVO TOKEN
