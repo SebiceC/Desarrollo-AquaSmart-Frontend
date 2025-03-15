@@ -26,10 +26,6 @@ export const validateField = (name, value, formData) => {
           errors[name] = "Máximo 13 caracteres";
         } else if (name === "document" && value.length > 15) {
           errors[name] = "Máximo 15 caracteres";
-        } else if (name === "document" && value.length < 6) {
-          errors[name] = "Mínimo 6 caracteres";
-        } else if (name === "phone" && value.length < 10) {
-          errors[name] = "Mínimo 10 caracteres";
         }
  
 
