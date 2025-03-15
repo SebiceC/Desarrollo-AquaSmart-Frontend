@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import InputItem from "../../components/InputItem";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -12,14 +12,15 @@ const ForgotPassword = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalProps, setModalProps] = useState({});
     const [showTokenForm, setShowTokenForm] = useState(false);
+    const [otp, setOtp] = useState(Array(6).fill(""));
     const [otpError, setOtpError] = useState("");
-    const [otp, setOtp] = useState("");
     const [error, setError] = useState("");
     const [timeLeft, setTimeLeft] = useState(0);
     const [isDisabled, setIsDisabled] = useState(false);
     const navigate = useNavigate();
 
     const API_URL = import.meta.env.VITE_APP_API_URL;
+    const inputRefs = useRef([]);
 
     const openModal = (title, message, btnMessage, onCloseAction) => {
         setModalProps({
@@ -54,8 +55,17 @@ const ForgotPassword = () => {
                 throw new Error(response.data.error);
             }
         } catch (err) {
+
             if (err.response) {
-                setError(err.response.data.error || "Error en el servidor");
+                const errorData = err.response.data;
+
+                if (errorData.phone) {
+                    setError(errorData.phone);
+                } else if (errorData.error) {
+                    setError(errorData.error);
+                } else {
+                    setError("Error desconocido en la validación.");
+                }
             } else if (err.request) {
                 setError("No hay respuesta del servidor. Verifica tu conexión.");
             } else {
@@ -130,7 +140,9 @@ const ForgotPassword = () => {
 
     // Manejo de validación del token
     const handleTokenSubmit = async () => {
-        if (!otp.trim() || !document.trim()) {
+        const otpValue = otp.join("").trim(); // Convierte el array en string
+
+        if (!otpValue || !document.trim()) {
             setOtpError("¡Token no ingresado!");
             return;
         }
@@ -138,14 +150,12 @@ const ForgotPassword = () => {
         try {
             const response = await axios.post(
                 `${API_URL}/users/validate-otp`,
-                { document: String(document), otp },
+                { document: String(document), otp: otpValue },
                 { headers: { "Content-Type": "application/json" } }
             );
-            navigate(`/recoverPassword?document=${document}`);
 
-            if (response.data.access) {
-                localStorage.setItem("token", response.data.access);
-                localStorage.setItem("refresh", response.data.refresh);
+            if (response.status === 200) {  // Solo navega si el backend responde con éxito
+                navigate(`/recoverPassword?document=${document}`);
             }
         } catch (err) {
             if (err.response) {
@@ -155,6 +165,31 @@ const ForgotPassword = () => {
                 }
             } else {
                 setOtpError("Error de conexión con el servidor");
+            }
+        }
+    };
+
+    const handleChange = (e, index) => {
+        const value = e.target.value.replace(/\D/g, ""); // Solo números
+        if (!value) return;
+
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (index < 5 && value) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (e, index) => {
+        if (e.key === "Backspace") {
+            const newOtp = [...otp];
+            newOtp[index] = "";
+            setOtp(newOtp);
+
+            if (index > 0) {
+                inputRefs.current[index - 1]?.focus();
             }
         }
     };
@@ -179,10 +214,10 @@ const ForgotPassword = () => {
                         className="flex flex-col items-center w-full"
                     >
                         {error && (
-                            <span className="w-[83%] text-md text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-3 items-center justify-center mx-auto px-5">
-                                <IoIosWarning size={26} />
+                            <span className="w-[83%] text-sm text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                                <IoIosWarning size={26} className="flex-shrink-0" />
                                 {error}
-                                <IoIosWarning size={26} />
+                                <IoIosWarning size={26} className="flex-shrink-0" />
                             </span>
                         )}
                         <InputItem
@@ -233,40 +268,37 @@ const ForgotPassword = () => {
                         />
                         <button
                             type="submit"
-                            className="w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out"
+                            className="w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out"
                         >
                             SOLICITAR TOKEN
                         </button>
                     </form>
                 </div>
             ) : (
-                <div className="bg-white p-8 rounded-lg shadow-lg w-[400px] border border-blue-400 flex flex-col justify-center mx-auto items-center">
+                <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[40%] lg:w-[28%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
                     <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
                     <p className="text-center mt-2">
                         Introduce el token que fue enviado por SMS a tu teléfono.
                     </p>
 
                     {otpError && (
-                        <span className="w-full text-md text-center py-1 my-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-3 items-center justify-center mx-auto px-5">
-                            <IoIosWarning size={26} />
-                            {otpError}
-                            <IoIosWarning size={26} />
-                        </span>
+                        <span className="w-full text-sm text-center py-1 my-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                        <IoIosWarning size={26} className="flex-shrink-0" />
+                        {otpError}
+                        <IoIosWarning size={26} className="flex-shrink-0" />
+                    </span>
                     )}
-                    <div className="flex justify-center gap-2 mt-4">
+                    <div className="flex justify-center gap-1 mt-4">
                         {[...Array(6)].map((_, i) => (
                             <input
                                 key={i}
-                                type="tel" // Asegura que solo se ingresen números en móviles
+                                ref={(el) => (inputRefs.current[i] = el)}
+                                type="tel"
                                 maxLength="1"
-                                className="w-12 h-12 text-center border border-gray-400 rounded-md"
+                                className="w-12 h-12 text-lg text-center border border-gray-400 rounded-md"
                                 value={otp[i] || ""}
-                                onChange={(e) => {
-                                    const value = e.target.value.replace(/\D/g, ""); // Elimina cualquier caracter no numérico
-                                    let newOtp = otp.split("");
-                                    newOtp[i] = value;
-                                    setOtp(newOtp.join("").trim());
-                                }}
+                                onChange={(e) => handleChange(e, i)}
+                                onKeyDown={(e) => handleKeyDown(e, i)}
                             />
                         ))}
                     </div>

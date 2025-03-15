@@ -86,7 +86,7 @@ const Perfil = () => {
                             <div className="mt-4 text-gray-700 space-y-2">
                                 <p className="flex items-center justify-center space-x-2">
                                     <FaUser className="text-gray-600" />
-                                    <span>{user.person_type_name}</span>
+                                    <span>Persona: {user.person_type_name}</span>
                                 </p>
                                 <p className="flex items-center justify-center space-x-2">
                                     <FaPhone className="text-gray-600" />
