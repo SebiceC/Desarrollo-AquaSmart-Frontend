@@ -282,7 +282,7 @@ const PreRegister = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Telefono"
-                  maxLength={10}
+                  maxLength={13}
                   error={errors.phone}
                 />
 

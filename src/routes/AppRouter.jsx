@@ -9,6 +9,7 @@ import Perfil from "../app/Perfil";
 import IoTControll from "../app/IoTControll";
 import ProtectedRoute from "./ProtectedRoute"; // Importamos el componente de protección
 import UsersList from "../app/gestionDatos/Users/UsersList";
+import UserList from "../app/gestionDatos/Users/UsersList";
 
 const AppRouter = () => {
     return (
@@ -26,7 +27,7 @@ const AppRouter = () => {
             {/* Rutas protegidas */}
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
-            <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
+            <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UserList />} />} />
         </Routes>
     );
 };

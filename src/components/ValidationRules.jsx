@@ -22,12 +22,16 @@ export const validateField = (name, value, formData) => {
           errors[name] = "ERROR, campo vacío";
         } else if (!numberRegex.test(value)) {
           errors[name] = "Solo se permiten números";
-        } else if (name === "phone" && value.length > 10) {
-          errors[name] = "Máximo 10 caracteres";
+        } else if (name === "phone" && value.length > 13) {
+          errors[name] = "Máximo 13 caracteres";
         } else if (name === "document" && value.length > 15) {
           errors[name] = "Máximo 15 caracteres";
+        } else if (name === "document" && value.length < 6) {
+          errors[name] = "Mínimo 6 caracteres";
+        } else if (name === "phone" && value.length < 10) {
+          errors[name] = "Mínimo 10 caracteres";
         }
-
+ 
 
         break;
         
@@ -47,12 +51,12 @@ export const validateField = (name, value, formData) => {
         if (!value) {
           errors[name] = "ERROR, campo vacío";   
       } else if (value.length > 35) {
-        errors[name] = "Máximo 20 caracteres";
+        errors[name] = "Máximo 35 caracteres";
       }
         break;
   
       case "password":
-        const passwordRegex = /^(?=.*[A-Z])(?=.*[._!@#$%^&*])(?=.*\d)(?=.{8,})/;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+-={}|:;"'<>,.?/])(?=.*\d)(?=.{8,})/;
         if (!value) {
           errors[name] = "ERROR, campo vacío";
         } else if (!passwordRegex.test(value)) {
