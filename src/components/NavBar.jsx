@@ -202,10 +202,21 @@ function NavBar() {
                         direction="/gestionDatos"
                         text="Gestión de datos"
                         subItems={[
+                            { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
                             { direction: "/gestionDatos/users", text: "Usuarios" },
                             { direction: "/gestionDatos/predios", text: "Predios" },
                             { direction: "/gestionDatos/lotes", text: "Lotes" },
                             { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                        ]}
+                    />
+                    <NavItem
+                        direction="/gestionDatos"
+                        text="Gestión de registros"
+                        subItems={[
+                            { direction: "/gestionRegistros/usuarios", text: "Registro de Usuarios" },
+                            { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                            { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                            { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
                         ]}
                     />
                     <NavItem
@@ -270,6 +281,16 @@ function NavBar() {
                                 { direction: "/gestionDatos/predios", text: "Predios" },
                                 { direction: "/gestionDatos/lotes", text: "Lotes" },
                                 { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/gestionDatos"
+                            text="Gestión de registros"
+                            subItems={[
+                                { direction: "/gestionRegistros/usuarios", text: "Registro de Usuarios" },
+                                { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                                { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                                { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
                             ]}
                         />
                         <NavItem

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Upload } from "lucide-react";
+import { ChevronDown, EyeIcon, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputItem from "../../components/InputItem"; // Componente reutilizable
 import { validateField } from "../../components/ValidationRules"; // Validación modular
 import Modal from "../../components/Modal"; // Importar el componente Modal
+import { EyeSlashIcon } from "@heroicons/react/24/solid";
 
 const PreRegister = () => {
   //const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -26,11 +27,14 @@ const PreRegister = () => {
   const [personTypes, setPersonTypes] = useState([]); // Estado para los tipos de persona
   const API_URL = globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
 
+  const [filteredDocumentTypes, setFilteredDocumentTypes] = useState([]);
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // Obtener los tipos de documento y persona desde el backend
   useEffect(() => {
@@ -52,6 +56,28 @@ const PreRegister = () => {
 
     fetchOptions();
   }, []);
+
+  // Filtrar los tipos de documento según el tipo de persona seleccionado
+
+  useEffect(() => {
+    if (formData.person_type === "1") {
+      // Si es "Natural", excluir el tipo de documento 4 (NIT)
+      setFilteredDocumentTypes(
+        documentTypes.filter((type) => type.documentTypeId !== 5)
+      );
+    } else if (formData.person_type === "2") {
+      // Si es "Jurídica", solo permitir el tipo de documento 4 (NIT)
+      setFilteredDocumentTypes(
+        documentTypes.filter((type) => type.documentTypeId === 5)
+      );
+    } else {
+      // Si no se ha seleccionado un tipo de persona, mostrar todos los tipos de documento
+      setFilteredDocumentTypes(documentTypes);
+    }
+  }, [formData.person_type, documentTypes]);
+
+
+
 
   // Manejar cambios en los archivos seleccionados
   const handleFileChange = (e) => {
@@ -208,7 +234,7 @@ const PreRegister = () => {
       </div>
 
       {/* Formulario */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:border-0 border-4 border-gray-300 rounded-lg my-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8  my-8">
         <h2 className="text-center text-xl font-medium mb-8">
           Formulario de Pre registro de usuario
         </h2>
@@ -263,7 +289,7 @@ const PreRegister = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Telefono"
-                  maxLength={10}
+                  maxLength={13}
                   error={errors.phone}
                 />
 
@@ -288,9 +314,8 @@ const PreRegister = () => {
                   </span>
                   <div className="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                        errors.person_type ? "bg-red-100" : "bg-white"
-                      }`}
+                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.person_type ? "bg-red-100" : "bg-white"
+                        }`}
                       name="person_type"
                       value={formData.person_type}
                       onChange={handleChange}
@@ -314,15 +339,15 @@ const PreRegister = () => {
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
                   <div className="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                        errors.document_type ? "bg-red-100" : "bg-white"
-                      }`}
+                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.document_type ? "bg-red-100" : "bg-white"
+                        }`}
                       name="document_type"
                       value={formData.document_type}
                       onChange={handleChange}
+                      disabled={!formData.person_type} // Deshabilitar si no se ha seleccionado un tipo de persona
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
-                      {documentTypes.map((type, index) => (
+                      {filteredDocumentTypes.map((type, index) => (
                         <option key={index} value={type.documentTypeId}>
                           {type.typeName}
                         </option>
@@ -345,28 +370,52 @@ const PreRegister = () => {
                   maxLength={15}
                   error={errors.document}
                 />
-
-                <InputItem
-                  label="Contraseña: "
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Contraseña"
-                  maxLength={20}
-                  error={errors.password}
-                />
-
-                <InputItem
-                  label="Confirmar Contraseña: "
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirmar Contraseña"
-                  maxLength={20}
-                  error={errors.confirmPassword}
-                />
+                <div className="relative w-full flex">
+                  <InputItem
+                    label="Contraseña: "
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Contraseña"
+                    maxLength={20}
+                    error={errors.password}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-18 sm:right-20 top-8"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                    ) : (
+                      <EyeIcon className="h-6 w-6 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <div className="relative w-full flex">
+                  <InputItem
+                    label="Confirmar contraseña: "
+                    type={showPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirmar Contraseña"
+                    maxLength={20}
+                    error={errors.confirmPassword}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-18 sm:right-20 top-8"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                    ) : (
+                      <EyeIcon className="h-6 w-6 text-gray-500" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

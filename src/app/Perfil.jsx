@@ -83,24 +83,24 @@ const Perfil = () => {
               </h2>
               <p className="text-gray-700 font-semibold">ID: {user.document}</p>
 
-              <div className="mt-4 text-gray-700 space-y-2">
-                <p className="flex items-center justify-center space-x-2">
-                  <FaUser className="text-gray-600" />
-                  <span>{user.person_type_name}</span>
-                </p>
-                <p className="flex items-center justify-center space-x-2">
-                  <FaPhone className="text-gray-600" />
-                  <span>{user.phone}</span>
-                </p>
-                <p className="flex items-center justify-center space-x-2">
-                  <FaEnvelope className="text-gray-600" />
-                  <span>{user.email}</span>
-                </p>
-              </div>
-            </>
-          ) : (
-            <p className="text-gray-600 mt-4">Cargando perfil...</p>
-          )}
+                            <div className="mt-4 text-gray-700 space-y-2">
+                                <p className="flex items-center justify-center space-x-2">
+                                    <FaUser className="text-gray-600" />
+                                    <span>Persona: {user.person_type_name}</span>
+                                </p>
+                                <p className="flex items-center justify-center space-x-2">
+                                    <FaPhone className="text-gray-600" />
+                                    <span>{user.phone}</span>
+                                </p>
+                                <p className="flex items-center justify-center space-x-2">
+                                    <FaEnvelope className="text-gray-600" />
+                                    <span>{user.email}</span>
+                                </p>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-gray-600 mt-4">Cargando perfil...</p>
+                    )}
 
           <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300">
             Editar
