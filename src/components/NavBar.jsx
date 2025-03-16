@@ -87,6 +87,16 @@ function NavBar() {
                         ]}
                     />
                     <NavItem
+                        direction="/gestionDatos"
+                        text="Gestión de registros"
+                        subItems={[
+                            { direction: "/gestionRegistros/pre-registros", text: "Registro de Usuarios" },
+                            { direction: "/gestionRegistros/users", text: "Registro de Predios" },
+                            { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                            { direction: "/gestionRegistros/dispositivosIoT", text: "Registro de Dispositivos IoT" },
+                        ]}
+                    />
+                    <NavItem
                         direction="/facturacion"
                         text="Facturación"
                         subItems={[
@@ -148,6 +158,16 @@ function NavBar() {
                                 { direction: "/gestionDatos/predios", text: "Predios" },
                                 { direction: "/gestionDatos/lotes", text: "Lotes" },
                                 { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/gestionDatos"
+                            text="Gestión de registros"
+                            subItems={[
+                                { direction: "/gestionRegistros/usuarios", text: "Registro de Usuarios" },
+                                { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                                { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                                { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
                             ]}
                         />
                         <NavItem
