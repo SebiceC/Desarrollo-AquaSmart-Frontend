@@ -23,11 +23,11 @@ const RegistroPredios = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         if (name === "latitude" || name === "longitude") {
-            if (/^\d{0,3}(\.\d{0,15})?$/.test(value)) {
+            if (/^\d{0,3}(\.\d{0,6})?$/.test(value)) {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else if (name === "land_size") {
-            if (/^\d{0,6}(\.\d{0,15})?$/.test(value)) {
+            if (/^\d{0,6}(\.\d{0,2})?$/.test(value)) {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else if (name === "owner_id" || name === "farm_name") {
@@ -101,7 +101,7 @@ const RegistroPredios = () => {
         <div>
             <NavBar/>
             <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6">
-                <h2 className="text-center text-2xl font-bold mb-8">
+                <h2 className="text-center text-2xl font-bold mb-8 mt-12">
                     Formulario de Registro de Predios
                 </h2>
                 <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
