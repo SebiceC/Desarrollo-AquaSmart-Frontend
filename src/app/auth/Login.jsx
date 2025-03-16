@@ -20,17 +20,15 @@ const Login = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  //const API_URL = import.meta.env.VITE_APP_API_URL;
 
   const inputRefs = useRef([]);
 
-<<<<<<< HEAD
   //const API_URL = import.meta.env.VITE_APP_API_URL;
   var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
-=======
-  const API_URL = ;
 
->>>>>>> 6dcc2fa0962e232ef3189dda3046d77f1950d62a
+  //const API_URL = ;
+
 
   const openModal = (title, message, btnMessage, onCloseAction) => {
     setModalProps({
