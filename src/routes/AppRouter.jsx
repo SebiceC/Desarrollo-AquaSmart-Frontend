@@ -10,7 +10,9 @@ import IoTControll from "../app/IoTControll";
 import ProtectedRoute from "./ProtectedRoute"; // Importamos el componente de protección
 import UsersList from "../app/gestionDatos/Users/UsersList";
 import RegistroPredios from "../app/gestionRegistros/RegistroPredios";
-
+import PreRegistrosList from "../app/gestionDatos/Users/PreRegistrosList";
+import PreRegistroDetail from "../app/gestionDatos/Users/PreRegistroDetail";
+import UserUpdateInformation from "../app/gestionDatos/Users/id/UserUpdateInformation";
 const AppRouter = () => {
     return (
         <Routes>
@@ -28,8 +30,11 @@ const AppRouter = () => {
             {/* Rutas protegidas */}
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
-            <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
             <Route path="gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
+            <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
+            <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
+            <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
+            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />           
         </Routes>
     );
 };
