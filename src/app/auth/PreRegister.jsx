@@ -7,7 +7,7 @@ import { validateField } from "../../components/ValidationRules"; // Validación
 import Modal from "../../components/Modal"; // Importar el componente Modal
 
 const PreRegister = () => {
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  //const API_URL = import.meta.env.VITE_APP_API_URL;
   const [formData, setFormData] = useState({
     first_name: "",
     document_type: "",
@@ -22,16 +22,10 @@ const PreRegister = () => {
     attachments: [],
   });
 
-<<<<<<< HEAD
   const [documentTypes, setDocumentTypes] = useState([]); // Estado para los tipos de documento
   const [personTypes, setPersonTypes] = useState([]); // Estado para los tipos de persona
-  const API_URL =
-    globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
+  const API_URL = globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
 
-=======
-  const [documentTypes, setDocumentTypes] = useState([]);
-  const [personTypes, setPersonTypes] = useState([]);
->>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -126,22 +120,6 @@ const PreRegister = () => {
   // Validar el formulario completo
   const validateForm = () => {
     const newErrors = {};
-<<<<<<< HEAD
-    const {
-      first_name,
-      last_name,
-      document_type,
-      person_type,
-      phone,
-      email,
-      address,
-      document,
-      password,
-      confirmPassword,
-      attachments,
-    } = formData;
-=======
->>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
 
     Object.keys(formData).forEach((key) => {
       if (key !== "attachments") {
@@ -318,16 +296,8 @@ const PreRegister = () => {
                       onChange={handleChange}
                     >
                       <option value="">SELECCIÓN DE TIPO DE PERSONA</option>
-<<<<<<< HEAD
-                      {personTypes.map((type) => (
-                        <option
-                          key={type.personTypeId}
-                          value={type.personTypeId}
-                        >
-=======
                       {personTypes.map((type, index) => (
                         <option key={index} value={type.personTypeId}>
->>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
                           {type.typeName}
                         </option>
                       ))}
@@ -339,110 +309,9 @@ const PreRegister = () => {
                   )}
                 </div>
 
-<<<<<<< HEAD
-                <div>
-                  <label>Correo: </label>
-                  <input
-                    type="email"
-                    placeholder="xxxxxxx@example.com"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.email ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    maxLength={50} // Limitar a 50 caracteres
-                  />
-                  {errors.email && (
-                    <p className="text-[#F90000]">{errors.email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label>Direccion de residencia</label>
-                  <input
-                    type="text"
-                    placeholder="Callexx#xx-xx"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.address ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    maxLength={70}
-                  />
-                  {errors.address && (
-                    <p className="text-[#F90000]">{errors.address}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label>Contraseña: </label>
-                  <input
-                    type="password"
-                    placeholder="Contraseña"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.password ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    maxLength={20} // Limitar a 20 caracteres
-                  />
-                  {errors.password && (
-                    <p className="text-[#F90000]">{errors.password}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Segunda columna */}
-              <div className="space-y-4">
-                <div>
-                  <label>Apellido: </label>
-                  <input
-                    type="text"
-                    placeholder="Apellido"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.last_name ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                    maxLength={20} // Limitar a 20 caracteres
-                  />
-                  {errors.last_name && (
-                    <p className="text-[#F90000]">{errors.last_name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label>Telefono: </label>
-                  <input
-                    type="tel"
-                    placeholder="Telefono"
-                    className={`w-full border border-gray-300 rounded px-3 py-2 ${
-                      errors.phone ? "bg-red-100" : "bg-white"
-                    }`}
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    maxLength={13} // Limitar a 13 caracteres
-                  />
-                  {errors.phone && (
-                    <p className="text-[#F90000]">{errors.phone}</p>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <label>Tipo de documento: </label>
-                  <span className="absolute left-0 top-0 text-red-500 -ml-3">
-                    *
-                  </span>
-=======
                 <div className="relative">
                   <label>Tipo de documento: </label>
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
->>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
                   <div className="relative">
                     <select
                       className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
@@ -453,16 +322,8 @@ const PreRegister = () => {
                       onChange={handleChange}
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
-<<<<<<< HEAD
-                      {documentTypes.map((type) => (
-                        <option
-                          key={type.documentTypeId}
-                          value={type.documentTypeId}
-                        >
-=======
                       {documentTypes.map((type, index) => (
                         <option key={index} value={type.documentTypeId}>
->>>>>>> 4686ec3b965c7dcb2e719c57b474acc9ff2375d4
                           {type.typeName}
                         </option>
                       ))}
