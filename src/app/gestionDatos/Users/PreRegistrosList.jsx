@@ -10,7 +10,7 @@ const PreRegistrosList = () => {
   const [filteredRegistros, setFilteredRegistros] = useState([]);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState(""); // Modal message state
+  const [modalMessage, setModalMessage] = useState("");
   const [filters, setFilters] = useState({
     id: "",
     startDate: "",
@@ -29,7 +29,7 @@ const PreRegistrosList = () => {
 
         console.log("Respuesta del servidor:", response.data);
         setRegistros(response.data);
-        setFilteredRegistros([]); // Tabla vacía al inicio
+        setFilteredRegistros([]);
       } catch (err) {
         console.error("Error al obtener los pre-registros:", err);
         setError("No se pudieron cargar los pre-registros.");
@@ -40,7 +40,7 @@ const PreRegistrosList = () => {
   }, []);
 
   const openErrorModal = (message) => {
-    setModalMessage(message); // Use setModalMessage to show the error
+    setModalMessage(message);
     setShowModal(true);
   };
 
@@ -63,34 +63,38 @@ const PreRegistrosList = () => {
     try {
       let filtered = registros;
 
-      // Validación de ID (Solo números)
       if (filters.id.trim() !== "" && !/^\d+$/.test(filters.id.trim())) {
-        setModalMessage("El campo de filtrado por ID contiene caracteres no válidos o el usuario no existe");
+        setModalMessage("El campo de filtrado por ID contiene caracteres no válidos o el usuario no existe.");
         setShowModal(true);
         return;
       }
 
-      // Validación de fechas incoherentes
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
         setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
         setShowModal(true);
         return;
       }
 
-      // Filtrado por ID
       if (filters.id.trim() !== "") {
         filtered = filtered.filter((registro) => registro.document.includes(filters.id.trim()));
       }
 
-      // Filtrado por fechas
       if (filters.startDate) {
-        filtered = filtered.filter((registro) => new Date(registro.created_at) >= new Date(filters.startDate));
-      }
-      if (filters.endDate) {
-        filtered = filtered.filter((registro) => new Date(registro.created_at) <= new Date(filters.endDate));
+        const startDate = new Date(filters.startDate).setHours(0, 0, 0, 0);
+        filtered = filtered.filter((registro) => {
+          const registroDate = new Date(registro.date_joined).setHours(0, 0, 0, 0);
+          return registroDate >= startDate;
+        });
       }
 
-      // Filtrado por estado
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate).setHours(23, 59, 59, 999);
+        filtered = filtered.filter((registro) => {
+          const registroDate = new Date(registro.date_joined).setHours(23, 59, 59, 999);
+          return registroDate <= endDate;
+        });
+      }
+
       if (filters.status !== "todos") {
         filtered = filtered.filter((registro) => {
           if (filters.status === "pendiente") {
@@ -104,7 +108,6 @@ const PreRegistrosList = () => {
         });
       }
 
-      // Si no se encuentra ningún registro después de filtrar
       if (filtered.length === 0) {
         openErrorModal("No se encontraron resultados para los filtros aplicados.");
       }
@@ -113,7 +116,8 @@ const PreRegistrosList = () => {
     } catch (error) {
       openErrorModal("Ocurrió un error al aplicar los filtros.");
     }
-  };
+};
+
 
   return (
     <div>
@@ -216,7 +220,16 @@ const PreRegistrosList = () => {
                 filteredRegistros.map((registro, index) => (
                   <tr key={index} className="border-b">
                     <td className="py-3 px-4 text-center align-middle">{registro.document}</td>
-                    <td className="py-3 px-4 text-center align-middle">{new Date(registro.created_at).toLocaleDateString()}</td>
+                    <td className="py-3 px-4 text-center align-middle">
+                      {registro.date_joined
+                        ? new Date(registro.date_joined).toLocaleDateString("es-ES", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          })
+                        : "Fecha no disponible"}
+                    </td>
+
                     <td className="py-3 px-4 text-center align-middle">
                       <span
                         className={`font-bold
@@ -260,7 +273,7 @@ const PreRegistrosList = () => {
           showModal={showModal}
           onClose={() => {
             setShowModal(false);
-            setFilteredRegistros([]); // Reset records after closing modal (optional)
+            setFilteredRegistros([]);
           }}
           title="Error"
           btnMessage="Cerrar"

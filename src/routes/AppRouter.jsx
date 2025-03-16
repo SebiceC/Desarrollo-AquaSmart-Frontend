@@ -31,7 +31,6 @@ const AppRouter = () => {
             <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
-
         </Routes>
     );
 };

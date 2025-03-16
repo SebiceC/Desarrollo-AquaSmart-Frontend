@@ -3,10 +3,10 @@ import React from "react";
 const Button = ({
   onClick,
   text,
-  color = "bg-[#365486]", // Default color
-  hoverColor = "hover:bg-[#2f4275]", // Default hover color
-  textColor = "text-white", // Default text color
-  size = "px-4 py-2", // Default size
+  color = "bg-[#365486]",
+  hoverColor = "hover:bg-[#2f4275]",
+  textColor = "text-white",
+  size = "px-4 py-2",
   disabled = false,
 }) => {
   return (
