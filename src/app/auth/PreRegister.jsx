@@ -8,7 +8,7 @@ import Modal from "../../components/Modal"; // Importar el componente Modal
 import { EyeSlashIcon } from "@heroicons/react/24/solid";
 
 const PreRegister = () => {
-  //const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = import.meta.env.VITE_APP_API_URL;
   const [formData, setFormData] = useState({
     first_name: "",
     document_type: "",
@@ -25,8 +25,7 @@ const PreRegister = () => {
 
   const [documentTypes, setDocumentTypes] = useState([]); // Estado para los tipos de documento
   const [personTypes, setPersonTypes] = useState([]); // Estado para los tipos de persona
-  const API_URL = globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
-
+  //const API_URL =globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
   const [filteredDocumentTypes, setFilteredDocumentTypes] = useState([]);
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
@@ -34,7 +33,6 @@ const PreRegister = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
 
   // Obtener los tipos de documento y persona desde el backend
   useEffect(() => {
@@ -75,9 +73,6 @@ const PreRegister = () => {
       setFilteredDocumentTypes(documentTypes);
     }
   }, [formData.person_type, documentTypes]);
-
-
-
 
   // Manejar cambios en los archivos seleccionados
   const handleFileChange = (e) => {
@@ -314,8 +309,9 @@ const PreRegister = () => {
                   </span>
                   <div className="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.person_type ? "bg-red-100" : "bg-white"
-                        }`}
+                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                        errors.person_type ? "bg-red-100" : "bg-white"
+                      }`}
                       name="person_type"
                       value={formData.person_type}
                       onChange={handleChange}
@@ -336,11 +332,14 @@ const PreRegister = () => {
 
                 <div className="relative">
                   <label>Tipo de documento: </label>
-                  <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
+                  <span className="absolute left-0 top-0 text-red-500 -ml-3">
+                    *
+                  </span>
                   <div className="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.document_type ? "bg-red-100" : "bg-white"
-                        }`}
+                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                        errors.document_type ? "bg-red-100" : "bg-white"
+                      }`}
                       name="document_type"
                       value={formData.document_type}
                       onChange={handleChange}
@@ -536,7 +535,10 @@ const PreRegister = () => {
         title="Error de Pre Registro"
         btnMessage="Aceptar"
       >
-        <p>Error en el envío del formulario, ya que el número de identificación ya cuenta con un pre-registro realizado.</p>
+        <p>
+          Error en el envío del formulario, ya que el número de identificación
+          ya cuenta con un pre-registro realizado.
+        </p>
       </Modal>
     </div>
   );
