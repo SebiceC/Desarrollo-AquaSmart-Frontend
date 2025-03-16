@@ -23,13 +23,13 @@ const AppRouter = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/forgotPassword" element={<ForgotPassword />} />
             <Route path="/recoverPassword" element={<RecoverPassword />} />
-            <Route path="/registro-predios" element={<RegistroPredios/>}/>
+            {/* <Route path="/registro-predios" element={<RegistroPredios/>}/> */}
 
             {/* Rutas protegidas */}
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
             <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
-            {/* <Route path="/registro-predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/> */}
+            <Route path="gestionRegistros/registro-predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
         </Routes>
     );
 };
