@@ -24,11 +24,10 @@ const Login = () => {
 
   const inputRefs = useRef([]);
 
-  //const API_URL = import.meta.env.VITE_APP_API_URL;
-  var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
 
   //const API_URL = ;
-
 
   const openModal = (title, message, btnMessage, onCloseAction) => {
     setModalProps({
@@ -43,7 +42,8 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!document.trim() || !password.trim()) return setError("¡Campos vacíos, por favor completarlos!");
+    if (!document.trim() || !password.trim())
+      return setError("¡Campos vacíos, por favor completarlos!");
 
     try {
       await axios.post(`${API_URL}/users/login`, { document, password });
@@ -60,17 +60,23 @@ const Login = () => {
           ? err.response.data.error.detail.join(" ")
           : err.response?.data?.error?.detail || "Solicitud incorrecta.",
         401: "Contraseña incorrecta.",
-        403: err.response?.data?.error?.detail || "Tu cuenta está inactiva. Contacta con soporte.",
+        403:
+          err.response?.data?.error?.detail ||
+          "Tu cuenta está inactiva. Contacta con soporte.",
         404: err.response?.data?.error?.details || "Usuario no encontrado.",
         429: "Demasiados intentos fallidos. Inténtalo más tarde.",
         500: "Error en el servidor. Inténtalo más tarde.",
       };
 
-      setError(errorMap[err.response?.status] || (err.request ? "Error de conexión. No se recibió respuesta del servidor." : "Error desconocido al procesar la solicitud."));
+      setError(
+        errorMap[err.response?.status] ||
+          (err.request
+            ? "Error de conexión. No se recibió respuesta del servidor."
+            : "Error desconocido al procesar la solicitud.")
+      );
       console.log(err);
     }
   };
-
 
   const handleConfirm = () => {
     setShowModal(false);
@@ -159,7 +165,6 @@ const Login = () => {
     }
   };
 
-
   return (
     <div className="w-full h-full min-h-screen bg-[#DCF2F1] flex flex-col items-center justify-center gap-10">
       <div className="flex justify-center">
@@ -182,7 +187,6 @@ const Login = () => {
                 <IoIosWarning size={26} className="flex-shrink-0" />
               </span>
             )}
-
 
             <InputItem
               id="document"
@@ -288,7 +292,6 @@ const Login = () => {
             ))}
           </div>
 
-
           <p className="text-center text-gray-600 mt-2">
             {timeLeft > 0
               ? `Tiempo restante: ${formatTime(timeLeft)}`
@@ -299,10 +302,11 @@ const Login = () => {
             <button
               onClick={startTimer}
               disabled={isDisabled}
-              className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${isDisabled
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#365486] hover:bg-[#344663]"
-                }`}
+              className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${
+                isDisabled
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#365486] hover:bg-[#344663]"
+              }`}
             >
               SOLICITAR NUEVO TOKEN
             </button>

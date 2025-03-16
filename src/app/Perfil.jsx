@@ -9,8 +9,8 @@ const Perfil = () => {
   const [error, setError] = useState("");
   const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
   const navigate = useNavigate();
-  //const API_URL = import.meta.env.VITE_APP_API_URL;
-  var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
   // Función para obtener los datos del usuario
   const fetchProfile = async () => {
     try {
@@ -83,24 +83,24 @@ const Perfil = () => {
               </h2>
               <p className="text-gray-700 font-semibold">ID: {user.document}</p>
 
-                            <div className="mt-4 text-gray-700 space-y-2">
-                                <p className="flex items-center justify-center space-x-2">
-                                    <FaUser className="text-gray-600" />
-                                    <span>Persona: {user.person_type_name}</span>
-                                </p>
-                                <p className="flex items-center justify-center space-x-2">
-                                    <FaPhone className="text-gray-600" />
-                                    <span>{user.phone}</span>
-                                </p>
-                                <p className="flex items-center justify-center space-x-2">
-                                    <FaEnvelope className="text-gray-600" />
-                                    <span>{user.email}</span>
-                                </p>
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-gray-600 mt-4">Cargando perfil...</p>
-                    )}
+              <div className="mt-4 text-gray-700 space-y-2">
+                <p className="flex items-center justify-center space-x-2">
+                  <FaUser className="text-gray-600" />
+                  <span>Persona: {user.person_type_name}</span>
+                </p>
+                <p className="flex items-center justify-center space-x-2">
+                  <FaPhone className="text-gray-600" />
+                  <span>{user.phone}</span>
+                </p>
+                <p className="flex items-center justify-center space-x-2">
+                  <FaEnvelope className="text-gray-600" />
+                  <span>{user.email}</span>
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-600 mt-4">Cargando perfil...</p>
+          )}
 
           <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300">
             Editar
