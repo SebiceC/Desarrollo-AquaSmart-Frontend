@@ -29,7 +29,7 @@ const AppRouter = () => {
             {/* Rutas protegidas */}
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
-            <Route path= '/gestionDatos/registro-predios' element={<ProtectedRoute element={<RegistroPredios />} />} />
+            <Route path="gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
             <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
