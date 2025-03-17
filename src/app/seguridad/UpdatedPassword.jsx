@@ -132,6 +132,7 @@ const UpdatedPassword = () => {
                             placeholder="Ingrese su contraseña actual"
                             value={formData.current_password}
                             onChange={handleChange}
+                            maxLength={20}
                             error={errors.current_password}
                         />
                         <button
@@ -164,6 +165,7 @@ const UpdatedPassword = () => {
                             placeholder="Ingrese su nueva contraseña"
                             value={formData.new_password}
                             onChange={handleChange}
+                            maxLength={20}
                             error={errors.new_password}
                         />
                         <button
@@ -196,6 +198,7 @@ const UpdatedPassword = () => {
                             placeholder="Repita su nueva contraseña"
                             value={formData.confirm_password}
                             onChange={handleChange}
+                            maxLength={20}
                             error={errors.confirm_password}
                         />
                         <button
@@ -221,21 +224,21 @@ const UpdatedPassword = () => {
                         {formData.new_password && (
                             <div className="bg-gray-100 p-4 rounded-md">
                                 <p className="text-sm font-semibold mb-2">Requisitos de contraseña:</p>
-                                <ul className="text-sm">
-                                    <li className={`mb-1 ${passwordValidations.length ? "text-green-600" : "text-red-600"}`}>
-                                        Entre 8 y 20 caracteres
+                                <ul className="mt-2 text-sm">
+                                    <li className={passwordValidations.length ? "text-black" : "text-black"}>
+                                        {passwordValidations.length ? "✔" : "✖"} Máximo 20 caracteres, mínimo 8 caracteres
                                     </li>
-                                    <li className={`mb-1 ${passwordValidations.uppercase ? "text-green-600" : "text-red-600"}`}>
-                                        Al menos una letra mayúscula
+                                    <li className={passwordValidations.uppercase ? "text-black" : "text-black"}>
+                                        {passwordValidations.uppercase ? "✔" : "✖"} Al menos una letra mayúscula
                                     </li>
-                                    <li className={`mb-1 ${passwordValidations.lowercase ? "text-green-600" : "text-red-600"}`}>
-                                        Al menos una letra minúscula
+                                    <li className={passwordValidations.lowercase ? "text-black" : "text-black"}>
+                                        {passwordValidations.lowercase ? "✔" : "✖"} Al menos una letra minúscula
                                     </li>
-                                    <li className={`mb-1 ${passwordValidations.number ? "text-green-600" : "text-red-600"}`}>
-                                        Al menos un número
+                                    <li className={passwordValidations.number ? "text-black" : "text-black"}>
+                                        {passwordValidations.number ? "✔" : "✖"} Al menos un número
                                     </li>
-                                    <li className={`${passwordValidations.specialChar ? "text-green-600" : "text-red-600"}`}>
-                                        Al menos un carácter especial (!@#$%^&* etc.)
+                                    <li className={passwordValidations.specialChar ? "text-black" : "text-black"}>
+                                        {passwordValidations.specialChar ? "✔" : "✖"} Al menos un carácter especial (@$!%*?&)
                                     </li>
                                 </ul>
                             </div>
