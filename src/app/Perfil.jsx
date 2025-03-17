@@ -86,7 +86,7 @@ const Perfil = () => {
                             <div className="mt-4 text-gray-700 space-y-2">
                                 <p className="flex items-center justify-center space-x-2">
                                     <FaUser className="text-gray-600" />
-                                    <span>{user.person_type_name}</span>
+                                    <span>Persona: {user.person_type_name}</span>
                                 </p>
                                 <p className="flex items-center justify-center space-x-2">
                                     <FaPhone className="text-gray-600" />
@@ -102,7 +102,8 @@ const Perfil = () => {
                         <p className="text-gray-600 mt-4">Cargando perfil...</p>
                     )}
 
-                    <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300">
+                    <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300"
+                        onClick={() => navigate('/perfil/actualizar-informacion')}>
                         Editar
                     </button>
 
