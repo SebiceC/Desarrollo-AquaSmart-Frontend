@@ -119,7 +119,7 @@ function NavBar() {
                             },
                         ]}
                     />
-                    <NavItem direction="/predicciones" text="Predicciones" />
+                    <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                     <NavItem direction="/permisos" text="Permisos" />
                 </ul>
 
@@ -190,7 +190,7 @@ function NavBar() {
                                 { direction: "/historialConsumo/mensual", text: "Consumo Mensual" },
                             ]}
                         />
-                        <NavItem direction="/predicciones" text="Predicciones" />
+                        <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                         <NavItem direction="/permisos" text="Permisos" />
                     </div>
 
