@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import axios from "axios";
 
 // PRUEBAS: se importo React, se agrego la variable de pruebas.
-const API_URL = import.meta.env.VITE_APP_API_URL; // Obtener la URL de la API desde las variables de entorno
-//var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
+//const API_URL = import.meta.env.VITE_APP_API_URL; // Obtener la URL de la API desde las variables de entorno
+var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {

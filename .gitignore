@@ -12,7 +12,10 @@ dist
 dist-ssr
 *.local
 .env
-
+#PRUEBA
+.cypress/fixtures
+cypress/fixtures
+cypress/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -24,4 +27,6 @@ dist-ssr
 *.sln
 *.sw?
 package-lock.json
+variables.js
+package.json
 variables.js
