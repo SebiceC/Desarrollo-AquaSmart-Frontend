@@ -251,7 +251,7 @@ const Login = () => {
         <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[50%] lg:w-[28%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
           <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
           <p className="text-center mt-2">
-            Introduce el token que fue enviado por SMS a tu teléfono.
+            Introduce el token que fue enviado a tu correo electrónico.
           </p>
 
           {otpError && (

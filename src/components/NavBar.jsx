@@ -165,7 +165,7 @@ function NavBar() {
                             ]}
                         />
                         <NavItem
-                            direction="/gestionDatos"
+                            direction="/gestionRegistros"
                             text="Gestión de registros"
                             subItems={[
                                 { direction: "/gestionRegistros/usuarios", text: "Registro de Usuarios" },
