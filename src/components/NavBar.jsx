@@ -91,7 +91,7 @@ function NavBar() {
                         ]}
                     />
                     <NavItem
-                        direction="/gestionDatos"
+                        direction="/gestionRegistros"
                         text="Gestión de registros"
                         subItems={[
                             { direction: "/gestionRegistros/usuarios", text: "Registro de Usuarios" },
@@ -119,7 +119,7 @@ function NavBar() {
                             },
                         ]}
                     />
-                    <NavItem direction="/predicciones" text="Predicciones" />
+                    <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                     <NavItem direction="/permisos" text="Permisos" />
                 </ul>
 
@@ -190,7 +190,7 @@ function NavBar() {
                                 { direction: "/historialConsumo/mensual", text: "Consumo Mensual" },
                             ]}
                         />
-                        <NavItem direction="/predicciones" text="Predicciones" />
+                        <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                         <NavItem direction="/permisos" text="Permisos" />
                     </div>
 
