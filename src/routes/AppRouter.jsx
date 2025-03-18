@@ -14,10 +14,16 @@ import PreRegistrosList from "../app/gestionDatos/Users/PreRegistrosList";
 import PreRegistroDetail from "../app/gestionDatos/Users/PreRegistroDetail";
 import UserUpdateInformation from "../app/gestionDatos/Users/id/UserUpdateInformation";
 
+import UpdateInformation from "../app/gestionDatos/UserEdit/UpdateInformation"
+import PrediosList from "../app/gestionDatos/predios/PrediosList";
 import UserInformation from "../app/gestionDatos/Users/id/UserInformation";
 import RegistroLotes from "../app/gestionRegistros/RegistroLotes";
 
 import UpdatedPassword from "../app/seguridad/UpdatedPassword";
+import LotesList from "../app/gestionDatos/lotes/LotesList";
+import LoteInformation from "../app/gestionDatos/lotes/LoteInformation";
+import DispositivoIoTList from "../app/gestionDatos/dispositivosIoT/DispositivosIoTList"
+import DispositivosIoTInformation from "../app/gestionDatos/dispositivosIoT/DispositivosIoTInformation";
 
 const AppRouter = () => {
     return (
@@ -44,8 +50,15 @@ const AppRouter = () => {
 
             <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
             <Route path="/gestionDatos/users/:document" element={<ProtectedRoute element={<UserInformation />} />} />
+            <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
+            <Route path="/gestionDatos/lotes/:id" element={<ProtectedRoute element={<LoteInformation />} />} />
+            <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
+            <Route path="/gestionDatos/dispositivosIoT/:id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
+            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} /> 
+            <Route path="/gestionDatos/users/updateinformation/:document" element={<ProtectedRoute element={<UpdateInformation />} />} /> 
+            <Route path="/gestionDatos/predios" element={<ProtectedRoute element={<PrediosList />} />} />           
             <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />         
             <Route path="/seguridad/actualizar-contrasena" element={<ProtectedRoute element={<UpdatedPassword />} />} />         
         </Routes>

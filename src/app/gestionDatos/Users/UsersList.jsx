@@ -1,18 +1,22 @@
 // UserList.jsx
 import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputFilter from "../../../components/InputFilter";
 import Modal from "../../../components/Modal";
+import DeleteUser from "../UserEdit/DeleteUsers";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const UserList = () => {
+  const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
   const [personTypes, setPersonTypes] = useState([]);
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const [filters, setFilters] = useState({
     id: "",
     personType: "",
@@ -24,8 +28,7 @@ const UserList = () => {
     1: "Natural",
     2: "Jurídica",
   };
-  
-  const navigate = useNavigate();
+
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
   useEffect(() => {
@@ -89,13 +92,21 @@ const UserList = () => {
       const filtered = usuarios.filter((user) => {
         const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
         const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
+    
+        // Convertir las fechas a solo año, mes y día (ignorar horas, minutos y segundos)
+        const userDate = new Date(user.date_joined);
+        const userDateOnly = new Date(userDate.getFullYear(), userDate.getMonth(), userDate.getDate());
+    
+        const startDate = filters.startDate === "" ? null : new Date(filters.startDate);
+        const endDate = filters.endDate === "" ? null : new Date(filters.endDate);
+    
         const matchesDate =
-          (filters.startDate === "" || new Date(user.date_joined) >= new Date(filters.startDate)) &&
-          (filters.endDate === "" || new Date(user.date_joined) <= new Date(filters.endDate));
-
+            (startDate === null || userDateOnly >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) &&
+            (endDate === null || userDateOnly <= new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()));
+    
         return matchesId && matchesPersonType && matchesDate && user.is_active && user.is_registered;
       });
-
+      
       if (filters.id.trim() !== "" && filtered.length === 0) {
         setModalMessage("El usuario filtrado no existe.");
         setShowModal(true);
@@ -103,7 +114,7 @@ const UserList = () => {
       }
 
       if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
-        setModalMessage("El campo de filtrado por fecha de registro  no se encuentra asociado a ningún registro");
+        setModalMessage("El campo de filtrado por fecha de registro no se encuentra asociado a ningún registro");
         setShowModal(true);
         return;
       }
@@ -114,6 +125,24 @@ const UserList = () => {
       setShowModal(true);
     }
   };
+
+  // Función para abrir el modal de confirmación de eliminación
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
+  };
+
+  // Función que se ejecuta cuando la eliminación ha sido exitosa
+  const handleDeleteSuccess = (documentId) => {
+    // Actualizar la lista de usuarios
+    setUsuarios(usuarios.filter(user => user.document !== documentId));
+    
+    // Si hay usuarios filtrados, actualizar esa lista también
+    if (filteredUsuarios.length > 0) {
+      setFilteredUsuarios(filteredUsuarios.filter(user => user.document !== documentId));
+    }
+  };
+
   return (
     <div>
       <NavBar />
@@ -134,14 +163,26 @@ const UserList = () => {
           <Modal
             showModal={showModal}
             onClose={() => {
-              setShowModal(false)
+              setShowModal(false);
               setFilteredUsuarios([]);
             }}
-            title="Error"
+            title={modalMessage === "Usuario eliminado correctamente" ? "Éxito" : "Error"}
             btnMessage="Cerrar"
           >
             <p>{modalMessage}</p>
           </Modal>
+        )}
+
+        {/* Componente DeleteUser para confirmación de eliminación */}
+        {showDeleteModal && userToDelete && (
+          <DeleteUser
+            user={userToDelete}
+            showModal={showDeleteModal}
+            setShowModal={setShowDeleteModal}
+            onDeleteSuccess={handleDeleteSuccess}
+            setModalMessage={setModalMessage}
+            setShowErrorModal={setShowModal}
+          />
         )}
 
         {/* Tabla de usuarios */}
@@ -166,7 +207,7 @@ const UserList = () => {
                 </tr>
               ) : (
                 filteredUsuarios.map((user) => (
-                  <tr key={user.document} className="hover:bg-gray-50">
+                  <tr key={user.document} className="hover:bg-gray-100">
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.document}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.first_name}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{user.last_name}</td>
@@ -178,13 +219,23 @@ const UserList = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
                       <div className="flex space-x-1 justify-start">
-                        <button className="bg-[#FF2100] p-1.5 rounded-lg min-w-[28px]" >
+                        <button 
+                          className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                          onClick={() => handleDeleteClick(user)}
+                        >
                           <Trash2 className="text-white" />
                         </button>
-                        <button className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]" onClick={() => navigate(`/gestionDatos/users/${user.document}`)}>
+                        <button 
+                          className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]"
+                          onClick={() => navigate(`/gestionDatos/users/${user.document}`)}
+                        >
                           <Eye className="text-white" />
                         </button>
-                        <button className="bg-[#0C8CE9] p-1.5 rounded-lg min-w-[28px]">
+                        <button
+                          className="bg-blue-400 hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[40px] min-h-[40px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                          onClick={() => navigate(`/gestionDatos/users/updateinformation/${user.document}`)}
+                          aria-label="Editar información del usuario"
+                        >
                           <Pencil className="text-white" />
                         </button>
                       </div>

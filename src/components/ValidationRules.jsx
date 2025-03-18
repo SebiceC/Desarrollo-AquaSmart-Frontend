@@ -1,4 +1,3 @@
-
 export const validateField = (name, value, formData) => {
     const errors = {};
   
@@ -31,10 +30,7 @@ export const validateField = (name, value, formData) => {
         } else if (name === "phone" && value.length < 10) {
           errors[name] = "Mínimo 10 caracteres";
         }
- 
-
         break;
-        
   
       case "email":
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,9 +46,9 @@ export const validateField = (name, value, formData) => {
       case "address":
         if (!value) {
           errors[name] = "ERROR, campo vacío";   
-      } else if (value.length > 35) {
-        errors[name] = "Máximo 35 caracteres";
-      }
+        } else if (value.length > 35) {
+          errors[name] = "Máximo 35 caracteres";
+        }
         break;
   
       case "password":
@@ -74,6 +70,30 @@ export const validateField = (name, value, formData) => {
           errors[name] = "Las contraseñas no coinciden.";
         } else if (value.length > 20) {
           errors[name] = "Máximo 20 caracteres";
+        }
+        break;
+
+      case "person_type":
+        if (!value) {
+          errors[name] = "ERROR, campo vacío";
+        }
+        break;
+
+      case "attachments":
+        if (Array.isArray(value)) {
+          if (value.length > 5) {
+            errors[name] = "Máximo 5 archivos permitidos";
+          } else {
+            const invalidFile = value.find(file => file.type !== "application/pdf");
+            if (invalidFile) {
+              errors[name] = `El archivo ${invalidFile.name} debe ser PDF`;
+            } else {
+              const largeFile = value.find(file => file.size > 500000);
+              if (largeFile) {
+                errors[name] = `El archivo ${largeFile.name} excede los 500KB`;
+              }
+            }
+          }
         }
         break;
   

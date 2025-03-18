@@ -11,7 +11,7 @@ const UserUpdateInformation = () => {
 
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
@@ -21,9 +21,13 @@ const UserUpdateInformation = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showErrorModal2, setShowErrorModal2] = useState(false);
+<<<<<<< HEAD
   const [error, setError] = useState(null); // Estado para manejar errores
+=======
+  const [showNoChangesModal, setShowNoChangesModal] = useState(false);
+  const [error, setError] = useState(null);
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
 
-  // Obtener datos del usuario
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -33,12 +37,16 @@ const UserUpdateInformation = () => {
           return;
         }
 
+<<<<<<< HEAD
         // Primera petición: Obtener perfil del usuario
+=======
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
         const profileResponse = await axios.get(`${API_URL}/users/profile`, {
           headers: { Authorization: `Token ${token}` },
         });
 
         const userData = profileResponse.data;
+<<<<<<< HEAD
 
         const permissionsResponse = await axios.get(
           `${API_URL}/admin/users/${userData.document}/permissions`,
@@ -54,10 +62,24 @@ const UserUpdateInformation = () => {
         setUser({ ...userData, role });
 
         // Actualizar el estado del formulario
+=======
+        
+        const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userData.document}/permissions`, {
+          headers: { Authorization: `Token ${token}` },
+        });
+
+        const role = permissionsResponse.data.role || "Sin rol asignado";
+        setUser({ ...userData, role });
+
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
         setFormData({
           email: userData.email || "",
           phone: userData.phone || "",
         });
+<<<<<<< HEAD
+=======
+
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
       } catch (err) {
         setShowErrorModal2(true);
       }
@@ -68,22 +90,28 @@ const UserUpdateInformation = () => {
     }
   }, [API_URL]);
 
-  // Manejar cambios en los campos editables
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Validar solo los campos editables
     if (["email", "phone"].includes(name)) {
       const fieldErrors = validateField(name, value, formData);
       setErrors((prev) => ({ ...prev, [name]: fieldErrors[name] || "" }));
     }
   };
 
-  // Manejar la actualización del perfil
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+<<<<<<< HEAD
+=======
+    // Validar si no hay cambios
+    if (formData.email === user.email && formData.phone === user.phone) {
+      setShowNoChangesModal(true);
+      return;
+    }
+
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -110,7 +138,6 @@ const UserUpdateInformation = () => {
         <NavBar />
       </div>
 
-      {/* Contenido principal */}
       <div className="max-w-4xl mx-auto p-8">
         <h2 className="text-xl font-medium mb-8 my-10 text-center">
           Mis Datos Personales
@@ -121,7 +148,6 @@ const UserUpdateInformation = () => {
         {user ? (
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Columna izquierda - Datos bloqueados */}
               <div className="space-y-4">
                 <InputItem
                   label="Rol"
@@ -175,7 +201,6 @@ const UserUpdateInformation = () => {
                 </div>
               </div>
 
-              {/* Columna derecha - Campos editables */}
               <div className="space-y-4">
                 <InputItem
                   label="Tipo de Persona"
@@ -205,7 +230,6 @@ const UserUpdateInformation = () => {
               </div>
             </div>
 
-            {/* Botones de acción */}
             <div className="flex gap-4 justify-end mt-8">
               <button
                 type="button"
@@ -249,12 +273,28 @@ const UserUpdateInformation = () => {
 
       <Modal
         showModal={showErrorModal2}
-        onClose={() => setShowErrorModal2(false)}
+        onClose={() => {
+          setShowErrorModal2(false);
+          navigate("/home");
+        }}
         title="Error"
         btnMessage="Aceptar"
       >
         <p>Error al cargar los datos</p>
       </Modal>
+<<<<<<< HEAD
+=======
+
+      {/* Nuevo Modal para formulario sin cambios */}
+      <Modal
+        showModal={showNoChangesModal}
+        onClose={() => setShowNoChangesModal(false)}
+        title="Formulario sin cambios"
+        btnMessage="Aceptar"
+      >
+        <p>No se realizo ningun cambio en su informaicon personal.</p>
+      </Modal>
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
     </div>
   );
 };

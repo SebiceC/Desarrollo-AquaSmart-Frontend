@@ -200,6 +200,7 @@ const ForgotPassword = () => {
         <img src="/img/logo.png" alt="Logo" className="w-[60%] lg:w-[50%]" />
       </div>
 
+<<<<<<< HEAD
       {!showTokenForm ? (
         <div className="w-[83%] sm:w-[70%] lg:w-[30%] bg-white p-6 border-1 border-[#003F88] rounded-lg mx-auto flex flex-col justify-center items-center">
           <h1 className="text-4xl font-bold pb-8 text-center">
@@ -219,6 +220,180 @@ const ForgotPassword = () => {
                 {error}
                 <IoIosWarning size={26} className="flex-shrink-0" />
               </span>
+=======
+            if (response.status === 200) {  // Solo navega si el backend responde con éxito
+                navigate(`/recoverPassword?document=${document}`);
+            }
+        } catch (err) {
+            if (err.response) {
+                if (err.response.status === 400) {
+                    console.error("Error del servidor:", err.response.data);
+                    setOtpError(err.response.data?.detail || "Error al validar OTP");
+                }
+            } else {
+                setOtpError("Error de conexión con el servidor");
+            }
+        }
+    };
+
+    const handleChange = (e, index) => {
+        const value = e.target.value.replace(/\D/g, ""); // Solo números
+        if (!value) return;
+
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        if (index < 5 && value) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (e, index) => {
+        if (e.key === "Backspace") {
+            const newOtp = [...otp];
+            newOtp[index] = "";
+            setOtp(newOtp);
+
+            if (index > 0) {
+                inputRefs.current[index - 1]?.focus();
+            }
+        }
+    };
+
+    return (
+        <div className="w-full h-full min-h-screen bg-[#DCF2F1] flex flex-col items-center justify-center gap-10">
+            <div className="flex justify-center">
+                <img src="/img/logo.png" alt="Logo" className="w-[60%] lg:w-[50%]" />
+            </div>
+
+            {!showTokenForm ? (
+                <div className="w-[83%] sm:w-[70%] lg:w-[30%] bg-white p-6 border-1 border-[#003F88] rounded-lg mx-auto flex flex-col justify-center items-center">
+                    <h1 className="text-4xl font-bold pb-8 text-center">
+                        RECUPERACIÓN DE CONTRASEÑA
+                    </h1>
+                    <p className="text-justify w-[85%] pb-5">
+                        Introduce tu cédula de ciudadanía y teléfono, para solicitar un
+                        token y recuperar tu contraseña.
+                    </p>
+                    <form
+                        onSubmit={handleReset}
+                        className="flex flex-col items-center w-full"
+                    >
+                        {error && (
+                            <span className="w-[83%] text-sm text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                                <IoIosWarning size={26} className="flex-shrink-0" />
+                                {error}
+                                <IoIosWarning size={26} className="flex-shrink-0" />
+                            </span>
+                        )}
+                        <InputItem
+                            id="document"
+                            labelName={
+                                <>
+                                    Cédula de Ciudadanía{" "}
+                                    <PiAsteriskSimpleBold
+                                        size={12}
+                                        className="inline text-red-500"
+                                    />
+                                </>
+                            }
+                            placeholder="Ingresa tu Cédula de Ciudadanía"
+                            type="string"
+                            value={document}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Permitir solo números y limitar el tamaño
+                                if (/^\d*$/.test(value)) {
+                                    setDocument(value);
+                                }
+                            }}
+                            maxLength={11}
+                        />
+                        <InputItem
+                            id="phone"
+                            labelName={
+                                <>
+                                    Teléfono{" "}
+                                    <PiAsteriskSimpleBold
+                                        size={12}
+                                        className="inline text-red-500"
+                                    />
+                                </>
+                            }
+                            placeholder="Ingresa tu teléfono"
+                            type="string"
+                            value={phone}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Permitir solo números y limitar el tamaño
+                                if (/^\d*$/.test(value)) {
+                                    setPhone(value);
+                                }
+                            }}
+                            maxLength={10}
+                        />
+                        <button
+                            type="submit"
+                            className="w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out"
+                        >
+                            SOLICITAR TOKEN
+                        </button>
+                    </form>
+                </div>
+            ) : (
+                <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[40%] lg:w-[28%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
+                    <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
+                    <p className="text-center mt-2">
+                        Introduce el token que fue enviado a tu correo electrónico.
+                    </p>
+
+                    {otpError && (
+                        <span className="w-full text-sm text-center py-1 my-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                        <IoIosWarning size={26} className="flex-shrink-0" />
+                        {otpError}
+                        <IoIosWarning size={26} className="flex-shrink-0" />
+                    </span>
+                    )}
+                    <div className="flex justify-center gap-1 mt-4">
+                        {[...Array(6)].map((_, i) => (
+                            <input
+                                key={i}
+                                ref={(el) => (inputRefs.current[i] = el)}
+                                type="tel"
+                                maxLength="1"
+                                className="w-12 h-12 text-lg text-center border border-gray-400 rounded-md"
+                                value={otp[i] || ""}
+                                onChange={(e) => handleChange(e, i)}
+                                onKeyDown={(e) => handleKeyDown(e, i)}
+                            />
+                        ))}
+                    </div>
+
+                    <p className="text-center text-gray-600 mt-2">
+                        {timeLeft > 0
+                            ? `Tiempo restante: ${formatTime(timeLeft)}`
+                            : "Puedes solicitar un nuevo token"}
+                    </p>
+
+                    <div className="flex justify-center gap-4 mt-4">
+                        <button
+                            onClick={handleRequestNewToken}
+                            disabled={isDisabled}
+                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-[#365486] hover:bg-[#344663]"
+                                }`}
+                        >
+                            SOLICITAR NUEVO TOKEN
+                        </button>
+                        <button
+                            onClick={handleTokenSubmit}
+                            className="bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663]"
+                        >
+                            ENVIAR
+                        </button>
+                    </div>
+                </div>
+>>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
             )}
             <InputItem
               id="document"
