@@ -84,17 +84,40 @@ const PrediosList = () => {
         return;
       }
   
-      // Filtrado de predios
-      const filtered = predios.filter((predio) => {
-        const matchesId = filters.id.trim() === "" || predio.id_plot.includes(filters.id.trim());
-        const matchesOwner = filters.ownerDocument.trim() === "" || predio.owner.includes(filters.ownerDocument.trim());
-        const matchesDate =
-          (filters.startDate === "" || new Date(predio.registration_date) >= new Date(filters.startDate)) &&
-          (filters.endDate === "" || new Date(predio.registration_date) <= new Date(filters.endDate));
+// Filtrado de predios
+const filtered = predios.filter((predio) => {
+  const matchesId = filters.id.trim() === "" || predio.id_plot.includes(filters.id.trim());
+  const matchesOwner = filters.ownerDocument.trim() === "" || predio.owner.includes(filters.ownerDocument.trim());
   
-        return matchesId && matchesOwner && matchesDate;
-      });
+  // Manejo de fechas - enfoque más explícito
+  let matchesDate = true; // Por defecto asumimos que coincide
   
+  if (filters.startDate !== "" || filters.endDate !== "") {
+    // Solo verificamos fechas si hay algún filtro de fecha
+    
+    // Convertir fecha de registro a formato YYYY-MM-DD
+    const predioDate = new Date(predio.registration_date);
+    const predioDateStr = predioDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
+    
+    // Verificar límite inferior
+    if (filters.startDate !== "") {
+      const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+      if (predioDateStr < startDateStr) {
+        matchesDate = false;
+      }
+    }
+    
+    // Verificar límite superior
+    if (matchesDate && filters.endDate !== "") {
+      const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+      if (predioDateStr > endDateStr) {
+        matchesDate = false;
+      }
+    }
+  }
+
+  return matchesId && matchesOwner && matchesDate;
+});
       if (filters.id.trim() !== "" && filtered.length === 0) {
         setModalMessage("El predio filtrado no existe.");
         setShowModal(true);

@@ -88,24 +88,41 @@ const UserList = () => {
         return;
       }
 
-      // Filtrado de usuarios
-      const filtered = usuarios.filter((user) => {
-        const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
-        const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
+
+// Filtrado de usuarios
+const filtered = usuarios.filter((user) => {
+  const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
+  const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
+
+  // Manejo de fechas - enfoque más explícito
+  let matchesDate = true; // Por defecto asumimos que coincide
+  
+  if (filters.startDate !== "" || filters.endDate !== "") {
+    // Solo verificamos fechas si hay algún filtro de fecha
     
-        // Convertir las fechas a solo año, mes y día (ignorar horas, minutos y segundos)
-        const userDate = new Date(user.date_joined);
-        const userDateOnly = new Date(userDate.getFullYear(), userDate.getMonth(), userDate.getDate());
+    // Convertir fecha de usuario a formato YYYY-MM-DD
+    const userDate = new Date(user.date_joined);
+    const userDateStr = userDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
     
-        const startDate = filters.startDate === "" ? null : new Date(filters.startDate);
-        const endDate = filters.endDate === "" ? null : new Date(filters.endDate);
+    // Verificar límite inferior
+    if (filters.startDate !== "") {
+      const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+      if (userDateStr < startDateStr) {
+        matchesDate = false;
+      }
+    }
     
-        const matchesDate =
-            (startDate === null || userDateOnly >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) &&
-            (endDate === null || userDateOnly <= new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()));
-    
-        return matchesId && matchesPersonType && matchesDate && user.is_registered;
-      });
+    // Verificar límite superior
+    if (matchesDate && filters.endDate !== "") {
+      const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+      if (userDateStr > endDateStr) {
+        matchesDate = false;
+      }
+    }
+  }
+
+  return matchesId && matchesPersonType && matchesDate && user.is_registered;
+});
       
       if (filters.id.trim() !== "" && filtered.length === 0) {
         setModalMessage("El usuario filtrado no existe.");
