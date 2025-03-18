@@ -53,7 +53,7 @@ const UserList = () => {
         });
 
         const activeAndRegisteredUsers = response.data.filter(
-          (user) => user.is_active && user.is_registered
+          (user) => user.is_registered
         );
 
         setUsuarios(activeAndRegisteredUsers);
@@ -104,7 +104,7 @@ const UserList = () => {
             (startDate === null || userDateOnly >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) &&
             (endDate === null || userDateOnly <= new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()));
     
-        return matchesId && matchesPersonType && matchesDate && user.is_active && user.is_registered;
+        return matchesId && matchesPersonType && matchesDate  && user.is_registered;
       });
       
       if (filters.id.trim() !== "" && filtered.length === 0) {
@@ -193,9 +193,11 @@ const UserList = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Apellidos</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Registro</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Tipo</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Registro</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -211,6 +213,7 @@ const UserList = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.document}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.first_name}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{user.last_name}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{user.is_active ? "Activo" : "Inactivo"}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {personTypeNames[user.person_type]?.substring(0, 3) || "Des"}
                     </td>
@@ -219,12 +222,14 @@ const UserList = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
                       <div className="flex space-x-1 justify-start">
-                        <button 
-                          className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                          onClick={() => handleDeleteClick(user)}
-                        >
-                          <Trash2 className="text-white" />
-                        </button>
+                        {user.is_active && (
+                          <button 
+                            className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                            onClick={() => handleDeleteClick(user)}
+                          >
+                            <Trash2 className="text-white" />
+                          </button>
+                        )}
                         <button 
                           className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]"
                           onClick={() => navigate(`/gestionDatos/users/${user.document}`)}
