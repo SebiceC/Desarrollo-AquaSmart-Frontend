@@ -20,6 +20,8 @@ import RegistroLotes from "../app/gestionRegistros/RegistroLotes";
 import UpdatedPassword from "../app/seguridad/UpdatedPassword";
 import LotesList from "../app/gestionDatos/lotes/LotesList";
 import LoteInformation from "../app/gestionDatos/lotes/LoteInformation";
+import DispositivoIoTList from "../app/gestionDatos/dispositivosIoT/DispositivosIoTList"
+import DispositivosIoTInformation from "../app/gestionDatos/dispositivosIoT/DispositivosIoTInformation";
 
 const AppRouter = () => {
     return (
@@ -48,6 +50,8 @@ const AppRouter = () => {
             <Route path="/gestionDatos/users/:document" element={<ProtectedRoute element={<UserInformation />} />} />
             <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
             <Route path="/gestionDatos/lotes/:id" element={<ProtectedRoute element={<LoteInformation />} />} />
+            <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
+            <Route path="/gestionDatos/dispositivosIoT/:id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
             <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />         
