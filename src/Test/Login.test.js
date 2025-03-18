@@ -1,49 +1,115 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom/";
-import Login from "../app/auth/Login";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import axios from "axios";
 import { MemoryRouter } from "react-router-dom";
+import Login from "../app/auth/Login";
 
-describe("Login Component", () => {
-  test("validates document and password fields", () => {
+// Mock de axios
+jest.mock("axios");
+
+describe("Login Component - Verificar inicio de sesión", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    localStorage.clear();
+  });
+
+  test("inicia sesión correctamente, captura el token y muestra el modal de éxito", async () => {
+    // Mock de la respuesta del servidor
+    axios.post.mockResolvedValueOnce({
+      data: {
+        token: "fake-jwt-token",
+      },
+    });
+
+    // Renderizar el componente envuelto en MemoryRouter
     render(
       <MemoryRouter>
         <Login />
       </MemoryRouter>
     );
 
-    // Obtener los campos de cédula y contraseña
-    const documentInput = screen.getByPlaceholderText(
-      "Ingresa tu Cédula de Ciudadanía"
+    // Simular entrada de datos en los campos de documento y contraseña
+    fireEvent.change(
+      screen.getByPlaceholderText("Ingresa tu Cédula de Ciudadanía"),
+      {
+        target: { value: "123456789" },
+      }
     );
-    const passwordInput = screen.getByPlaceholderText("Ingresa tu contraseña");
-    const submitButton = screen.getByText("INICIAR SESIÓN");
+    fireEvent.change(screen.getByPlaceholderText("Ingresa tu contraseña"), {
+      target: { value: "password123" },
+    });
 
-    // Probar campos vacíos
-    fireEvent.change(documentInput, { target: { value: "" } });
-    fireEvent.change(passwordInput, { target: { value: "" } });
-    fireEvent.click(submitButton);
+    // Simular clic en el botón de inicio de sesión
+    fireEvent.click(screen.getByText("INICIAR SESIÓN"));
 
-    expect(
-      screen.getByText("¡Campos vacíos, por favor completarlos!")
-    ).toBeInTheDocument();
+    // Esperar a que se muestre el modal de éxito
+    await waitFor(() => {
+      expect(screen.getByText("TOKEN ENVIADO")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Se ha enviado un token de 6 caracteres a tu número de teléfono registrado."
+        )
+      ).toBeInTheDocument();
+    });
+  });
 
-    // Probar campo de cédula con caracteres inválidos
-    fireEvent.change(documentInput, { target: { value: "awaw1212" } });
-    fireEvent.change(passwordInput, { target: { value: "asadsa21212" } });
-    fireEvent.click(submitButton);
+  test("muestra un mensaje de error si los campos están vacíos", async () => {
+    // Renderizar el componente envuelto en MemoryRouter
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
 
-    expect(
-      screen.getByText("¡Campos vacíos, por favor completarlos!")
-    ).toBeInTheDocument();
+    // Simular clic en el botón de inicio de sesión sin llenar los campos
+    fireEvent.click(screen.getByText("INICIAR SESIÓN"));
 
-    // Probar campo de cédula con caracteres válidos
-    fireEvent.change(documentInput, { target: { value: "1109420278" } });
-    fireEvent.change(passwordInput, { target: { value: "Cc115689*" } });
-    fireEvent.click(submitButton);
+    // Verificar que se muestra el mensaje de error
+    await waitFor(() => {
+      expect(
+        screen.getByText("¡Campos vacíos, por favor completarlos!")
+      ).toBeInTheDocument();
+    });
+  });
 
-    expect(
-      screen.queryByText("¡Campos vacíos, o datos incorrectos!")
-    ).not.toBeInTheDocument();
+  test("muestra un mensaje de error si las credenciales son incorrectas", async () => {
+    // Mock de la respuesta del servidor con error 401
+    axios.post.mockRejectedValueOnce({
+      response: {
+        status: 401,
+        data: {
+          error: {
+            detail: "Contraseña incorrecta.",
+          },
+        },
+      },
+    });
+
+    // Renderizar el componente envuelto en MemoryRouter
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
+
+    // Simular entrada de datos en los campos de documento y contraseña
+    fireEvent.change(
+      screen.getByPlaceholderText("Ingresa tu Cédula de Ciudadanía"),
+      {
+        target: { value: "123456789" },
+      }
+    );
+    fireEvent.change(screen.getByPlaceholderText("Ingresa tu contraseña"), {
+      target: { value: "wrongpassword" },
+    });
+
+    // Simular clic en el botón de inicio de sesión
+    fireEvent.click(screen.getByText("INICIAR SESIÓN"));
+
+    // Verificar que se muestra el mensaje de error
+    await waitFor(() => {
+      expect(screen.getByText("Contraseña incorrecta.")).toBeInTheDocument();
+    });
   });
 });

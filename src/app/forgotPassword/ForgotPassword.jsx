@@ -19,8 +19,8 @@ const ForgotPassword = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
-  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
+  //const API_URL = import.meta.env.VITE_APP_API_URL;
+  var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
   const inputRefs = useRef([]);
 
   const openModal = (title, message, btnMessage, onCloseAction) => {

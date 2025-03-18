@@ -1,38 +1,54 @@
-describe("Formulario de Pre-registro de Usuario", () => {
-  it("Debe completar el formulario correctamente y enviarlo", () => {
-    cy.visit("http://localhost:5173/preRegister"); // Ajusta la URL según tu entorno
+describe("Prueba de inicio de sesión con OTP en Cypress", () => {
+  const cedula = "1109420278"; // Ajusta con un valor válido
+  const password = "Cc115689*"; // Ajusta con un valor válido
+  const otpCode = "743178"; // OTP preajustado
 
-    // Completar datos personales
-    cy.get("input[name='first_name']").type("SEBASTIAN");
-    cy.get("input[name='last_name']").type("JIMENEZ FIGUEROA");
-    cy.get("input[name='email']").type("teobservo@yahoo.com");
-    cy.get("input[name='phone']").type("3228061144");
-    cy.get("input[name='address']").type("kr 5 4 29");
+  beforeEach(() => {
+    cy.visit("http://localhost:5173/login"); // Ajusta con la URL correcta
+  });
 
-    // Seleccionar tipo de persona
-    cy.get("select[name='person_type']").select("Natural");
-    // Seleccionar tipo de documento
-    cy.get("select[name='document_type']").select("Cedula de ciudadanía (CC)");
-    // Ingresar número de identificación
-    cy.get("input[name='document']").type("1109420278");
-    // Ingresar y confirmar contraseña
-    cy.get("input[name='password']").type("Cc115689*");
-    cy.get("input[name='confirmPassword']").type("Cc115689*");
-    // Subir archivo PDF (Debe estar en la carpeta fixtures)
-    cy.get('input[type="file"]').selectFile(
-      "cypress/fixtures/certificado.pdf",
-      { force: true }
+  it("Debe completar el inicio de sesión con OTP", () => {
+    // Llenar el campo de cédula
+    cy.get("input#document").type(cedula);
+
+    // Llenar el campo de contraseña
+    cy.get("input#password").type(password);
+
+    // Hacer clic en el botón de iniciar sesión
+    cy.contains("INICIAR SESIÓN").click();
+
+    // Esperar el mensaje de confirmación del envío del token
+    cy.contains("TOKEN ENVIADO").should("be.visible");
+    // Temporizador de 2 segundos antes de clic"
+    cy.log("Esperando 2 segundos antes de cerrar aviso...");
+    cy.wait(2000);
+    // Hacer clic en el botón de confirmar
+    cy.contains("CONFIRMAR").click();
+
+    // Llenar los campos del token con el OTP preajustado
+    cy.get('input[type="tel"]').each(($el, index) => {
+      cy.wrap($el).type(otpCode[index]);
+    });
+
+    // Temporizador de 20 segundos antes de hacer clic en "ENVIAR"
+    cy.log("Esperando 20 segundos antes de enviar el OTP...");
+    cy.wait(20000); // Espera de 20 segundos para que el usuario pueda verificar
+
+    // Aquí Cypress NO hará clic automáticamente en "ENVIAR",
+    // el usuario deberá hacerlo manualmente
+    // Temporizador de 2 segundos antes de clic"
+    cy.log("Esperando 2 segundos antes de cerrar aviso...");
+    cy.wait(2000);
+    cy.log("Ahora haz clic manualmente en 'ENVIAR'");
+    cy.log("Esperando 2 segundos antes de cerrar aviso...");
+    cy.wait(2000);
+    // Verificar que el inicio de sesión fue exitoso después de que el usuario haga clic
+    cy.contains("INICIO DE SESIÓN EXITOSO", { timeout: 30000 }).should(
+      "be.visible"
     );
-    // Hacer clic en el botón de registro
-    cy.get("button").contains("Registro").click();
-    // Validar que el mensaje de error está visible
-    cy.get("div.fixed.inset-0.flex.items-center.justify-center") // Buscamos el contenedor de la alerta
-      .should("be.visible")
-      .within(() => {
-        cy.contains("Error de Pre Registro").should("be.visible");
-        cy.contains(
-          "Error en el envío del formulario, ya que el número de identificación ya cuenta con un pre-registro realizado."
-        ).should("be.visible");
-      });
+    cy.log("Esperando 2 segundos antes de cerrar aviso...");
+    cy.wait(2000);
+    // Hacer clic en continuar
+    cy.contains("CONTINUAR").click();
   });
 });

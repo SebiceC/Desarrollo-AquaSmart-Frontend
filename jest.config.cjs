@@ -1,16 +1,24 @@
 module.exports = {
-  testEnvironment: "jsdom",
+  // Configura el entorno de pruebas en Node.js
+  testEnvironment: "node",
+
+  // Archivos de configuración adicionales
   setupFilesAfterEnv: ["<rootDir>/setupTests.js"],
-  testEnvironment: "jsdom",
+
+  // Transformaciones para archivos JS/JSX
   transform: {
     "^.+\\.(js|jsx)$": "babel-jest",
   },
-  transformIgnorePatterns: [
-    "node_modules/(?!(your-module-to-transform)/)", // Ignora node_modules, excepto los que necesitas transformar
-  ],
+
+  // Ignorar transformaciones en node_modules, excepto módulos específicos
+  transformIgnorePatterns: ["node_modules/(?!(your-module-to-transform)/)"],
+
+  // Mapeo de módulos para evitar errores con archivos de estilo
   moduleNameMapper: {
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
   },
+
+  // Configuración de reportes
   reporters: [
     "default",
     [

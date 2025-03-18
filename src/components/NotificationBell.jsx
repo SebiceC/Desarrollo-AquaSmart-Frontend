@@ -10,6 +10,7 @@ const NotificationBell = () => {
   const bellRef = useRef(null);
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_APP_API_URL;
+  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -121,7 +122,9 @@ const NotificationBell = () => {
                   className="p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                   onClick={() => navigate("/gestionDatos/pre-registros")}
                 >
-                  <p className="text-sm font-medium text-gray-800">{notification.message}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {notification.message}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1">Hace un momento</p>
                 </div>
               ))}
@@ -132,7 +135,9 @@ const NotificationBell = () => {
               </div>
             </div>
           ) : (
-            <div className="p-4 text-center text-gray-500">No hay notificaciones nuevas</div>
+            <div className="p-4 text-center text-gray-500">
+              No hay notificaciones nuevas
+            </div>
           )}
         </div>
       )}
