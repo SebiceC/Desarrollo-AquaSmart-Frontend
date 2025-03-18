@@ -32,6 +32,7 @@ const PreRegister = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 
   // Obtener los tipos de documento y persona desde el backend
@@ -390,7 +391,7 @@ const PreRegister = () => {
                 <div className="relative w-full flex">
                   <InputItem
                     label="Confirmar contraseña: "
-                    type={showPassword ? "text" : "password"}
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
@@ -401,9 +402,9 @@ const PreRegister = () => {
                   <button
                     type="button"
                     className="absolute right-18 sm:right-20 top-8"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showPassword ? (
+                    {showConfirmPassword ? (
                       <EyeSlashIcon className="h-6 w-6 text-gray-500" />
                     ) : (
                       <EyeIcon className="h-6 w-6 text-gray-500" />

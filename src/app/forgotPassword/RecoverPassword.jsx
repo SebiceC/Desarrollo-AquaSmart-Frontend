@@ -18,6 +18,7 @@ const RecoverPassword = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalProps, setModalProps] = useState({});
     const navigate = useNavigate();
@@ -189,7 +190,7 @@ const RecoverPassword = () => {
                                 </>
                             }
                             placeholder="Confirma la contraseña"
-                            type={showPassword ? "text" : "password"}
+                            type={showConfirmPassword ? "text" : "password"}
                             value={formData.confirm_password}
                             onChange={handleChange}
                             maxLength={20}
@@ -197,9 +198,9 @@ const RecoverPassword = () => {
                         <button
                             type="button"
                             className="absolute right-10 sm:right-12 top-8"
-                            onClick={() => setShowPassword(!showPassword)}
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
-                            {showPassword ? (
+                            {showConfirmPassword ? (
                                 <EyeSlashIcon className="h-6 w-6 text-gray-500" />
                             ) : (
                                 <EyeIcon className="h-6 w-6 text-gray-500" />
