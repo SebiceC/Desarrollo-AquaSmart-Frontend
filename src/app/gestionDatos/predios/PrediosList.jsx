@@ -1,10 +1,10 @@
-// PrediosList.jsx
 import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputFilter from "../../../components/InputFilterPredio";
 import Modal from "../../../components/Modal";
+import DataTable from "../../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
 const PrediosList = () => {
@@ -39,7 +39,7 @@ const PrediosList = () => {
         const activePredios = response.data.filter(
           (predio) => predio.is_activate
         );
-console.log(activePredios);
+        console.log(activePredios);
         setPredios(activePredios); // Solo actualiza predios, no filteredPredios
       } catch (error) {
         console.error("Error al obtener la lista de predios:", error);
@@ -62,7 +62,7 @@ console.log(activePredios);
     try {
       // Validación de ID
       if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim())) {
-        setModalMessage("El campo “ID del predio” contiene caracteres no válidos o el predio no existe");
+        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
         setShowModal(true);
         setFilteredPredios([]);
         return;
@@ -70,7 +70,7 @@ console.log(activePredios);
   
       // Validación de documento del propietario
       if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo “ID del propietario” contiene caracteres no válidos o no se encuentra asociado a ningún registro");
+        setModalMessage("El campo ID del propietario contiene caracteres no válidos o no se encuentra asociado a ningún registro");
         setShowModal(true);
         setFilteredPredios([]);
         return;
@@ -145,6 +145,40 @@ console.log(activePredios);
     }
   };
 
+  // Configuración de columnas para DataTable
+  const columns = [
+    { key: "id_plot", label: "ID Predio" },
+    { key: "plot_name", label: "Nombre" },
+    { key: "owner", label: "Propietario" },
+    { 
+      key: "plot_extension", 
+      label: "Extensión", 
+      responsive: "hidden md:table-cell",
+      render: (predio) => `${predio.plot_extension} ha`
+    },
+    { 
+      key: "registration_date", 
+      label: "Registro", 
+      responsive: "hidden sm:table-cell",
+      render: (predio) => new Date(predio.registration_date).toLocaleDateString()
+    }
+  ];
+
+  // Manejadores para las acciones
+  const handleView = (predio) => {
+    // Deixo vacío para mantener la estructura original
+    navigate(`/gestionDatos/predios/${predio.id_plot}`);
+  };
+  
+  const handleEdit = (predio) => {
+    // Deixo vacío para mantener la estructura original
+    navigate(`/gestionDatos/predios/update/${predio.id_plot}`);
+  };
+  
+  const handleDelete = (predio) => {
+    handleInactivate(predio.id_plot);
+  };
+
   return (
     <div>
       <NavBar />
@@ -177,49 +211,15 @@ console.log(activePredios);
           </Modal>
         )}
 
-        {/* Tabla de predios */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-6 overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Predio</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Propietario</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Extensión</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Registro</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredPredios.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-500 text-sm">
-                    {predios.length > 0 ? "Aplica filtros para ver resultados." : "No hay predios para mostrar."}
-                  </td>
-                </tr>
-              ) : (
-                filteredPredios.map((predio) => (
-                  <tr key={predio.id_plot} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.id_plot}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.plot_name}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.owner}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{`${predio.plot_extension} ha`}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                      {new Date(predio.registration_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex space-x-1 justify-start">
-                      <button className="bg-red-500 p-2 rounded-lg" onClick={() => handleDeleteClick(user)}><Trash2 className="text-white" /></button>
-                      <button className="bg-green-500 p-2 rounded-lg" onClick={() => navigate(``)}><Eye className="text-white" /></button>
-                      <button className="bg-blue-500 p-2 rounded-lg" onClick={() => navigate(``)}><Pencil className="text-white" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* Uso del componente DataTable */}
+        <DataTable
+          columns={columns}
+          data={filteredPredios}
+          emptyMessage={predios.length > 0 ? "Aplica filtros para ver resultados." : "No hay predios para mostrar."}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );

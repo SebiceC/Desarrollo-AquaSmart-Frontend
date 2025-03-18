@@ -58,7 +58,7 @@ const RegistroPredios = () => {
         if (!validateForm()) return;
 
         try {
-            const response = await axios.post(`${API_URL}/plot-lot/register`, {
+            const response = await axios.post(`${API_URL}/plot-lot/lots/register`, {
                 owner: formData.owner_id,
                 plot_name: formData.farm_name,
                 plot_extension: formData.land_size,
