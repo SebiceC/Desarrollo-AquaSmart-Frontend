@@ -158,6 +158,7 @@ function NavBar() {
                             direction="/gestionDatos"
                             text="Gestión de datos"
                             subItems={[
+                                { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
                                 { direction: "/gestionDatos/users", text: "Usuarios" },
                                 { direction: "/gestionDatos/predios", text: "Predios" },
                                 { direction: "/gestionDatos/lotes", text: "Lotes" },

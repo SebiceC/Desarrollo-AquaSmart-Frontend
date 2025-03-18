@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputFilter from "../../../components/InputFilterPredio";
 import Modal from "../../../components/Modal";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 const PrediosList = () => {
   const navigate = useNavigate();
@@ -208,39 +209,9 @@ console.log(activePredios);
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex space-x-1 justify-start">
-                        <button
-                          onClick={() => handleInactivate(predio.id_plot)}
-                          className="bg-red-500 p-1.5 rounded-md min-w-[28px] hover:bg-red-600 transition-colors"
-                          title="Inhabilitar predio"
-                        >
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/1345/1345874.png"
-                            alt="Inhabilitar"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
-                        </button>
-                        <button 
-                          className="bg-green-600 p-1.5 rounded-md min-w-[28px] hover:bg-green-700 transition-colors"
-                          onClick={() => navigate(`/predios/view/${predio.id_plot}`)}
-                          title="Ver detalles del predio"
-                        >
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
-                            alt="Ver"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
-                        </button>
-                        <button
-                          className="bg-blue-400 hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[28px] focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-                          onClick={() => navigate(`/predios/edit/${predio.id_plot}`)}
-                          title="Editar predio"
-                        >
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-                            alt="Editar"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
-                        </button>
+                      <button className="bg-red-500 p-2 rounded-lg" onClick={() => handleDeleteClick(user)}><Trash2 className="text-white" /></button>
+                      <button className="bg-green-500 p-2 rounded-lg" onClick={() => navigate(``)}><Eye className="text-white" /></button>
+                      <button className="bg-blue-500 p-2 rounded-lg" onClick={() => navigate(``)}><Pencil className="text-white" /></button>
                       </div>
                     </td>
                   </tr>

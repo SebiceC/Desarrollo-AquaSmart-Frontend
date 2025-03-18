@@ -7,8 +7,6 @@ import InputFilter from "../../../components/InputFilter";
 import Modal from "../../../components/Modal";
 import DeleteUser from "../UserEdit/DeleteUsers";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
 
 const UserList = () => {
   const navigate = useNavigate();
@@ -30,8 +28,7 @@ const UserList = () => {
     1: "Natural",
     2: "Jurídica",
   };
-  
-  const navigate = useNavigate();
+
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
   useEffect(() => {
@@ -144,7 +141,6 @@ const UserList = () => {
     if (filteredUsuarios.length > 0) {
       setFilteredUsuarios(filteredUsuarios.filter(user => user.document !== documentId));
     }
-
   };
 
   return (
@@ -227,15 +223,12 @@ const UserList = () => {
                           className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                           onClick={() => handleDeleteClick(user)}
                         >
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/1345/1345874.png"
-                            alt="Eliminar"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
-                        <button className="bg-[#FF2100] p-1.5 rounded-lg min-w-[28px]" >
                           <Trash2 className="text-white" />
                         </button>
-                        <button className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]" onClick={() => navigate(`/gestionDatos/users/${user.document}`)}>
+                        <button 
+                          className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]"
+                          onClick={() => navigate(`/gestionDatos/users/${user.document}`)}
+                        >
                           <Eye className="text-white" />
                         </button>
                         <button
@@ -243,12 +236,6 @@ const UserList = () => {
                           onClick={() => navigate(`/gestionDatos/users/updateinformation/${user.document}`)}
                           aria-label="Editar información del usuario"
                         >
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-                            alt="editar"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
-                        <button className="bg-[#0C8CE9] p-1.5 rounded-lg min-w-[28px]">
                           <Pencil className="text-white" />
                         </button>
                       </div>
