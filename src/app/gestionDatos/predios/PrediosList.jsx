@@ -1,0 +1,257 @@
+// PrediosList.jsx
+import React, { useEffect, useState } from "react";
+import NavBar from "../../../components/NavBar";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import InputFilter from "../../../components/InputFilterPredio";
+import Modal from "../../../components/Modal";
+
+const PrediosList = () => {
+  const navigate = useNavigate();
+  const [predios, setPredios] = useState([]);
+  const [filteredPredios, setFilteredPredios] = useState([]); // Inicialmente vacío
+  const [modalMessage, setModalMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [filters, setFilters] = useState({
+    id: "",
+    ownerDocument: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
+  useEffect(() => {
+    const fetchPredios = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setModalMessage("No hay una sesión activa. Por favor, inicie sesión.");
+          setShowModal(true);
+          return;
+        }
+
+        const response = await axios.get(`${API_URL}/plot-lot/plots/list`, {
+          headers: { Authorization: `Token ${token}` },
+        });
+
+        const activePredios = response.data.filter(
+          (predio) => predio.is_activate
+        );
+console.log(activePredios);
+        setPredios(activePredios); // Solo actualiza predios, no filteredPredios
+      } catch (error) {
+        console.error("Error al obtener la lista de predios:", error);
+        setModalMessage("Error al cargar los predios. Por favor, intente más tarde.");
+        setShowModal(true);
+      }
+    };
+
+    fetchPredios();
+  }, [API_URL]);
+
+  const handleFilterChange = (name, value) => {
+    setFilters({
+      ...filters,
+      [name]: value,
+    });
+  };
+
+  const applyFilters = () => {
+    try {
+      // Validación de ID
+      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim())) {
+        setModalMessage("El campo “ID del predio” contiene caracteres no válidos o el predio no existe");
+        setShowModal(true);
+        setFilteredPredios([]);
+        return;
+      }
+  
+      // Validación de documento del propietario
+      if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
+        setModalMessage("El campo “ID del propietario” contiene caracteres no válidos o no se encuentra asociado a ningún registro");
+        setShowModal(true);
+        setFilteredPredios([]);
+        return;
+      }
+  
+      // Validación de fechas
+      if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
+        setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
+        setShowModal(true);
+        setFilteredPredios([]);
+        return;
+      }
+  
+      // Filtrado de predios
+      const filtered = predios.filter((predio) => {
+        const matchesId = filters.id.trim() === "" || predio.id_plot.includes(filters.id.trim());
+        const matchesOwner = filters.ownerDocument.trim() === "" || predio.owner.includes(filters.ownerDocument.trim());
+        const matchesDate =
+          (filters.startDate === "" || new Date(predio.registration_date) >= new Date(filters.startDate)) &&
+          (filters.endDate === "" || new Date(predio.registration_date) <= new Date(filters.endDate));
+  
+        return matchesId && matchesOwner && matchesDate;
+      });
+  
+      if (filters.id.trim() !== "" && filtered.length === 0) {
+        setModalMessage("El predio filtrado no existe.");
+        setShowModal(true);
+        setFilteredPredios([]);
+        return;
+      }
+  
+      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
+        setModalMessage("No hay predios registrados en el rango de fechas especificado.");
+        setShowModal(true);
+        setFilteredPredios([]);
+        return;
+      }
+  
+      setFilteredPredios(filtered); // Actualiza filteredPredios solo cuando se aplican filtros
+    } catch (error) {
+      setModalMessage("¡El predio filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
+      setShowModal(true);
+      setFilteredPredios([]);
+    }
+  };
+
+  const handleInactivate = async (predioId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setModalMessage("No hay una sesión activa. Por favor, inicie sesión.");
+        setShowModal(true);
+        return;
+      }
+
+      await axios.post(`${API_URL}/plot-lot/${predioId}/inhabilitar/`, {}, {
+        headers: { Authorization: `Token ${token}` },
+      });
+
+      // Actualizar la lista de predios
+      setPredios(predios.map(predio => 
+        predio.id_plot === predioId ? { ...predio, is_activate: false } : predio
+      ));
+      setFilteredPredios(filteredPredios.filter(predio => predio.id_plot !== predioId));
+      
+      setModalMessage("Predio inhabilitado exitosamente.");
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error al inhabilitar el predio:", error);
+      setModalMessage(error.response?.data?.error || "Error al inhabilitar el predio. Por favor, intente nuevamente.");
+      setShowModal(true);
+    }
+  };
+
+  return (
+    <div>
+      <NavBar />
+      <div className="container mx-auto p-4 md:p-8 lg:p-20">
+        <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
+          Lista de Predios
+        </h1>
+
+        <InputFilter
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onApplyFilters={applyFilters}
+          showPersonTypeFilter={false}
+        />
+
+        {/* Modal de mensajes */}
+        {showModal && (
+          <Modal
+            showModal={showModal}
+            onClose={() => {
+              setShowModal(false);
+              if (modalMessage.includes("Error") || modalMessage.includes("no existe")) {
+                setFilteredPredios([]);
+              }
+            }}
+            title={modalMessage.includes("Error") || modalMessage.includes("no existe") ? "Error" : "Información"}
+            btnMessage="Cerrar"
+          >
+            <p>{modalMessage}</p>
+          </Modal>
+        )}
+
+        {/* Tabla de predios */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-6 overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Predio</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Propietario</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Extensión</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Registro</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredPredios.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-4 text-gray-500 text-sm">
+                    {predios.length > 0 ? "Aplica filtros para ver resultados." : "No hay predios para mostrar."}
+                  </td>
+                </tr>
+              ) : (
+                filteredPredios.map((predio) => (
+                  <tr key={predio.id_plot} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.id_plot}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.plot_name}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.owner}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{`${predio.plot_extension} ha`}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
+                      {new Date(predio.registration_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex space-x-1 justify-start">
+                        <button
+                          onClick={() => handleInactivate(predio.id_plot)}
+                          className="bg-red-500 p-1.5 rounded-md min-w-[28px] hover:bg-red-600 transition-colors"
+                          title="Inhabilitar predio"
+                        >
+                          <img
+                            src="https://cdn-icons-png.flaticon.com/512/1345/1345874.png"
+                            alt="Inhabilitar"
+                            className="w-5 h-5 md:w-6 md:h-6"
+                          />
+                        </button>
+                        <button 
+                          className="bg-green-600 p-1.5 rounded-md min-w-[28px] hover:bg-green-700 transition-colors"
+                          onClick={() => navigate(`/predios/view/${predio.id_plot}`)}
+                          title="Ver detalles del predio"
+                        >
+                          <img
+                            src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
+                            alt="Ver"
+                            className="w-5 h-5 md:w-6 md:h-6"
+                          />
+                        </button>
+                        <button
+                          className="bg-blue-400 hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[28px] focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                          onClick={() => navigate(`/predios/edit/${predio.id_plot}`)}
+                          title="Editar predio"
+                        >
+                          <img
+                            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
+                            alt="Editar"
+                            className="w-5 h-5 md:w-6 md:h-6"
+                          />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PrediosList;

@@ -10,7 +10,7 @@ const UserUpdateInformation = () => {
   const API_URL = import.meta.env.VITE_APP_API_URL;
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
@@ -18,11 +18,11 @@ const UserUpdateInformation = () => {
 
   const [errors, setErrors] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal,setShowErrorModal] = useState(false);
-  const [showErrorModal2,setShowErrorModal2] = useState(false);
-  const [error, setError] = useState(null); // Estado para manejar errores
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showErrorModal2, setShowErrorModal2] = useState(false);
+  const [showNoChangesModal, setShowNoChangesModal] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Obtener datos del usuario
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -31,72 +31,67 @@ const UserUpdateInformation = () => {
           setError("No hay sesión activa.");
           return;
         }
-  
-        // Primera petición: Obtener perfil del usuario
+
         const profileResponse = await axios.get(`${API_URL}/users/profile`, {
           headers: { Authorization: `Token ${token}` },
         });
-  
+
         const userData = profileResponse.data;
-       
-  
         
         const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userData.document}/permissions`, {
           headers: { Authorization: `Token ${token}` },
         });
-  
-        // Extraer el role desde los permisos (ajusta esto según la estructura de la respuesta)
-        const role = permissionsResponse.data.role || "Sin rol asignado"; 
-  
-        // Actualizar el estado del usuario incluyendo el role obtenido
+
+        const role = permissionsResponse.data.role || "Sin rol asignado";
         setUser({ ...userData, role });
-  
-        // Actualizar el estado del formulario
+
         setFormData({
           email: userData.email || "",
           phone: userData.phone || "",
         });
-  
+
       } catch (err) {
         setShowErrorModal2(true);
       }
     };
-  
+
     if (API_URL) {
       fetchProfile();
     }
   }, [API_URL]);
-  
 
-  // Manejar cambios en los campos editables
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Validar solo los campos editables
     if (["email", "phone"].includes(name)) {
       const fieldErrors = validateField(name, value, formData);
       setErrors((prev) => ({ ...prev, [name]: fieldErrors[name] || "" }));
     }
   };
 
-  // Manejar la actualización del perfil
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
+    // Validar si no hay cambios
+    if (formData.email === user.email && formData.phone === user.phone) {
+      setShowNoChangesModal(true);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         setError("No hay sesión activa.");
         return;
       }
-  
+
       await axios.patch(
         `${API_URL}/users/profile/update`,
         { email: formData.email, phone: formData.phone },
         { headers: { Authorization: `Token ${token}` } }
       );
-  
+
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error en la actualización:", error);
@@ -110,7 +105,6 @@ const UserUpdateInformation = () => {
         <NavBar />
       </div>
 
-      {/* Contenido principal */}
       <div className="max-w-4xl mx-auto p-8">
         <h2 className="text-xl font-medium mb-8 my-10 text-center">
           Mis Datos Personales
@@ -121,7 +115,6 @@ const UserUpdateInformation = () => {
         {user ? (
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Columna izquierda - Datos bloqueados */}
               <div className="space-y-4">
                 <InputItem label="Rol" name="role" placeholder={user?.role} disabled />   
                 <InputItem label="Nombre" name="first_name" placeholder={user.first_name} disabled />
@@ -156,10 +149,8 @@ const UserUpdateInformation = () => {
                     ))}
                 </ul>
                 </div>
-
               </div>
 
-              {/* Columna derecha - Campos editables */}
               <div className="space-y-4">
                 <InputItem
                   label="Tipo de Persona"
@@ -184,7 +175,6 @@ const UserUpdateInformation = () => {
               </div>
             </div>
 
-            {/* Botones de acción */}
             <div className="flex gap-4 justify-end mt-8">
               <button
                 type="button"
@@ -197,14 +187,12 @@ const UserUpdateInformation = () => {
               <button
                 type="submit"
                 className="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
-                
               >
                 Actualizar
               </button>
             </div>
           </form>
         ) : (
-            
           <p className="text-center text-gray-500">Cargando datos...</p>
         )}
       </div>
@@ -230,16 +218,25 @@ const UserUpdateInformation = () => {
 
       <Modal
         showModal={showErrorModal2}
-        onClose={() => setShowErrorModal2(false)}
+        onClose={() => {
+          setShowErrorModal2(false);
+          navigate("/home");
+        }}
         title="Error"
         btnMessage="Aceptar"
       >
         <p>Error al cargar los datos</p>
       </Modal>
 
-
-
-
+      {/* Nuevo Modal para formulario sin cambios */}
+      <Modal
+        showModal={showNoChangesModal}
+        onClose={() => setShowNoChangesModal(false)}
+        title="Formulario sin cambios"
+        btnMessage="Aceptar"
+      >
+        <p>No se realizo ningun cambio en su informaicon personal.</p>
+      </Modal>
     </div>
   );
 };

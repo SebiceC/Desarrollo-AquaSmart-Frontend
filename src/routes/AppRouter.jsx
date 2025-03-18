@@ -13,6 +13,9 @@ import RegistroPredios from "../app/gestionRegistros/RegistroPredios";
 import PreRegistrosList from "../app/gestionDatos/Users/PreRegistrosList";
 import PreRegistroDetail from "../app/gestionDatos/Users/PreRegistroDetail";
 import UserUpdateInformation from "../app/gestionDatos/Users/id/UserUpdateInformation";
+import UpdateInformation from "../app/gestionDatos/UserEdit/UpdateInformation"
+import PrediosList from "../app/gestionDatos/predios/PrediosList";
+
 const AppRouter = () => {
     return (
         <Routes>
@@ -34,7 +37,9 @@ const AppRouter = () => {
             <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
-            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />           
+            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} /> 
+            <Route path="/gestionDatos/users/updateinformation/:document" element={<ProtectedRoute element={<UpdateInformation />} />} /> 
+            <Route path="/gestionDatos/predios" element={<ProtectedRoute element={<PrediosList />} />} />           
         </Routes>
     );
 };
