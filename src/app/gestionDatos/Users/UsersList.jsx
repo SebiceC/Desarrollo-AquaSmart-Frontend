@@ -4,6 +4,8 @@ import NavBar from "../../../components/NavBar";
 import axios from "axios";
 import InputFilter from "../../../components/InputFilter";
 import Modal from "../../../components/Modal";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const UserList = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -22,7 +24,8 @@ const UserList = () => {
     1: "Natural",
     2: "Jurídica",
   };
-
+  
+  const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
   useEffect(() => {
@@ -67,7 +70,7 @@ const UserList = () => {
   };
 
   const applyFilters = () => {
-     try {
+    try {
       // Validación de ID (Solo números)
       if (filters.id.trim() !== "" && !/^\d+$/.test(filters.id.trim())) {
         setModalMessage("El campo de filtrado por ID contiene caracteres no válidos o el usuario no existe");
@@ -110,14 +113,12 @@ const UserList = () => {
       setModalMessage("¡El usuario filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
       setShowModal(true);
     }
-      setFilteredUsuarios(filtered);
-
   };
   return (
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
-        <h1 className="text-center text-lg md:text-xl font-semibold mb-6">
+        <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
           Lista de usuarios del distrito
         </h1>
 
@@ -128,8 +129,8 @@ const UserList = () => {
           onApplyFilters={applyFilters}
         />
 
-                {/* Modal de error */}
-          {showModal && (
+        {/* Modal de error */}
+        {showModal && (
           <Modal
             showModal={showModal}
             onClose={() => {
@@ -175,28 +176,16 @@ const UserList = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
                       {new Date(user.date_joined).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
                       <div className="flex space-x-1 justify-start">
-                        <button className="bg-red-500 p-1.5 rounded-md min-w-[28px]">
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/1345/1345874.png"
-                            alt="Eliminar"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
+                        <button className="bg-[#FF2100] p-1.5 rounded-lg min-w-[28px]" >
+                          <Trash2 className="text-white" />
                         </button>
-                        <button className="bg-green-600 p-1.5 rounded-md min-w-[28px]">
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
-                            alt="Ver"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
+                        <button className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]" onClick={() => navigate(`/gestionDatos/users/${user.document}`)}>
+                          <Eye className="text-white" />
                         </button>
-                        <button className="bg-blue-400 p-1.5 rounded-md min-w-[28px]">
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-                            alt="Editar"
-                            className="w-5 h-5 md:w-6 md:h-6"
-                          />
+                        <button className="bg-[#0C8CE9] p-1.5 rounded-lg min-w-[28px]">
+                          <Pencil className="text-white" />
                         </button>
                       </div>
                     </td>

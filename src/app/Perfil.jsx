@@ -102,7 +102,10 @@ const Perfil = () => {
             <p className="text-gray-600 mt-4">Cargando perfil...</p>
           )}
 
-          <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300">
+          <button
+            className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300"
+            onClick={() => navigate("/perfil/actualizar-informacion")}
+          >
             Editar
           </button>
 
