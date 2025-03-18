@@ -8,9 +8,8 @@ import Modal from "../../components/Modal"; // Importar el componente Modal
 import { EyeSlashIcon } from "@heroicons/react/24/solid";
 
 const PreRegister = () => {
-  //const API_URL = import.meta.env.VITE_APP_API_URL;
-  const API_URL =
-    globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+  //const API_URL =globalThis.importMetaEnv?.VITE_APP_API_URL || "http://localhost:5000";
   const [formData, setFormData] = useState({
     first_name: "",
     document_type: "",

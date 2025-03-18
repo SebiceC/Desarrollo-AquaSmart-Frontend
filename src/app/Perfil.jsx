@@ -9,8 +9,8 @@ const Perfil = () => {
   const [error, setError] = useState("");
   const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
   const navigate = useNavigate();
-  //const API_URL = import.meta.env.VITE_APP_API_URL;
-  var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
   // Función para obtener los datos del usuario
   const fetchProfile = async () => {
     try {
