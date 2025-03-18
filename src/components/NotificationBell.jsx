@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Bell } from "lucide-react";
@@ -23,14 +23,14 @@ const NotificationBell = () => {
         });
 
         setNotifications(response.data);
-      } catch (err) {
+      } catch {
         console.warn("Backend no disponible, no se mostrarán notificaciones.");
         setNotifications([]);
       }
     };
 
     fetchNotifications();
-  }, []);
+  }, [API_URL]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

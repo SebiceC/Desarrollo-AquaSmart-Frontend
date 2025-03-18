@@ -246,32 +246,6 @@ function NavBar() {
             />
             <NavItem direction="/permisos" text="Permisos" />
           </div>
-
-<<<<<<< HEAD
-          {/* Botones Fijos */}
-          <div className="flex  flex-col  gap-3 absolute bottom-5 w-full px-5 pt-5 bg-[#DCF2F1]">
-            <button
-              type="submit"
-              onClick={handleLogout}
-              className="px-2 flex items-center space-x-2 text-gray-600 w-[70%]"
-            >
-              <LogOut size={20} />
-              <span>Cerrar sesión</span>
-            </button>
-            <Minus className="w-full h-[2px] bg-gray-400" />
-            <Link
-              to="/"
-              className="flex items-center space-x-2 text-sm text-gray-600 pb-5 px-2"
-            >
-              <HelpCircle size={20} />
-              <span>Manual de usuario y soporte</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
-    </header>
-  );
-=======
                 <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
                     <Menu size={28} />
                 </button>
@@ -369,7 +343,6 @@ function NavBar() {
             </nav>
         </header>
     );
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
 }
 
 export default NavBar;

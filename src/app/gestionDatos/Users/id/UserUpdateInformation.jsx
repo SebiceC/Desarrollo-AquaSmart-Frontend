@@ -21,12 +21,8 @@ const UserUpdateInformation = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showErrorModal2, setShowErrorModal2] = useState(false);
-<<<<<<< HEAD
-  const [error, setError] = useState(null); // Estado para manejar errores
-=======
   const [showNoChangesModal, setShowNoChangesModal] = useState(false);
   const [error, setError] = useState(null);
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -37,16 +33,11 @@ const UserUpdateInformation = () => {
           return;
         }
 
-<<<<<<< HEAD
-        // Primera petición: Obtener perfil del usuario
-=======
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
         const profileResponse = await axios.get(`${API_URL}/users/profile`, {
           headers: { Authorization: `Token ${token}` },
         });
 
         const userData = profileResponse.data;
-<<<<<<< HEAD
 
         const permissionsResponse = await axios.get(
           `${API_URL}/admin/users/${userData.document}/permissions`,
@@ -55,31 +46,13 @@ const UserUpdateInformation = () => {
           }
         );
 
-        // Extraer el role desde los permisos (ajusta esto según la estructura de la respuesta)
-        const role = permissionsResponse.data.role || "Sin rol asignado";
-
-        // Actualizar el estado del usuario incluyendo el role obtenido
-        setUser({ ...userData, role });
-
-        // Actualizar el estado del formulario
-=======
-        
-        const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userData.document}/permissions`, {
-          headers: { Authorization: `Token ${token}` },
-        });
-
         const role = permissionsResponse.data.role || "Sin rol asignado";
         setUser({ ...userData, role });
 
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
         setFormData({
           email: userData.email || "",
           phone: userData.phone || "",
         });
-<<<<<<< HEAD
-=======
-
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
       } catch (err) {
         setShowErrorModal2(true);
       }
@@ -103,15 +76,12 @@ const UserUpdateInformation = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-<<<<<<< HEAD
-=======
     // Validar si no hay cambios
     if (formData.email === user.email && formData.phone === user.phone) {
       setShowNoChangesModal(true);
       return;
     }
 
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -282,8 +252,6 @@ const UserUpdateInformation = () => {
       >
         <p>Error al cargar los datos</p>
       </Modal>
-<<<<<<< HEAD
-=======
 
       {/* Nuevo Modal para formulario sin cambios */}
       <Modal
@@ -294,7 +262,6 @@ const UserUpdateInformation = () => {
       >
         <p>No se realizo ningun cambio en su informaicon personal.</p>
       </Modal>
->>>>>>> 66e05436ff0debf69e1250b2c218f0073537f506
     </div>
   );
 };
