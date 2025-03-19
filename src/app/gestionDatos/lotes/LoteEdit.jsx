@@ -19,7 +19,7 @@ const LoteEdit = () => {
     });
     
     const [soilTypes, setSoilTypes] = useState([]);
-    const [fieldErrors, setFieldErrors] = useState({
+    const [errors, setErrors] = useState({
         tipo_cultivo: false,
         predio_asignado: false,
         variedad_cultivo: false
@@ -96,7 +96,7 @@ const LoteEdit = () => {
 
         if (name === "tipo_cultivo" || name === "variedad_cultivo" || name === "predio_asignado") {
             const isValid = validateField(name, value);
-            setFieldErrors(prev => ({ ...prev, [name]: !isValid }));
+            setErrors(prev => ({ ...prev, [name]: !isValid }));
 
             if (!isValid) {
                 setErrorMessage("ERROR, tipo de datos erróneo (solo números y letras)");
@@ -109,28 +109,43 @@ const LoteEdit = () => {
     const validateForm = () => {
         const { tipo_cultivo, predio_asignado, tipo_suelo, variedad_cultivo } = formData;
     
-        // Verificar campos obligatorios, asegurando que tipo_suelo sea un string antes de aplicar .trim()
-        if (!tipo_cultivo.trim() || !predio_asignado.trim() || !String(tipo_suelo).trim()) {
-            setErrorMessage("Por favor, complete todos los campos obligatorios.");
+        let newErrors = {}; // Este objeto almacenará los errores para cada campo
+    
+        // Verificar campos obligatorios
+        if (!tipo_cultivo.trim()) {
+            newErrors.tipo_cultivo = " ";
+        }
+        if (!predio_asignado.trim()) {
+            newErrors.predio_asignado = " ";
+        }
+        if (!String(tipo_suelo).trim()) {
+            newErrors.tipo_suelo = " ";
+        }
+    
+        // Validar tipo de cultivo
+        if (!validateField("tipo_cultivo", tipo_cultivo)) {
+            newErrors.tipo_cultivo = "ERROR, tipo de datos erróneo (solo números y letras)";
+        }
+    
+        // Validar predio asignado
+        if (!validateField("predio_asignado", predio_asignado)) {
+            newErrors.predio_asignado = "ERROR, tipo de datos erróneo (solo números y letras)";
+        }
+    
+        // Verificar variedad cultivo
+        if (variedad_cultivo.trim() && !validateField("variedad_cultivo", variedad_cultivo)) {
+            newErrors.variedad_cultivo = "ERROR, tipo de datos erróneo (solo números y letras)";
+        }
+    
+        setErrors(newErrors); // Actualiza los errores en el estado
+    
+        // Si hay algún error, no permitas enviar el formulario
+        if (Object.keys(newErrors).length > 0) {
             return false;
         }
     
-        const hasInvalidTipoCultivo = !validateField("tipo_cultivo", tipo_cultivo);
-        const hasInvalidPredioAsignado = !validateField("predio_asignado", predio_asignado);
-        const hasInvalidVariedadCultivo = variedad_cultivo.trim() !== "" && !validateField("variedad_cultivo", variedad_cultivo);
-    
-        setFieldErrors({
-            tipo_cultivo: hasInvalidTipoCultivo,
-            predio_asignado: hasInvalidPredioAsignado,
-            variedad_cultivo: hasInvalidVariedadCultivo
-        });
-    
-        if (hasInvalidTipoCultivo || hasInvalidPredioAsignado || hasInvalidVariedadCultivo) {
-            return false;
-        }
-    
-        return true;
-    };        
+        return true; // Si no hay errores, el formulario es válido
+    };           
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -185,7 +200,7 @@ const LoteEdit = () => {
                     setErrorMessage(error.response.data.non_field_errors[0]);
                 }
     
-                setFieldErrors(newErrors); // Actualizar los errores
+                setErrors(newErrors); // Actualizar los errores
             } else {
                 setErrorMessage("Error de conexión con el servidor.");
             }
@@ -209,7 +224,7 @@ const LoteEdit = () => {
                             placeholder="Ej: Cacao"
                             value={formData.id_lot}
                             onChange={handleChange}
-                            error={fieldErrors.id_lot}
+                            error={errors.id_lot}
                             maxLength={20}
                             disabled
                         />
@@ -220,7 +235,7 @@ const LoteEdit = () => {
                             placeholder="Ej: Cacao"
                             value={formData.tipo_cultivo}
                             onChange={handleChange}
-                            error={fieldErrors.tipo_cultivo}
+                            error={errors.tipo_cultivo}
                             maxLength={20}
                         />
                         <InputItem
@@ -230,8 +245,8 @@ const LoteEdit = () => {
                             placeholder="ID (letras, números y un guión)"
                             value={formData.predio_asignado}
                             onChange={handleChange}
-                            error={fieldErrors.predio_asignado} // Mostrar el error aquí
-                            className={`${fieldErrors.predio_asignado ? "border-red-500" : "border-gray-300"}`} // Condición de borde rojo
+                            error={errors.predio_asignado} // Mostrar el error aquí
+                            className={`${errors.predio_asignado ? "border-red-500" : "border-gray-300"}`} // Condición de borde rojo
                         />
     
                         <div className="relative mt-2 flex flex-col">
@@ -262,7 +277,7 @@ const LoteEdit = () => {
                             placeholder="Ej: Floral"
                             value={formData.variedad_cultivo}
                             onChange={handleChange}
-                            error={fieldErrors.variedad_cultivo}
+                            error={errors.variedad_cultivo}
                             maxLength={20}
                         />
     
