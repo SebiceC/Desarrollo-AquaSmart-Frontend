@@ -26,6 +26,7 @@ import DispositivoIoTList from "../app/gestionDatos/dispositivosIoT/Dispositivos
 import DispositivosIoTInformation from "../app/gestionDatos/dispositivosIoT/DispositivosIoTInformation";
 
 import PrediosDetail from "../app/gestionDatos/predios/PrediosDetail";
+import LoteEdit from "../app/gestionDatos/lotes/LoteEdit";
 
 const AppRouter = () => {
     return (
@@ -63,7 +64,9 @@ const AppRouter = () => {
             <Route path="/gestionDatos/predios" element={<ProtectedRoute element={<PrediosList />} />} />           
             <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />         
             <Route path="/seguridad/actualizar-contrasena" element={<ProtectedRoute element={<UpdatedPassword />} />} />
-            <Route path="/gestionDatos/predios/:id_plot" element={<ProtectedRoute element={<PrediosDetail />} />} />         
+            <Route path="/gestionDatos/predios/:id_plot" element={<ProtectedRoute element={<PrediosDetail />} />} />
+            <Route path="/gestionDatos/lotes/:id_lot/update" element={<ProtectedRoute element={<LoteEdit />} />} />
+
         </Routes>
     );
 };
