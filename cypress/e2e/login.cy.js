@@ -1,3 +1,7 @@
+/// <reference types="cypress" />
+beforeEach(() => {
+  cy.viewport(1920, 1080); // Adjust these values to a desktop screen size
+});
 describe("Prueba de inicio de sesión con OTP en Cypress", () => {
   const cedula = "1109420278"; // Ajusta con un valor válido
   const password = "Cc115689*"; // Ajusta con un valor válido
