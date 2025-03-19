@@ -1,23 +1,27 @@
-// PrediosList.jsx
 import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputFilter from "../../../components/InputFilterPredio";
 import Modal from "../../../components/Modal";
+import DataTable from "../../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import DeletePlots from "./DeletePlots";
 
 const PrediosList = () => {
   const navigate = useNavigate();
   const [predios, setPredios] = useState([]);
-  const [filteredPredios, setFilteredPredios] = useState([]); // Inicialmente vacío
+  const [filteredPredios, setFilteredPredios] = useState(null); // Cambiado a null para controlar si se han aplicado filtros
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [plotToDelete, setPlotToDelete] = useState(null);
   const [filters, setFilters] = useState({
     id: "",
     ownerDocument: "",
     startDate: "",
     endDate: "",
+    isActive: "",
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -36,11 +40,9 @@ const PrediosList = () => {
           headers: { Authorization: `Token ${token}` },
         });
 
-        const activePredios = response.data.filter(
-          (predio) => predio.is_activate
-        );
-console.log(activePredios);
-        setPredios(activePredios); // Solo actualiza predios, no filteredPredios
+        // Store all plots, both active and inactive
+        setPredios(response.data);
+        console.log("Todos los predios:", response.data);
       } catch (error) {
         console.error("Error al obtener la lista de predios:", error);
         setModalMessage("Error al cargar los predios. Por favor, intente más tarde.");
@@ -58,24 +60,35 @@ console.log(activePredios);
     });
   };
 
+  // Modified applyFilters function to show modal when owner ID doesn't exist
   const applyFilters = () => {
     try {
+      // Verificamos si hay al menos un filtro aplicado
+      const hasActiveFilters = 
+        filters.id.trim() !== "" || 
+        filters.ownerDocument.trim() !== "" || 
+        filters.startDate !== "" || 
+        filters.endDate !== "" || 
+        filters.isActive !== "";
+      
+
       // Validación de ID
-      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim())) {
-        setModalMessage("El campo “ID del predio” contiene caracteres no válidos o el predio no existe");
+      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
+        !/^\d+$/.test(filters.id.trim())) {
+        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
         setShowModal(true);
         setFilteredPredios([]);
         return;
       }
-  
-      // Validación de documento del propietario
+
+      // Validación de formato del documento del propietario
       if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo “ID del propietario” contiene caracteres no válidos o no se encuentra asociado a ningún registro");
+        setModalMessage("El campo ID del propietario contiene caracteres no válidos o el propietario no existe");
         setShowModal(true);
         setFilteredPredios([]);
         return;
       }
-  
+
       // Validación de fechas
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
         setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
@@ -83,32 +96,77 @@ console.log(activePredios);
         setFilteredPredios([]);
         return;
       }
-  
+
       // Filtrado de predios
       const filtered = predios.filter((predio) => {
-        const matchesId = filters.id.trim() === "" || predio.id_plot.includes(filters.id.trim());
-        const matchesOwner = filters.ownerDocument.trim() === "" || predio.owner.includes(filters.ownerDocument.trim());
-        const matchesDate =
-          (filters.startDate === "" || new Date(predio.registration_date) >= new Date(filters.startDate)) &&
-          (filters.endDate === "" || new Date(predio.registration_date) <= new Date(filters.endDate));
+        // Modificación para permitir búsqueda parcial por ID
+        const matchesId = filters.id.trim() === "" ||
+          (filters.id.trim().length > 0 &&
+            predio.id_plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
+
+        const matchesOwner = filters.ownerDocument.trim() === "" ||
+          predio.owner.includes(filters.ownerDocument.trim());
+
+        // Modificado para incluir predios tanto activos como inactivos
+        const matchesStatus =
+          filters.isActive === "" ||
+          predio.is_activate === (filters.isActive === "true");
+
+
+  // Manejo de fechas - enfoque idéntico al que funciona en UserList
+  let matchesDate = true; // Por defecto asumimos que coincide
   
-        return matchesId && matchesOwner && matchesDate;
+  if (filters.startDate !== "" || filters.endDate !== "") {
+    // Solo verificamos fechas si hay algún filtro de fecha
+    
+    // Convertir fecha de predio a formato YYYY-MM-DD
+    const predioDate = new Date(predio.registration_date);
+    const predioDateStr = predioDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
+    
+    // Verificar límite inferior
+    if (filters.startDate !== "") {
+      const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+      if (predioDateStr < startDateStr) {
+        matchesDate = false;
+      }
+    }
+    
+    // Verificar límite superior
+    if (matchesDate && filters.endDate !== "") {
+      const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+      if (predioDateStr > endDateStr) {
+        matchesDate = false;
+      }
+    }
+  }
+
+        return matchesId && matchesOwner && matchesDate && matchesStatus;
       });
-  
+
+      // Validación adicional para ID del predio no existente
       if (filters.id.trim() !== "" && filtered.length === 0) {
         setModalMessage("El predio filtrado no existe.");
         setShowModal(true);
         setFilteredPredios([]);
         return;
       }
-  
+
+      // Validación adicional para documento del propietario no existente
+      if (filters.ownerDocument.trim() !== "" && filtered.length === 0) {
+        setModalMessage("El ID del propietario no se encuentra asociado a ningún registro");
+        setShowModal(true);
+        setFilteredPredios([]);
+        return;
+      }
+
+      // Validación para rango de fechas sin resultados
       if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
         setModalMessage("No hay predios registrados en el rango de fechas especificado.");
         setShowModal(true);
         setFilteredPredios([]);
         return;
       }
-  
+
       setFilteredPredios(filtered); // Actualiza filteredPredios solo cuando se aplican filtros
     } catch (error) {
       setModalMessage("¡El predio filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
@@ -117,32 +175,48 @@ console.log(activePredios);
     }
   };
 
-  const handleInactivate = async (predioId) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setModalMessage("No hay una sesión activa. Por favor, inicie sesión.");
-        setShowModal(true);
-        return;
-      }
+  const handleDelete = (plot) => {
+    setPlotToDelete(plot);
+    setShowDeleteModal(true);
+  };
+  const handleDeleteSuccess = (plotId) => {
+    // Actualizar la lista de usuarios
+    setPredios(predios.filter(plot => plot.id_plot !== plotId));
 
-      await axios.post(`${API_URL}/plot-lot/${predioId}/inhabilitar/`, {}, {
-        headers: { Authorization: `Token ${token}` },
-      });
-
-      // Actualizar la lista de predios
-      setPredios(predios.map(predio => 
-        predio.id_plot === predioId ? { ...predio, is_activate: false } : predio
-      ));
-      setFilteredPredios(filteredPredios.filter(predio => predio.id_plot !== predioId));
-      
-      setModalMessage("Predio inhabilitado exitosamente.");
-      setShowModal(true);
-    } catch (error) {
-      console.error("Error al inhabilitar el predio:", error);
-      setModalMessage(error.response?.data?.error || "Error al inhabilitar el predio. Por favor, intente nuevamente.");
-      setShowModal(true);
+    // Si hay usuarios filtrados, actualizar esa lista también
+    if (filteredPredios && filteredPredios.length > 0) {
+      setFilteredPredios(filteredPredios.filter(plot => plot.id_plot !== plotId));
     }
+  };
+
+
+  // Configuración de columnas para DataTable
+  const columns = [
+    { key: "id_plot", label: "ID Predio" },
+    { key: "plot_name", label: "Nombre" },
+    { key: "owner", label: "Propietario" },
+    { key: "is_activate", label: "Estado", render: (predio) => predio.is_activate ? "Activo" : "Inactivo" },
+    {
+      key: "plot_extension",
+      label: "Extensión",
+      responsive: "hidden md:table-cell",
+      render: (predio) => `${predio.plot_extension} ha`
+    },
+    {
+      key: "registration_date",
+      label: "Registro",
+      responsive: "hidden sm:table-cell",
+      render: (predio) => new Date(predio.registration_date).toLocaleDateString()
+    }
+  ];
+
+  // Manejadores para las acciones
+  const handleView = (predio) => {
+    navigate(`/gestionDatos/predios/${predio.id_plot}`);
+  };
+
+  const handleEdit = (predio) => {
+    navigate(`/gestionDatos/predios/update/${predio.id_plot}`);
   };
 
   return (
@@ -166,60 +240,45 @@ console.log(activePredios);
             showModal={showModal}
             onClose={() => {
               setShowModal(false);
-              if (modalMessage.includes("Error") || modalMessage.includes("no existe")) {
-                setFilteredPredios([]);
+              if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
+                setFilteredPredios(null);
               }
             }}
-            title={modalMessage.includes("Error") || modalMessage.includes("no existe") ? "Error" : "Información"}
+            title={modalMessage === "Predio eliminado correctamente" ? "Éxito" : "Error"}
             btnMessage="Cerrar"
           >
             <p>{modalMessage}</p>
           </Modal>
         )}
 
-        {/* Tabla de predios */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-6 overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Predio</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Propietario</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Extensión</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Registro</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredPredios.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-500 text-sm">
-                    {predios.length > 0 ? "Aplica filtros para ver resultados." : "No hay predios para mostrar."}
-                  </td>
-                </tr>
-              ) : (
-                filteredPredios.map((predio) => (
-                  <tr key={predio.id_plot} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.id_plot}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.plot_name}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{predio.owner}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{`${predio.plot_extension} ha`}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                      {new Date(predio.registration_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex space-x-1 justify-start">
-                      <button className="bg-red-500 p-2 rounded-lg" onClick={() => handleDeleteClick(user)}><Trash2 className="text-white" /></button>
-                      <button className="bg-green-500 p-2 rounded-lg" onClick={() => navigate(``)}><Eye className="text-white" /></button>
-                      <button className="bg-blue-500 p-2 rounded-lg" onClick={() => navigate(``)}><Pencil className="text-white" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {showDeleteModal && plotToDelete && (
+          <DeletePlots
+            plot={plotToDelete}
+            showModal={showDeleteModal}
+            setShowModal={setShowDeleteModal}
+            onDeleteSuccess={handleDeleteSuccess}
+            setModalMessage={setModalMessage}
+            setShowErrorModal={setShowModal}
+          />
+        )}
+
+        {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
+        {filteredPredios !== null && (
+          <DataTable
+            columns={columns}
+            data={filteredPredios}
+            emptyMessage="No se encontraron predios con los filtros aplicados."
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
+        
+        {filteredPredios === null && (
+          <div className="text-center my-10 text-gray-600">
+            Aplica filtros para ver resultados.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-// UserList.jsx
+
 import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +6,7 @@ import axios from "axios";
 import InputFilter from "../../../components/InputFilter";
 import Modal from "../../../components/Modal";
 import DeleteUser from "../UserEdit/DeleteUsers";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import DataTable from "../../../components/DataTable";
 
 const UserList = () => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const UserList = () => {
     personType: "",
     startDate: "",
     endDate: "",
+    isActive: "",
   });
 
   const personTypeNames = {
@@ -53,7 +54,7 @@ const UserList = () => {
         });
 
         const activeAndRegisteredUsers = response.data.filter(
-          (user) => user.is_active && user.is_registered
+          (user) => user.is_registered
         );
 
         setUsuarios(activeAndRegisteredUsers);
@@ -88,24 +89,45 @@ const UserList = () => {
         return;
       }
 
-      // Filtrado de usuarios
-      const filtered = usuarios.filter((user) => {
-        const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
-        const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
+
+// Filtrado de usuarios
+const filtered = usuarios.filter((user) => {
+  const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
+  const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
+
+  const matchesStatus = 
+  filters.isActive === "" || 
+  user.is_active === (filters.isActive === "true");
+
+  // Manejo de fechas - enfoque más explícito
+  let matchesDate = true; // Por defecto asumimos que coincide
+  
+  if (filters.startDate !== "" || filters.endDate !== "") {
+    // Solo verificamos fechas si hay algún filtro de fecha
     
-        // Convertir las fechas a solo año, mes y día (ignorar horas, minutos y segundos)
-        const userDate = new Date(user.date_joined);
-        const userDateOnly = new Date(userDate.getFullYear(), userDate.getMonth(), userDate.getDate());
+    // Convertir fecha de usuario a formato YYYY-MM-DD
+    const userDate = new Date(user.date_joined);
+    const userDateStr = userDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
     
-        const startDate = filters.startDate === "" ? null : new Date(filters.startDate);
-        const endDate = filters.endDate === "" ? null : new Date(filters.endDate);
+    // Verificar límite inferior
+    if (filters.startDate !== "") {
+      const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+      if (userDateStr < startDateStr) {
+        matchesDate = false;
+      }
+    }
     
-        const matchesDate =
-            (startDate === null || userDateOnly >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) &&
-            (endDate === null || userDateOnly <= new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()));
-    
-        return matchesId && matchesPersonType && matchesDate && user.is_active && user.is_registered;
-      });
+    // Verificar límite superior
+    if (matchesDate && filters.endDate !== "") {
+      const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+      if (userDateStr > endDateStr) {
+        matchesDate = false;
+      }
+    }
+  }
+
+  return matchesId && matchesPersonType && matchesStatus && matchesDate && user.is_registered;
+});
       
       if (filters.id.trim() !== "" && filtered.length === 0) {
         setModalMessage("El usuario filtrado no existe.");
@@ -143,6 +165,34 @@ const UserList = () => {
     }
   };
 
+  // Configuración de columnas para la tabla
+  const columns = [
+    { key: "document", label: "Documento" },
+    { key: "first_name", label: "Nombre" },
+    { key: "last_name", label: "Apellidos", responsive: "hidden md:table-cell" },
+    { 
+      key: "is_active", 
+      label: "Estado", 
+      render: (user) => user.is_active ? "Activo" : "Inactivo" 
+    },
+    { 
+      key: "person_type", 
+      label: "Tipo", 
+      responsive: "hidden sm:table-cell",
+      render: (user) => personTypeNames[user.person_type]?.substring(0, 3) || "Des"
+    },
+    { 
+      key: "date_joined", 
+      label: "Registro", 
+      responsive: "hidden md:table-cell",
+      render: (user) => new Date(user.date_joined).toLocaleDateString()
+    },
+  ];
+
+  // Manejadores de acciones para la tabla
+  const handleView = (user) => navigate(`/gestionDatos/users/${user.document}`);
+  const handleEdit = (user) => navigate(`/gestionDatos/users/updateinformation/${user.document}`);
+
   return (
     <div>
       <NavBar />
@@ -156,6 +206,7 @@ const UserList = () => {
           filters={filters}
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
+          usuarios={usuarios} 
         />
 
         {/* Modal de error */}
@@ -185,67 +236,15 @@ const UserList = () => {
           />
         )}
 
-        {/* Tabla de usuarios */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden mt-6 overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Apellidos</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Registro</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsuarios.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-500 text-sm">
-                    No hay usuarios para mostrar. Aplica filtros para ver resultados.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsuarios.map((user) => (
-                  <tr key={user.document} className="hover:bg-gray-100">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.document}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.first_name}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{user.last_name}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {personTypeNames[user.person_type]?.substring(0, 3) || "Des"}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                      {new Date(user.date_joined).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
-                      <div className="flex space-x-1 justify-start">
-                        <button 
-                          className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                          onClick={() => handleDeleteClick(user)}
-                        >
-                          <Trash2 className="text-white" />
-                        </button>
-                        <button 
-                          className="bg-[#18864B] p-1.5 rounded-lg min-w-[28px]"
-                          onClick={() => navigate(`/gestionDatos/users/${user.document}`)}
-                        >
-                          <Eye className="text-white" />
-                        </button>
-                        <button
-                          className="bg-blue-400 hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[40px] min-h-[40px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-                          onClick={() => navigate(`/gestionDatos/users/updateinformation/${user.document}`)}
-                          aria-label="Editar información del usuario"
-                        >
-                          <Pencil className="text-white" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* Uso del nuevo componente DataTable */}
+        <DataTable
+          columns={columns}
+          data={filteredUsuarios}
+          emptyMessage="No hay usuarios para mostrar. Aplica filtros para ver resultados."
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
       </div>
     </div>
   );

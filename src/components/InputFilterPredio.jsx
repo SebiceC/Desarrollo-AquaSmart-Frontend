@@ -10,6 +10,10 @@ const InputFilter = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFi
     onFilterChange("ownerDocument", e.target.value);
   };
 
+  const handleStatusChange = (e) => {
+    onFilterChange("isActive", e.target.value);
+  };
+
   const handleDateChange = (e) => {
     onFilterChange(e.target.name, e.target.value);
   };
@@ -44,6 +48,31 @@ const InputFilter = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFi
           onChange={handleOwnerDocumentChange}
           maxLength={15}
         />
+      </div>
+
+
+            {/* Filtro por Estado (Activo/Inactivo) */}
+            <div className="relative w-full lg:w-[22%] xl:w-1/5">
+        <select
+          className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+          value={filters.isActive}
+          onChange={handleStatusChange}
+        >
+          <option value=""> SELECCIÓN DE ESTADO</option>
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+        <span className="absolute top-3 right-4 text-gray-400">
+          <svg
+            className="w-5 h-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
       </div>
 
       {/* Filtro por Fecha de Registro */}

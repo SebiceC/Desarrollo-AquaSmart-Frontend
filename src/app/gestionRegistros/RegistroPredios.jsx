@@ -23,7 +23,7 @@ const RegistroPredios = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         if (name === "latitude" || name === "longitude") {
-            if (/^\d{0,3}(\.\d{0,6})?$/.test(value)) {
+            if (/^-?\d{0,3}(\.\d{0,6})?$/.test(value)) {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else if (name === "land_size") {
@@ -58,7 +58,7 @@ const RegistroPredios = () => {
         if (!validateForm()) return;
 
         try {
-            const response = await axios.post(`${API_URL}/plot-lot/register`, {
+            const response = await axios.post(`${API_URL}/plot-lot/plots/register`, {
                 owner: formData.owner_id,
                 plot_name: formData.farm_name,
                 plot_extension: formData.land_size,

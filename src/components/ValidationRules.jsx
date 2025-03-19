@@ -51,17 +51,17 @@ export const validateField = (name, value, formData) => {
         }
         break;
   
-      case "password":
-        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+-={}|:;"'<>,.?/])(?=.*\d)(?=.{8,})/;
-        if (!value) {
-          errors[name] = "ERROR, campo vacío";
-        } else if (!passwordRegex.test(value)) {
-          errors[name] =
-            "La contraseña debe tener al menos 8 caracteres, una mayúscula, un numero y un carácter especial";
-        } else if (value.length > 20) {
-          errors[name] = "Máximo 20 caracteres";
-        }
-        break;
+        case "password":
+          const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{}|\\:;"'<>,.?/])(?=.*\d)(?=.{8,})/;
+          if (!value) {
+            errors[name] = "ERROR, campo vacío";
+          } else if (!passwordRegex.test(value)) {
+            errors[name] =
+              "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial";
+          } else if (value.length > 20) {
+            errors[name] = "Máximo 20 caracteres";
+          }
+          break;
   
       case "confirmPassword":
         if (!value) {
