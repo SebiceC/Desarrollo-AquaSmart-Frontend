@@ -11,7 +11,7 @@ import DeletePlots from "./DeletePlots";
 const PrediosList = () => {
   const navigate = useNavigate();
   const [predios, setPredios] = useState([]);
-  const [filteredPredios, setFilteredPredios] = useState([]); // Inicialmente vacío
+  const [filteredPredios, setFilteredPredios] = useState(null); // Cambiado a null para controlar si se han aplicado filtros
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -40,11 +40,9 @@ const PrediosList = () => {
           headers: { Authorization: `Token ${token}` },
         });
 
-        const activePredios = response.data.filter(
-          (predio) => predio.is_activate
-        );
-        console.log(activePredios);
-        setPredios(activePredios); // Solo actualiza predios, no filteredPredios
+        // Store all plots, both active and inactive
+        setPredios(response.data);
+        console.log("Todos los predios:", response.data);
       } catch (error) {
         console.error("Error al obtener la lista de predios:", error);
         setModalMessage("Error al cargar los predios. Por favor, intente más tarde.");
@@ -65,6 +63,15 @@ const PrediosList = () => {
   // Modified applyFilters function to show modal when owner ID doesn't exist
   const applyFilters = () => {
     try {
+      // Verificamos si hay al menos un filtro aplicado
+      const hasActiveFilters = 
+        filters.id.trim() !== "" || 
+        filters.ownerDocument.trim() !== "" || 
+        filters.startDate !== "" || 
+        filters.endDate !== "" || 
+        filters.isActive !== "";
+      
+
       // Validación de ID
       if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
         !/^\d+$/.test(filters.id.trim())) {
@@ -100,36 +107,38 @@ const PrediosList = () => {
         const matchesOwner = filters.ownerDocument.trim() === "" ||
           predio.owner.includes(filters.ownerDocument.trim());
 
+        // Modificado para incluir predios tanto activos como inactivos
         const matchesStatus =
           filters.isActive === "" ||
           predio.is_activate === (filters.isActive === "true");
 
-        // Manejo de fechas - enfoque más explícito
-        let matchesDate = true; // Por defecto asumimos que coincide
 
-        if (filters.startDate !== "" || filters.endDate !== "") {
-          // Solo verificamos fechas si hay algún filtro de fecha
-
-          // Convertir fecha de predio a formato YYYY-MM-DD
-          const predioDate = new Date(predio.registration_date);
-          const predioDateStr = predioDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
-
-          // Verificar límite inferior
-          if (filters.startDate !== "") {
-            const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
-            if (predioDateStr < startDateStr) {
-              matchesDate = false;
-            }
-          }
-
-          // Verificar límite superior
-          if (matchesDate && filters.endDate !== "") {
-            const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
-            if (predioDateStr > endDateStr) {
-              matchesDate = false;
-            }
-          }
-        }
+  // Manejo de fechas - enfoque idéntico al que funciona en UserList
+  let matchesDate = true; // Por defecto asumimos que coincide
+  
+  if (filters.startDate !== "" || filters.endDate !== "") {
+    // Solo verificamos fechas si hay algún filtro de fecha
+    
+    // Convertir fecha de predio a formato YYYY-MM-DD
+    const predioDate = new Date(predio.registration_date);
+    const predioDateStr = predioDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
+    
+    // Verificar límite inferior
+    if (filters.startDate !== "") {
+      const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+      if (predioDateStr < startDateStr) {
+        matchesDate = false;
+      }
+    }
+    
+    // Verificar límite superior
+    if (matchesDate && filters.endDate !== "") {
+      const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+      if (predioDateStr > endDateStr) {
+        matchesDate = false;
+      }
+    }
+  }
 
         return matchesId && matchesOwner && matchesDate && matchesStatus;
       });
@@ -175,7 +184,7 @@ const PrediosList = () => {
     setPredios(predios.filter(plot => plot.id_plot !== plotId));
 
     // Si hay usuarios filtrados, actualizar esa lista también
-    if (filteredPredios.length > 0) {
+    if (filteredPredios && filteredPredios.length > 0) {
       setFilteredPredios(filteredPredios.filter(plot => plot.id_plot !== plotId));
     }
   };
@@ -210,8 +219,6 @@ const PrediosList = () => {
     navigate(`/gestionDatos/predios/update/${predio.id_plot}`);
   };
 
-
-
   return (
     <div>
       <NavBar />
@@ -233,7 +240,9 @@ const PrediosList = () => {
             showModal={showModal}
             onClose={() => {
               setShowModal(false);
-              setFilteredPredios([]);
+              if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
+                setFilteredPredios(null);
+              }
             }}
             title={modalMessage === "Predio eliminado correctamente" ? "Éxito" : "Error"}
             btnMessage="Cerrar"
@@ -253,15 +262,23 @@ const PrediosList = () => {
           />
         )}
 
-        {/* Uso del componente DataTable */}
-        <DataTable
-          columns={columns}
-          data={filteredPredios}
-          emptyMessage={predios.length > 0 ? "Aplica filtros para ver resultados." : "No hay predios para mostrar."}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
+        {filteredPredios !== null && (
+          <DataTable
+            columns={columns}
+            data={filteredPredios}
+            emptyMessage="No se encontraron predios con los filtros aplicados."
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
+        
+        {filteredPredios === null && (
+          <div className="text-center my-10 text-gray-600">
+            Aplica filtros para ver resultados.
+          </div>
+        )}
       </div>
     </div>
   );
