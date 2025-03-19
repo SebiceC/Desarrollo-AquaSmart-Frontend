@@ -18,6 +18,7 @@ const PrediosList = () => {
     ownerDocument: "",
     startDate: "",
     endDate: "",
+    isActive: "",
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -58,44 +59,55 @@ const PrediosList = () => {
     });
   };
 
-  const applyFilters = () => {
-    try {
-      // Validación de ID
-      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
-        setShowModal(true);
-        setFilteredPredios([]);
-        return;
-      }
-  
-      // Validación de documento del propietario
-      if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo ID del propietario contiene caracteres no válidos o no se encuentra asociado a ningún registro");
-        setShowModal(true);
-        setFilteredPredios([]);
-        return;
-      }
-  
-      // Validación de fechas
-      if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
-        setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
-        setShowModal(true);
-        setFilteredPredios([]);
-        return;
-      }
-  
-// Filtrado de predios
-const filtered = predios.filter((predio) => {
-  const matchesId = filters.id.trim() === "" || predio.id_plot.includes(filters.id.trim());
-  const matchesOwner = filters.ownerDocument.trim() === "" || predio.owner.includes(filters.ownerDocument.trim());
-  
+// Modified applyFilters function to show modal when owner ID doesn't exist
+const applyFilters = () => {
+  try {
+    // Validación de ID
+    if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) && 
+        !/^\d+$/.test(filters.id.trim())) {
+      setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
+      setShowModal(true);
+      setFilteredPredios([]);
+      return;
+    }
+
+    // Validación de formato del documento del propietario
+    if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
+      setModalMessage("El campo ID del propietario contiene caracteres no válidos o el propietario no existe");
+      setShowModal(true);
+      setFilteredPredios([]);
+      return;
+    }
+
+    // Validación de fechas
+    if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
+      setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
+      setShowModal(true);
+      setFilteredPredios([]);
+      return;
+    }
+
+    // Filtrado de predios
+    const filtered = predios.filter((predio) => {
+      // Modificación para permitir búsqueda parcial por ID
+      const matchesId = filters.id.trim() === "" || 
+        (filters.id.trim().length > 0 && 
+         predio.id_plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
+      
+      const matchesOwner = filters.ownerDocument.trim() === "" || 
+        predio.owner.includes(filters.ownerDocument.trim());
+
+      const matchesStatus = 
+      filters.isActive === "" || 
+      predio.is_activate === (filters.isActive === "true");
+      
   // Manejo de fechas - enfoque más explícito
   let matchesDate = true; // Por defecto asumimos que coincide
   
   if (filters.startDate !== "" || filters.endDate !== "") {
     // Solo verificamos fechas si hay algún filtro de fecha
     
-    // Convertir fecha de registro a formato YYYY-MM-DD
+    // Convertir fecha de predio a formato YYYY-MM-DD
     const predioDate = new Date(predio.registration_date);
     const predioDateStr = predioDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
     
@@ -116,29 +128,40 @@ const filtered = predios.filter((predio) => {
     }
   }
 
-  return matchesId && matchesOwner && matchesDate;
-});
-      if (filters.id.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El predio filtrado no existe.");
-        setShowModal(true);
-        setFilteredPredios([]);
-        return;
-      }
-  
-      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
-        setModalMessage("No hay predios registrados en el rango de fechas especificado.");
-        setShowModal(true);
-        setFilteredPredios([]);
-        return;
-      }
-  
-      setFilteredPredios(filtered); // Actualiza filteredPredios solo cuando se aplican filtros
-    } catch (error) {
-      setModalMessage("¡El predio filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
+      return matchesId && matchesOwner && matchesDate && matchesStatus;
+    });
+
+    // Validación adicional para ID del predio no existente
+    if (filters.id.trim() !== "" && filtered.length === 0) {
+      setModalMessage("El predio filtrado no existe.");
       setShowModal(true);
       setFilteredPredios([]);
+      return;
     }
-  };
+
+    // Validación adicional para documento del propietario no existente
+    if (filters.ownerDocument.trim() !== "" && filtered.length === 0) {
+      setModalMessage("El ID del propietario no se encuentra asociado a ningún registro");
+      setShowModal(true);
+      setFilteredPredios([]);
+      return;
+    }
+    
+    // Validación para rango de fechas sin resultados
+    if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
+      setModalMessage("No hay predios registrados en el rango de fechas especificado.");
+      setShowModal(true);
+      setFilteredPredios([]);
+      return;
+    }
+
+    setFilteredPredios(filtered); // Actualiza filteredPredios solo cuando se aplican filtros
+  } catch (error) {
+    setModalMessage("¡El predio filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
+    setShowModal(true);
+    setFilteredPredios([]);
+  }
+};
 
   const handleInactivate = async (predioId) => {
     try {
@@ -173,6 +196,7 @@ const filtered = predios.filter((predio) => {
     { key: "id_plot", label: "ID Predio" },
     { key: "plot_name", label: "Nombre" },
     { key: "owner", label: "Propietario" },
+    { key: "is_activate", label: "Estado", render: (predio) => predio.is_activate ? "Activo" : "Inactivo"  },
     { 
       key: "plot_extension", 
       label: "Extensión", 
@@ -189,12 +213,10 @@ const filtered = predios.filter((predio) => {
 
   // Manejadores para las acciones
   const handleView = (predio) => {
-    // Deixo vacío para mantener la estructura original
     navigate(`/gestionDatos/predios/${predio.id_plot}`);
   };
   
   const handleEdit = (predio) => {
-    // Deixo vacío para mantener la estructura original
     navigate(`/gestionDatos/predios/update/${predio.id_plot}`);
   };
   

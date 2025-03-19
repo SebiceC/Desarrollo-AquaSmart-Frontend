@@ -67,7 +67,7 @@ const DataTable = ({
                 {actions && (
                   <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
                     <div className="flex space-x-1 justify-start">
-                      {onDelete && item.is_active && (
+                      {onDelete && (item.is_active || item.is_activate) && (
                         <button
                           className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
                           onClick={() => onDelete(item)}

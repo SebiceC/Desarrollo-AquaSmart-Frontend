@@ -22,6 +22,7 @@ const UserList = () => {
     personType: "",
     startDate: "",
     endDate: "",
+    isActive: "",
   });
 
   const personTypeNames = {
@@ -94,6 +95,10 @@ const filtered = usuarios.filter((user) => {
   const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
   const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
 
+  const matchesStatus = 
+  filters.isActive === "" || 
+  user.is_active === (filters.isActive === "true");
+
   // Manejo de fechas - enfoque más explícito
   let matchesDate = true; // Por defecto asumimos que coincide
   
@@ -121,7 +126,7 @@ const filtered = usuarios.filter((user) => {
     }
   }
 
-  return matchesId && matchesPersonType && matchesDate && user.is_registered;
+  return matchesId && matchesPersonType && matchesStatus && matchesDate && user.is_registered;
 });
       
       if (filters.id.trim() !== "" && filtered.length === 0) {
@@ -201,6 +206,7 @@ const filtered = usuarios.filter((user) => {
           filters={filters}
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
+          usuarios={usuarios} 
         />
 
         {/* Modal de error */}
