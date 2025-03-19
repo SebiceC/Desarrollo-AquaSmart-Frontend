@@ -53,7 +53,7 @@ const AppRouter = () => {
             <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
             <Route path="/gestionDatos/users/:document" element={<ProtectedRoute element={<UserInformation />} />} />
             <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
-            <Route path="/gestionDatos/lotes/:id" element={<ProtectedRoute element={<LoteInformation />} />} />
+            <Route path="/gestionDatos/lotes/:id_lot" element={<ProtectedRoute element={<LoteInformation />} />} />
             <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
             <Route path="/gestionDatos/dispositivosIoT/:id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
