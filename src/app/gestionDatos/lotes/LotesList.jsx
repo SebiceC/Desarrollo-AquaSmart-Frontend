@@ -6,6 +6,7 @@ import InputFilter from "../../../components/InputFilterLote";
 import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import DeleteLotes from "./DeleteLote";
 
 
 const LotesList = () => {
@@ -132,25 +133,25 @@ const LotesList = () => {
       }
 
       // Filtrado de lotes
-      const filtered = lotes.filter((lote) => {
+      const filtered = lotes.filter((lots) => {
         // Modificación para permitir búsqueda parcial por ID
         const matchesId = filters.id.trim() === "" ||
           (filters.id.trim().length > 0 &&
-            lote.plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
+            lots.plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
       
         // Modificación para permitir búsqueda parcial por ID del lote
         const matchesIdlote = filters.lotId.trim() === "" ||
         (filters.lotId.trim().length > 0 &&
-          (lote.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
-           lote.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
+          (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
+           lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
         // Ahora buscamos en el predioOwner en lugar de owner
         const matchesOwner = filters.ownerDocument.trim() === "" ||
-          lote.predioOwner.includes(filters.ownerDocument.trim());
+          lots.predioOwner.includes(filters.ownerDocument.trim());
 
         // Modificado para incluir lotes tanto activos como inactivos
         const matchesStatus =
           filters.isActive === "" ||
-          lote.is_activate === (filters.isActive === "true");
+          lots.is_activate === (filters.isActive === "true");
 
 
         // Manejo de fechas - enfoque idéntico al que funciona en UserList
@@ -160,7 +161,7 @@ const LotesList = () => {
           // Solo verificamos fechas si hay algún filtro de fecha
           
           // Convertir fecha de predio a formato YYYY-MM-DD
-          const loteDate = new Date(lote.registration_date);
+          const loteDate = new Date(lots.registration_date);
           const loteDateStr = loteDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
           
           // Verificar límite inferior
@@ -223,18 +224,18 @@ const LotesList = () => {
     }
   };
 
-  const handleDelete = (lote) => {
-    setLoteToDelete(lote);
+  const handleDelete = (lots) => {
+    setLoteToDelete(lots);
     setShowDeleteModal(true);
   };
   
-  const handleDeleteSuccess = (lotId) => {
+  const handleDeleteSuccess = (lotsId) => {
     // Actualizar la lista de lotes
-    setLotes(lotes.filter(lote => lote.id_lot !== lotId));
+    setLotes(lotes.filter(lots => lots.id_lot !== lotsId));
 
     // Si hay lotes filtrados, actualizar esa lista también
     if (filteredLotes && filteredLotes.length > 0) {
-      setFilteredLotes(filteredLotes.filter(lote => lote.id_lot !== lotId));
+      setFilteredLotes(filteredLotes.filter(lots => lots.id_lot !== lotsId));
     }
   };
 
@@ -296,13 +297,13 @@ const LotesList = () => {
         )}
 
         {showDeleteModal && loteToDelete && (
-          <DeleteLots
-            lote={loteToDelete}
-            showModal={showDeleteModal}
-            setShowModal={setShowDeleteModal}
-            onDeleteSuccess={handleDeleteSuccess}
-            setModalMessage={setModalMessage}
-            setShowErrorModal={setShowModal}
+          <DeleteLotes
+          lots={loteToDelete}
+          showModal={showDeleteModal}
+          setShowModal={setShowDeleteModal}
+          onDeleteSuccess={handleDeleteSuccess}
+          setModalMessage={setModalMessage}
+          setShowErrorModal={setShowModal}
           />
         )}
 
