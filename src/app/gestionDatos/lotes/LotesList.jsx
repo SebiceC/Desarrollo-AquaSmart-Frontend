@@ -260,7 +260,7 @@ const LotesList = () => {
   };
 
   const handleEdit = (lote) => {
-    navigate(`/gestionDatos/lotes/update/${lote.id_lot}`);
+    navigate(`/gestionDatos/lotes/${lote.id_lot}/update`);
   };
 
   return (

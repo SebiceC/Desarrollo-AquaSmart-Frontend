@@ -81,14 +81,14 @@ const LoteEdit = () => {
 
     const validateField = (name, value) => {
         if (name === "tipo_cultivo" || name === "variedad_cultivo") {
-            const regex = /^[A-Za-z0-9\s]*$/;
+            const regex = /^[A-Za-zÁÉÍÓÚáéíóú0-9\s]*$/; // Se agregan vocales con tilde
             return regex.test(value);
         } else if (name === "predio_asignado") {
-            const regex = /^[A-Za-z0-9]*-?[A-Za-z0-9]*$/;
+            const regex = /^[A-Za-zÁÉÍÓÚáéíóú0-9]*-?[A-Za-zÁÉÍÓÚáéíóú0-9]*$/; // Se agregan vocales con tilde
             return regex.test(value);
         }
         return true;
-    };
+    };    
 
     const handleChange = (e) => {
         const { name, value } = e.target;
