@@ -246,6 +246,7 @@ const LoteEdit = () => {
                             value={formData.predio_asignado}
                             onChange={handleChange}
                             error={errors.predio_asignado} // Mostrar el error aquí
+                            maxLength={20}
                             className={`${errors.predio_asignado ? "border-red-500" : "border-gray-300"}`} // Condición de borde rojo
                         />
     
