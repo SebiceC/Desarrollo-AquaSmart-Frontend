@@ -145,7 +145,7 @@ function NavBar() {
                     )}
 
                     {/* Contenedor de enlaces, SOLO ESTE será desplazable */}
-                    <div className="flex flex-col space-y-4 font-medium overflow-y-auto h-[calc(100vh-180px)]">
+                    <div className="flex flex-col space-y-4 font-medium overflow-y-auto h-[calc(100vh-230px)]">
                         <NavItem direction="/perfil" text="Perfil" />
                         <NavItem
                             direction="/control-IoT"
