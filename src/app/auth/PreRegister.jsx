@@ -535,10 +535,14 @@ const PreRegister = () => {
         title="Error de Pre Registro"
         btnMessage="Aceptar"
       >
+<<<<<<< HEAD
         <p>
           Error en el envío del formulario, ya que el número de identificación
           ya cuenta con un pre-registro realizado.
         </p>
+=======
+        <p>Error en el envío del formulario, ya que el número de identificación ya esta registrado o cuenta con un pre-registro Actualizar.</p>
+>>>>>>> d0bd87db8e3be2b07a4233ddeb99b0277fbcbb24
       </Modal>
     </div>
   );

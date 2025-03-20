@@ -198,9 +198,9 @@ const PrediosList = () => {
     { key: "is_activate", label: "Estado", render: (predio) => predio.is_activate ? "Activo" : "Inactivo" },
     {
       key: "plot_extension",
-      label: "Extensión",
+      label: "Extensión M2",
       responsive: "hidden md:table-cell",
-      render: (predio) => `${predio.plot_extension} ha`
+      render: (predio) => `${predio.plot_extension} m2`
     },
     {
       key: "registration_date",
@@ -224,7 +224,7 @@ const PrediosList = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Lista de Predios
+          Lista de Predios del distrito
         </h1>
 
         <InputFilter
@@ -276,7 +276,7 @@ const PrediosList = () => {
         
         {filteredPredios === null && (
           <div className="text-center my-10 text-gray-600">
-            Aplica filtros para ver resultados.
+            No hay predios para mostrar. Aplica filtros para ver resultados.
           </div>
         )}
       </div>

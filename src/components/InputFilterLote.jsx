@@ -1,11 +1,14 @@
 import React from "react";
 import { Search } from "lucide-react";
 
-const InputFilter = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true }) => {
+const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true }) => {
   const handleIdChange = (e) => {
     onFilterChange("id", e.target.value);
   };
 
+  const handleLotIdChange = (e) => {
+    onFilterChange("lotId", e.target.value);
+  };
 
   const handleOwnerDocumentChange = (e) => {
     onFilterChange("ownerDocument", e.target.value);
@@ -38,6 +41,20 @@ const InputFilter = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFi
 
 
       
+      {/* Filtro por ID  de lote */}
+      <div className="relative w-full lg:w-[22%] xl:w-1/4">
+        <span className="absolute left-3 top-2 text-gray-400">
+          <Search size={18} />
+        </span>
+        <input
+          type="text"
+          placeholder="Filtrar por ID de lote"
+          className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+          value={filters.lotId}
+          onChange={handleLotIdChange}
+          maxLength={12}
+        />
+      </div>
 
       {/* Filtro por documento del propietario */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
@@ -126,4 +143,4 @@ const InputFilter = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFi
   );
 };
 
-export default InputFilter;
+export default InputFilterLote;
