@@ -1,5 +1,5 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+// Removed unused React import
+// Removed unused fireEvent import
 import "@testing-library/jest-dom";
 import { describe, test, expect } from "@jest/globals";
 import { MemoryRouter } from "react-router-dom";
