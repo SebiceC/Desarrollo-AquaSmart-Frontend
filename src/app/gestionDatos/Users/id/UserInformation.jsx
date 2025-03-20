@@ -18,7 +18,7 @@ function UserInformation() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get(`${API_URL}/users/admin/update/${document}`, {
+                const response = await axios.get(`${API_URL}/users/details/${document}`, {
                     headers: { Authorization: `Token ${token}` }, // Asegúrate de tener el token correctamente
                 });
                 setUser(response.data); // Guardar el usuario en el estado
@@ -57,7 +57,7 @@ function UserInformation() {
                         <div className="space-y-3 text-left flex flex-col">
                             <p className="flex items-center space-x-2">
                                 <FaUser className="text-gray-600" />
-                                <span>{user.person_type || "Tipo de usuario no disponible"}</span>
+                                <span>Persona: {user.person_type_name || "Tipo de usuario no disponible"}</span>
                             </p>
                             <p className="flex items-center space-x-2">
                                 <FaPhone className="text-gray-600" />
@@ -75,19 +75,8 @@ function UserInformation() {
                                 <IoDocument className="text-gray-600 mr-2" /> Anexos
                             </p>
                             <div className="mt-2 space-y-2">
-                                {user.files && user.files.length > 0 ? (
-                                    user.files.map((file, index) => (
-                                        <p
-                                            key={index}
-                                            className="flex items-center space-x-2 text-blue-600 cursor-pointer"
-                                        >
-                                            <span>{file}</span>
-                                            <MdDownload className="text-gray-600" />
-                                        </p>
-                                    ))
-                                ) : (
-                                    <p className="text-gray-600">No hay archivos anexos.</p>
-                                )}
+                                <span>{user.drive_folder_id || "Carpeta no disponible"}</span>
+
                             </div>
                         </div>
                     </div>
