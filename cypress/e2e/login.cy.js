@@ -1,4 +1,12 @@
 /// <reference types="cypress" />
+/* eslint-env mocha */
+/* global beforeEach */
+/* eslint-env cypress */
+/* global describe, it, cy */
+// Ensure Cypress is globally available
+// Ensure Cypress types are loaded for proper IntelliSense and type checking
+// Definir un identificador único para la sesión (eliminado porque no se usa)
+// Agregar un comando para definir el objeto `process` de manera consistente
 beforeEach(() => {
   cy.viewport(1920, 1080); // Adjust these values to a desktop screen size
 });
