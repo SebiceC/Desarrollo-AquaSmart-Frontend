@@ -1,54 +1,53 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { FileText } from "lucide-react";
-import NavBar from "../../../components/NavBar";
-import Modal from "../../../components/Modal";
-import { ArrowLeft } from "lucide-react";
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
+import axios from "axios"
+import NavBar from "../../../components/NavBar"
+import Modal from "../../../components/Modal"
+import BackButton from "../../../components/BackButton"
+import Button from "../../../components/Button"
 
 const PreRegistroDetail = () => {
-  const { document } = useParams();
-  const navigate = useNavigate();
-  const [registro, setRegistro] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [rejectReasonVisible, setRejectReasonVisible] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [buttonsVisible, setButtonsVisible] = useState(true);
-  const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
-  const [isSubmitSelected, setIsSubmitSelected] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
+  const { document } = useParams()
+  const [registro, setRegistro] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [rejectReasonVisible, setRejectReasonVisible] = useState(false)
+  const [rejectReason, setRejectReason] = useState("")
+  const [buttonsVisible, setButtonsVisible] = useState(true)
+  const [isSubmitEnabled, setIsSubmitEnabled] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [modalMessage, setModalMessage] = useState("")
+  const [modalTitle, setModalTitle] = useState("Alerta")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const personTypeNames = {
     1: "Natural",
     2: "Jurídica",
-  };
+  }
 
   useEffect(() => {
     const fetchRegistro = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const API_URL = import.meta.env.VITE_APP_API_URL;
-        const response = await axios.get(
-          `${API_URL}/users/admin/update/${document}`,
-          {
-            headers: { Authorization: `Token ${token}` },
-          }
-        );
-        setRegistro(response.data);
+        const token = localStorage.getItem("token")
+        const API_URL = import.meta.env.VITE_APP_API_URL
+        const response = await axios.get(`${API_URL}/users/admin/update/${document}`, {
+          headers: { Authorization: `Token ${token}` },
+        })
+        setRegistro(response.data)
         if (response.data.is_registered) {
-          setButtonsVisible(false);
+          setButtonsVisible(false)
         }
       } catch (err) {
-        setError("No se pudo cargar la información del registro.");
+        setError("No se pudo cargar la información del registro.")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchRegistro();
-  }, [document]);
+    fetchRegistro()
+  }, [document])
 
   if (loading) {
     return (
@@ -83,236 +82,344 @@ const PreRegistroDetail = () => {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  if (error) return <p>{error}</p>;
+  if (error) return <p>{error}</p>
 
   const handleReject = () => {
-    setRejectReasonVisible(true);
-    setButtonsVisible(false);
-  };
+    setRejectReasonVisible(true)
+    setButtonsVisible(false)
+  }
 
   const handleRejectReasonChange = (event) => {
-    const value = event.target.value;
-    setRejectReason(value);
-    setIsSubmitEnabled(value.trim() !== "");
-    if (value.length > 200) {
-      setModalMessage("La justificación no puede exceder los 200 caracteres.");
-      setShowModal(true);
-    }
-  };
+    const value = event.target.value
+    setRejectReason(value)
+    // Habilitar el botón solo si hay al menos 5 caracteres
+    setIsSubmitEnabled(value.trim().length >= 5)
+  }
 
-  const handleSubmit = async () => {
+  const handleSubmitRejection = async () => {
+    if (rejectReason.trim().length < 5) {
+      setModalTitle("Validación requerida")
+      setModalMessage("La justificación debe tener al menos 5 caracteres para poder procesar el rechazo.")
+      setShowModal(true)
+      return
+    }
+
     if (rejectReason.length > 200) {
-      setModalMessage("La justificación no puede exceder los 200 caracteres.");
-      setShowModal(true);
-      return;
+      setModalTitle("Límite excedido")
+      setModalMessage("La justificación no puede exceder los 200 caracteres. Por favor, reduzca el texto.")
+      setShowModal(true)
+      return
     }
 
+    setIsSubmitting(true)
+
     try {
-      // Aquí puedes hacer la lógica para enviar la justificación
-      // Por ejemplo, hacer un POST request a la API para registrar la justificación.
-      await axios.post(`/your-api-url-to-submit-rejection`, { rejectReason });
-      setModalMessage("La justificación fue enviada con éxito.");
-      setShowModal(true);
-    } catch (error) {
-      setModalMessage(
-        "Hubo un error al enviar la justificación. Intenta nuevamente."
-      );
-      setShowModal(true);
-    }
-  };
+      const token = localStorage.getItem("token")
+      const API_URL = import.meta.env.VITE_APP_API_URL
 
-  const handleAccept = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const API_URL = import.meta.env.VITE_APP_API_URL;
+      // Usar la ruta correcta para el rechazo
+      const response = await axios.post(
+        `${API_URL}/users/reject-user/${document}`,
+        {
+          mensaje_rechazo: rejectReason,
+        },
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      )
 
-      let response;
-
-      try {
-        response = await axios.patch(
-          `${API_URL}/users/admin/register/${document}`,
-          { is_active: true, is_registered: true },
-          { headers: { Authorization: `Token ${token}` } }
-        );
-        console.log("Usuario aprobado:", response.data);
-
-        if (response.status === 200) {
-          setRegistro((prev) => ({
-            ...prev,
-            is_registered: true,
-          }));
-          setModalMessage("El pre-registro ha sido aprobado exitosamente.");
-        } else {
-          setModalMessage("Hubo un problema al aprobar el pre-registro.");
-        }
-      } catch (error) {
-        console.error("Error al aprobar usuario:", error.response);
-        setModalMessage("Ocurrió un error al aprobar el pre-registro.");
+      if (response.status === 200 || response.status === 201) {
+        setModalTitle("Operación exitosa")
+        setModalMessage(
+          "El pre-registro ha sido rechazado correctamente. Se ha enviado una notificación al usuario con la justificación proporcionada.",
+        )
+        setRegistro((prev) => ({
+          ...prev,
+          is_registered: false,
+          is_active: false,
+          rejection_reason: rejectReason,
+        }))
+        setRejectReasonVisible(false)
+      } else {
+        setModalTitle("Error en la operación")
+        setModalMessage("Hubo un problema al rechazar el pre-registro. Por favor, intente nuevamente.")
       }
     } catch (error) {
-      setModalMessage("Ocurrió un error al aprobar el pre-registro.");
+      console.error("Error al rechazar usuario:", error.response || error)
+      setModalTitle("Error en el servidor")
+      setModalMessage(
+        "Ocurrió un error al procesar la solicitud de rechazo. Verifique su conexión e intente nuevamente.",
+      )
     } finally {
-      setShowModal(true);
+      setIsSubmitting(false)
+      setShowModal(true)
     }
-  };
+  }
+
+  const handleAccept = async () => {
+    setIsSubmitting(true)
+
+    try {
+      const token = localStorage.getItem("token")
+      const API_URL = import.meta.env.VITE_APP_API_URL
+
+      // Usar la ruta correcta para la aprobación y envío de correo
+      const response = await axios.patch(
+        `${API_URL}/users/admin/register/${document}`,
+        {
+          is_active: true,
+          is_registered: true,
+        },
+        {
+          headers: { Authorization: `Token ${token}` },
+        },
+      )
+
+      if (response.status === 200) {
+        setRegistro((prev) => ({
+          ...prev,
+          is_registered: true,
+          is_active: true,
+        }))
+        setButtonsVisible(false)
+        setModalTitle("Operación exitosa")
+        setModalMessage(
+          "El pre-registro ha sido aprobado exitosamente. Se ha enviado una notificación al usuario con sus credenciales de acceso.",
+        )
+      } else {
+        setModalTitle("Error en la operación")
+        setModalMessage("Hubo un problema al aprobar el pre-registro. Por favor, intente nuevamente.")
+      }
+    } catch (error) {
+      console.error("Error al aprobar usuario:", error.response || error)
+      setModalTitle("Error en el servidor")
+      setModalMessage(
+        "Ocurrió un error al procesar la solicitud de aprobación. Verifique su conexión e intente nuevamente.",
+      )
+    } finally {
+      setIsSubmitting(false)
+      setShowModal(true)
+    }
+  }
+
+  const handleCancelReject = () => {
+    setRejectReasonVisible(false)
+    setButtonsVisible(true)
+    setRejectReason("")
+  }
 
   return (
     <div>
       <NavBar />
-      <div className="max-w-3xl mx-auto p-6 mt-30 bg-white rounded-lg shadow">
-        <h1 className="text-xl font-medium text-center mb-2">
-          Aprobación de Pre Registro
-        </h1>
-        <p className="text-sm text-gray-600 text-center mb-6">
-          Información enviada por el usuario
-        </p>
+      <div className="max-w-3xl mx-auto p-8 mt-32 bg-white rounded-xl shadow-md">
+        {/* Encabezado con estilo mejorado */}
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-semibold text-[#365486] mb-2">Aprobación de Pre Registro</h1>
+          <p className="text-sm text-gray-600">Información enviada por el usuario para su verificación</p>
+          <div className="w-16 h-1 bg-[#365486] mx-auto mt-3 rounded-full"></div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Nombre: </span>
-              {registro.first_name}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Apellido: </span>
-              {registro.last_name}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Tipo de persona: </span>
-              {personTypeNames[registro.person_type] || "No disponible"}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Teléfono: </span>
-              {registro.phone}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Correo: </span>
-              {registro.email}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">ID: </span>
-              {registro.document}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Contraseña: </span>
-              {registro.password || "No disponible"}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm">
-              <span className="font-medium">Confirmación de contraseña: </span>
-              {registro.password || "No disponible"}
-            </p>
-          </div>
-          <div className="space-y-1 col-span-1 md:col-span-2">
-            <p className="text-sm">
-              <span className="font-medium">Fecha: </span>
-              {registro.date_joined
-                ? new Date(registro.date_joined).toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })
-                : "Fecha no disponible"}
-            </p>
+        {/* Tarjeta de información del usuario */}
+        <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Nombre: </span>
+                <span className="text-gray-600 font-medium">{registro.first_name}</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Apellido: </span>
+                <span className="text-gray-600 font-medium">{registro.last_name}</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Tipo de persona: </span>
+                <span className="text-gray-600 font-medium">
+                  {personTypeNames[registro.person_type] || "No disponible"}
+                </span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Teléfono: </span>
+                <span className="text-gray-600 font-medium">{registro.phone}</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Correo: </span>
+                <span className="text-gray-600 font-medium">{registro.email}</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">ID: </span>
+                <span className="text-gray-600 font-medium">{registro.document}</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Contraseña: </span>
+                <span className="text-gray-600 font-medium">{registro.password || "No disponible"}</span>
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm">
+                <span className="font-medium text-black">Confirmación de contraseña: </span>
+                <span className="text-gray-600">{registro.password || "No disponible"}</span>
+              </p>
+            </div>
+            <div className="space-y-1 col-span-1 md:col-span-2">
+              <p className="text-sm">
+                <span className="font-medium text-black">Fecha: </span>
+                <span className="text-gray-600">
+                  {registro.date_joined
+                    ? new Date(registro.date_joined).toLocaleDateString("es-ES", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      })
+                    : "Fecha no disponible"}
+                </span>
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="mt-4">
-          <p className="text-sm font-medium mb-2">Documentos actuales:</p>
+        {/* Sección de documentos */}
+        <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-100">
+          <h3 className="text-md font-medium text-[#365486] mb-3">Documentos adjuntos</h3>
           {registro.drive_folder_id ? (
             <a
               href={`https://drive.google.com/drive/u/1/folders/${registro.drive_folder_id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
               Ver documentos en Google Drive
             </a>
           ) : (
-            <p className="text-sm text-gray-500">No hay documentos disponibles.</p>
+            <p className="text-sm text-gray-500 italic">No hay documentos disponibles para este usuario.</p>
           )}
         </div>
 
-
+        {/* Sección de rechazo */}
         {rejectReasonVisible && (
-          <div className="mb-6 flex items-center gap-3">
-            <textarea
-              id="reject-reason"
-              value={rejectReason}
-              onChange={handleRejectReasonChange}
-              className="w-full p-2 border border-gray-300 rounded-md resize-none h-16"
-              placeholder="Escribe aquí el motivo del rechazo..."
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={!isSubmitEnabled}
-              className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                isSubmitEnabled
-                  ? "bg-[#365486] hover:bg-[#2f4275]"
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Enviar
-            </button>
+          <div className="bg-red-50 rounded-lg p-6 mb-8 border border-red-100">
+            <h3 className="text-md font-medium text-red-700 mb-3">Justificación del rechazo</h3>
+            <div className="flex flex-col gap-4">
+              <textarea
+                id="reject-reason"
+                value={rejectReason}
+                onChange={handleRejectReasonChange}
+                className="w-full p-3 border border-gray-300 rounded-md resize-none h-28 focus:ring-2 focus:ring-[#365486] focus:border-transparent transition-all"
+                placeholder="Escribe aquí el motivo del rechazo (mínimo 5 caracteres)..."
+                maxLength={200}
+              />
+              <div className="flex justify-between items-center">
+                <span
+                  className={`text-xs ${rejectReason.length >= 195 ? "text-red-500 font-medium" : "text-gray-500"}`}
+                >
+                  {rejectReason.length}/200 caracteres
+                </span>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleCancelReject}
+                    text="Cancelar"
+                    color="bg-white"
+                    hoverColor="hover:bg-gray-100"
+                    textColor="text-gray-700"
+                    size="px-5 py-2"
+                  />
+                  <Button
+                    onClick={handleSubmitRejection}
+                    text={isSubmitting ? "Enviando..." : "Enviar rechazo"}
+                    color="bg-red-600"
+                    hoverColor="hover:bg-red-700"
+                    disabled={!isSubmitEnabled || isSubmitting}
+                    size="px-5 py-2"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
-        <div className="flex justify-center gap-4 mb-6">
-          {!registro?.is_registered && (
-            <>
-              <button
-                onClick={handleReject}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-              >
-                Rechazar
-              </button>
-              <button
-                onClick={handleAccept}
-                className="px-4 py-2 bg-[#365486] hover:bg-[#2f4275] text-white transition-colors"
-              >
-                Aceptar
-              </button>
-            </>
-          )}
-        </div>
 
-        <div className="flex justify-start gap-2 mt-6">
-          <button
-            onClick={() => navigate("/gestionDatos/pre-registros")}
-            className="flex items-center gap-2 px-4 py-2 border border-blue-400 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft size={18} /> Regresar
-          </button>
+        {/* Botones de acción */}
+        {buttonsVisible && !registro?.is_registered && (
+          <div className="flex justify-center gap-5 my-8">
+            <Button
+              onClick={handleReject}
+              text="Rechazar solicitud"
+              color="bg-red-600"
+              hoverColor="hover:bg-red-700"
+              disabled={isSubmitting}
+              size="px-6 py-2.5"
+            />
+            <Button
+              onClick={handleAccept}
+              text={isSubmitting ? "Procesando..." : "Aprobar solicitud"}
+              disabled={isSubmitting}
+              size="px-6 py-2.5"
+            />
+          </div>
+        )}
+
+        {/* Mensaje de estado aprobado */}
+        {registro?.is_registered && (
+          <div className="bg-green-50 border border-green-100 rounded-lg p-4 my-6 text-center">
+            <p className="text-green-700 font-medium">Este pre-registro ya ha sido aprobado previamente.</p>
+          </div>
+        )}
+
+        {/* Botón de regreso */}
+        <div className="flex justify-start mt-8">
+          <BackButton to="/gestionDatos/pre-registros" text="Regresar a la lista" className="hover:bg-blue-50" />
         </div>
       </div>
 
+      {/* Modal */}
       {showModal && (
         <Modal
           showModal={showModal}
-          onClose={() => setShowModal(false)}
-          title="Alerta"
+          onClose={() => {
+            setShowModal(false)
+            if (
+              modalMessage.includes("exitosa") ||
+              modalMessage.includes("aprobado") ||
+              modalMessage.includes("rechazado")
+            ) {
+              window.location.href = "/gestionDatos/pre-registros"
+            }
+          }}
+          title={modalTitle}
           btnMessage="Cerrar"
         >
           <p>{modalMessage}</p>
         </Modal>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default PreRegistroDetail;
+export default PreRegistroDetail
