@@ -117,7 +117,7 @@ const InputFilter = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFi
 
       {/* Botón Filtrar */}
       <button
-        className="bg-orange-500 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-orange-600 w-full lg:w-auto lg:whitespace-nowrap"
+        className="bg-[#365486] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#344663] hover:scale-105 w-full lg:w-auto"
         onClick={onApplyFilters}
       >
         Filtrar
