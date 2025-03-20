@@ -9,8 +9,8 @@ import Modal from "../../../components/Modal";
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
 function DispositivosIoTInformation() {
-    const { id } = useParams(); // Obtener el ID del lote seleccionado
-    const [lot, setLot] = useState(null);
+    const { iot_id } = useParams(); // Obtener el ID del lote seleccionado
+    const [iot, setIot] = useState(null);
     const [error, setError] = useState("");
     const [showErrorModal, setShowErrorModal] = useState(false);
 
@@ -19,10 +19,11 @@ function DispositivosIoTInformation() {
     useEffect(() => {
         const fetchLot = async () => {
             try {
-                const response = await axios.get(`${API_URL}/users/admin/update/${id}`, {
+                const response = await axios.get(`${API_URL}/iot/iot-devices/${iot_id}`, {
                     headers: { Authorization: `Token ${token}` }, // Asegúrate de tener el token correctamente
                 });
-                setLot(response.data); // Guardar el lote en el estado
+                console.log(response.data)
+                setIot(response.data); // Guardar el lote en el estado
             } catch (err) {
                 setError("No se pudo cargar la información del dispositivo.");
                 setShowErrorModal(true);
@@ -35,7 +36,7 @@ function DispositivosIoTInformation() {
             setError("Token de autenticación no encontrado.");
             setShowErrorModal(true);
         }
-    }, [id, token]); // Se ejecuta cada vez que cambia el ID o el token
+    }, [iot_id, token]); // Se ejecuta cada vez que cambia el ID o el token
 
     return (
         <div className="w-full min-h-screen bg-white">
@@ -60,29 +61,41 @@ function DispositivosIoTInformation() {
 
                 <div className="flex justify-center">
                     <div className="bg-gray-200 rounded-2xl p-8 shadow-md w-full max-w-3xl text-center">
-                        {lot ? (
-                            <div className="space-y-6 text-left">
+                        {iot ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
                                 {/* Información del lote */}
                                 <p className="flex items-center space-x-2">
-                                    <FaUser className="text-gray-600" />
-                                    <span><strong>ID:</strong> {lot.id_lot || "ID del lote no disponible"}</span>
+                                    <span><strong>ID:</strong> {iot.iot_id || "ID del dispositivo no disponible"}</span>
+                                </p>
+                                <div className="flex items-center space-x-2">
+                                    <strong>Estado:</strong>
+                                    {/* Estado con colores */}
+                                    <span 
+                                        className={`font-semibold px-3 py-1 rounded-full ${iot.is_active === true ? "bg-green-500 text-white" : (iot.is_active === false ? "bg-red-500 text-white" : "bg-gray-300 text-black")}`}>
+                                        {iot.is_active === true ? "Activo" : (iot.is_active === false ? "Inactivo" : "No disponible")}
+                                    </span>
+                                </div>
+                                <p className="flex items-center space-x-2">
+                                    <span><strong>Nombre:</strong> {iot.name || "No disponible"}</span>
                                 </p>
                                 <p className="flex items-center space-x-2">
-                                    <FaPhone className="text-gray-600" />
-                                    <span><strong>Tipo de cultivo:</strong> {lot.crop_type || "No disponible"}</span>
+                                    <span><strong>Tipo:</strong> {iot.device_type_name || "No disponible"}</span>
                                 </p>
                                 <p className="flex items-center space-x-2">
-                                    <FaEnvelope className="text-gray-600" />
-                                    <span><strong>Variedad del cultivo:</strong> {lot.crop_variety || "No disponible"}</span>
+                                    <span><strong>Dueño del predio:</strong> {iot.owner_name || "No disponible"}</span>
                                 </p>
+                                
                                 <p className="flex items-center space-x-2">
-                                    <FaEnvelope className="text-gray-600" />
-                                    <span><strong>Tipo de suelo:</strong> {lot?.soil_type_id?.name || "No disponible"}</span>
+                                    <span><strong>Predio asignado:</strong> {iot.id_plot || "No disponible"}</span>
                                 </p>
-                                <p className="flex items-center space-x-2">
-                                    <FaEnvelope className="text-gray-600" />
-                                    <span><strong>ID del predio:</strong> {lot.plot_id || "No disponible"}</span>
-                                </p>
+
+                                {/* Características en una sola columna */}
+                                <div className="col-span-1 sm:col-span-2">
+                                    <p className="flex items-center space-x-2">
+                                        <strong>Características:</strong> 
+                                    </p>
+                                    <p>{iot.characteristics || "No disponible"}</p>
+                                </div>
                             </div>
                         ) : (
                             <div className="bg-gray-100 p-4 rounded-lg shadow-md">
