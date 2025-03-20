@@ -22,7 +22,7 @@ function LoteInformation() {
                 const response = await axios.get(`${API_URL}/plot-lot/lots/${id_lot}`, {
                     headers: { Authorization: `Token ${token}` }, // Asegúrate de tener el token correctamente
                 });
-                console.log(response.data)
+                // console.log(response.data)
                 setLot(response.data); // Guardar el lote en el estado
             } catch (err) {
                 setError("No se pudo cargar la información del lote.");
@@ -83,6 +83,10 @@ function LoteInformation() {
                             <div className="flex items-center space-x-2">
                                 <strong>ID Predio:</strong>
                                 <span>{lot.plot || "No disponible"}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <strong>Estado:</strong>
+                                <span>{lot.is_activate === true ? "Activo" : (lot.is_activate === false ? "Inactivo" : "No disponible")}</span>
                             </div>
                         </div>
                         ) : (
