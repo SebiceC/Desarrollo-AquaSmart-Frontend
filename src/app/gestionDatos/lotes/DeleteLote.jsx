@@ -68,7 +68,7 @@ const DeleteLotes = ({
 
                     {/* Mensaje */}
                     <p className="mb-6">
-                        ¡Estás seguro en eliminar el predio!
+                        ¿Estás seguro de que deseas eliminar el lote?
                     </p>
 
                     {/* Botones */}
