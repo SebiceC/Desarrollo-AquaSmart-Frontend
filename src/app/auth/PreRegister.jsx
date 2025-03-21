@@ -537,7 +537,7 @@ const PreRegister = () => {
       >
         <p>
           Error en el envío del formulario, ya que el número de identificación
-          ya esta registrado o cuenta con un pre-registro Actualizar.
+          ya esta registrado o cuenta con un pre-registro.
         </p>
       </Modal>
     </div>

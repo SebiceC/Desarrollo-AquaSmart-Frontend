@@ -29,6 +29,17 @@ function UserInformation() {
         setError("No se pudo cargar la información del usuario.");
       }
     };
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await axios.get(`${API_URL}/users/details/${document}`, {
+                    headers: { Authorization: `Token ${token}` }, // Asegúrate de tener el token correctamente
+                });
+                setUser(response.data); // Guardar el usuario en el estado
+            } catch (err) {
+                setError("No se pudo cargar la información del usuario.");
+            }
+        };
 
     if (token) {
       fetchUser(); // Solo hacer la solicitud si el token existe
@@ -73,6 +84,22 @@ function UserInformation() {
                 <span>{user.email || "Correo no disponible"}</span>
               </p>
             </div>
+                    <div className="mt-12 flex-row lg:flex flex-col justify-center gap-20 space-y-10 lg:space-y-0">
+                        {/* Información del usuario */}
+                        <div className="space-y-3 text-left flex flex-col">
+                            <p className="flex items-center space-x-2">
+                                <FaUser className="text-gray-600" />
+                                <span>Persona: {user.person_type_name || "Tipo de usuario no disponible"}</span>
+                            </p>
+                            <p className="flex items-center space-x-2">
+                                <FaPhone className="text-gray-600" />
+                                <span>{user.phone || "No disponible"}</span>
+                            </p>
+                            <p className="flex items-center space-x-2">
+                                <FaEnvelope className="text-gray-600" />
+                                <span>{user.email || "Correo no disponible"}</span>
+                            </p>
+                        </div>
 
             {/* Anexos del usuario */}
             <div className="text-left">
@@ -100,6 +127,22 @@ function UserInformation() {
       </div>
     </div>
   );
+                        {/* Anexos del usuario */}
+                        <div className="text-left">
+                            <p className="flex items-center font-semibold">
+                                <IoDocument className="text-gray-600 mr-2" /> Anexos
+                            </p>
+                            <div className="mt-2 space-y-2">
+                                <span>{user.drive_folder_id || "Carpeta no disponible"}</span>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default UserInformation;

@@ -29,6 +29,8 @@ import PrediosDetail from "../app/gestionDatos/predios/PrediosDetail";
 import LoteEdit from "../app/gestionDatos/lotes/LoteEdit";
 import PrediosUpdate from "../app/gestionDatos/predios/PrediosUpdate"
 import RegistroDispositivosIoT from "../app/gestionRegistros/RegistroDispositivosIoT";
+import RolesList from "../app/permisos/RolesList";
+import DispositivoEdit from "../app/gestionDatos/dispositivosIoT/DispositivoEdit";
 
 const AppRouter = () => {
     return (
@@ -58,7 +60,7 @@ const AppRouter = () => {
             <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
             <Route path="/gestionDatos/lotes/:id_lot" element={<ProtectedRoute element={<LoteInformation />} />} />
             <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
-            <Route path="/gestionDatos/dispositivosIoT/:id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
+            <Route path="/gestionDatos/dispositivosIoT/:iot_id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
             <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
             <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} /> 
@@ -70,7 +72,8 @@ const AppRouter = () => {
             <Route path="/gestionDatos/lotes/:id_lot/update" element={<ProtectedRoute element={<LoteEdit />} />} />
             <Route path="/gestionDatos/predios/update/:id_plot" element={<ProtectedRoute element={<PrediosUpdate />} />} />
             <Route path="/gestionRegistros/dispositivosIoT" element={<ProtectedRoute element={<RegistroDispositivosIoT/>}/>}/>            
-
+            <Route path="/permisos" element={<ProtectedRoute element={<RolesList/>}/>}/>
+            <Route path="/gestionDatos/dispositivosIoT/:iot_id/update" element={<ProtectedRoute element={<DispositivoEdit />} />} />
         </Routes>
     );
 };

@@ -12,10 +12,12 @@ const API_URL = import.meta.env.VITE_APP_API_URL;
 const LoteEdit = () => {
     const { id_lot } = useParams(); // Obtener ID del lote a actualizar
     const [formData, setFormData] = useState({
+        id_lot: "",
         tipo_cultivo: "",
         predio_asignado: "",
         tipo_suelo: "",
         variedad_cultivo: "",
+        is_activate: true,
     });
     
     const [soilTypes, setSoilTypes] = useState([]);
@@ -24,6 +26,10 @@ const LoteEdit = () => {
         predio_asignado: false,
         variedad_cultivo: false
     });
+    const [lotsStates] = useState([
+        { value: true, label: "Activo" },
+        { value: false, label: "Inactivo" }
+    ]);
 
     const [errorMessage, setErrorMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -61,13 +67,13 @@ const LoteEdit = () => {
                         "Content-Type": "application/json",
                     },
                 });
-
                 setFormData({
                     id_lot: response.data.id_lot || "",
                     tipo_cultivo: response.data.crop_type || "",
                     predio_asignado: response.data.plot || "",
                     tipo_suelo: response.data.soil_type || "",
                     variedad_cultivo: response.data.crop_variety || "",
+                    is_activate: response.data.is_activate === true || response.data.is_activate === "true", // Asegurar que is_activate sea siempre booleano
                 });
             } catch (error) {
                 setErrorMessage("No se pudo cargar la información del lote.");
@@ -151,6 +157,7 @@ const LoteEdit = () => {
         e.preventDefault();
         setIsSubmitted(true);
     
+        // Validar el formulario antes de enviar
         if (!validateForm()) return;
     
         const token = localStorage.getItem("token");
@@ -159,15 +166,20 @@ const LoteEdit = () => {
             return;
         }
     
+        const updatedData = {
+            id_lot: formData.id_lot,
+            crop_type: formData.tipo_cultivo,
+            plot: formData.predio_asignado,
+            soil_type: formData.tipo_suelo,
+            crop_variety: formData.variedad_cultivo,
+            is_activate: formData.is_activate // Agregado directamente al mismo PATCH
+        };
+
         try {
+            // Enviar los datos de actualización con is_activate incluido
             const response = await axios.patch(
                 `${API_URL}/plot-lot/lots/${id_lot}/update`,
-                {
-                    crop_type: formData.tipo_cultivo,
-                    plot: formData.predio_asignado,
-                    soil_type: formData.tipo_suelo,
-                    crop_variety: formData.variedad_cultivo,
-                },
+                updatedData,
                 {
                     headers: {
                         Authorization: `Token ${token}`,
@@ -177,25 +189,22 @@ const LoteEdit = () => {
             );
     
             if (response.status === 200) {
-                setShowSuccessModal(true);
+                setShowSuccessModal(true);  // Mostrar modal de éxito
             }
         } catch (error) {
             if (error.response) {
-                // Verificar si hay errores específicos
                 let newErrors = {};
     
-                // Verificar si el error tiene un mensaje específico para el predio
+                // Si el error está relacionado con algún campo específico, mostrar mensaje
                 if (error.response.data.plot) {
-                    newErrors.predio_asignado = " ";  // Mostrar el error
+                    newErrors.predio_asignado = " ";  
                     setErrorMessage(error.response.data.plot[0]);  // Mostrar el mensaje de error relacionado con el predio
                 }
     
-                // Si se devuelve un error general
                 if (error.response.data.error) {
-                    setErrorMessage(error.response.data.error);  // Mostrar el mensaje general de error
+                    setErrorMessage(error.response.data.error);
                 }
     
-                // Verificar si hay errores no específicos
                 if (error.response.data.non_field_errors) {
                     setErrorMessage(error.response.data.non_field_errors[0]);
                 }
@@ -205,8 +214,7 @@ const LoteEdit = () => {
                 setErrorMessage("Error de conexión con el servidor.");
             }
         }
-    };
-    
+    };    
     
     return (
         <div>
@@ -217,19 +225,26 @@ const LoteEdit = () => {
                 </h2>
                 <div className="bg-white p-10 w-full max-w-3xl">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputItem
-                            label={<><strong>ID lote</strong> <PiAsteriskSimpleBold size={12} className="inline text-red-500" /></>}
+                        <div className="relative">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            ID lote
+                            <span className="ml-1 text-xs text-gray-500">(No editable)</span>
+                            </label>
+                            <input
                             type="text"
-                            name="tipo_cultivo"
-                            placeholder="Ej: Cacao"
-                            value={formData.id_lot}
-                            onChange={handleChange}
-                            error={errors.id_lot}
-                            maxLength={20}
+                            name="id_lot"
+                            value={formData.id_lot || ""}
+                            className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-gray-500 cursor-not-allowed"
                             disabled
-                        />
+                            readOnly
+                            aria-label="ID lote (no editable)"
+                            />
+                            {errors.id_lot && (
+                            <p className="text-[#F90000] text-sm mt-1">{errors.id_lot}</p>
+                            )}
+                        </div>
                         <InputItem
-                            label={<><strong>Tipo de cultivo</strong> <PiAsteriskSimpleBold size={12} className="inline text-red-500" /></>}
+                            label="Tipo de cultivo"
                             type="text"
                             name="tipo_cultivo"
                             placeholder="Ej: Cacao"
@@ -239,18 +254,19 @@ const LoteEdit = () => {
                             maxLength={20}
                         />
                         <InputItem
-                            label={<><strong>Predio a asignar</strong> <PiAsteriskSimpleBold size={12} className="inline text-red-500" /></>}
+                            label="Predio a asignar"
                             type="text"
                             name="predio_asignado"
                             placeholder="ID (letras, números y un guión)"
                             value={formData.predio_asignado}
                             onChange={handleChange}
                             error={errors.predio_asignado} // Mostrar el error aquí
+                            maxLength={20}
                             className={`${errors.predio_asignado ? "border-red-500" : "border-gray-300"}`} // Condición de borde rojo
                         />
     
                         <div className="relative mt-2 flex flex-col">
-                            <label htmlFor="tipo_suelo" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="tipo_suelo" className="text-sm font-medium text-gray-1000">
                                 Tipo de Suelo <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
                             </label>
                             <select
@@ -281,6 +297,39 @@ const LoteEdit = () => {
                             maxLength={20}
                         />
     
+                        <div className="relative">
+                            <label className="block text-sm font-medium text-gray-1000 mb-1">
+                                Estado del lote
+                            </label>
+                            <div className="relative">
+                            <select
+                                className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.is_activate ? "bg-red-100" : "bg-white"}`}
+                                name="is_activate"
+                                value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
+                                onChange={(e) => {
+                                    const value = e.target.value === "true";
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        is_activate: value,
+                                    }));
+
+                                    setErrors((prev) => ({ ...prev, is_activate: "" }));
+                                }}
+                            >
+                                <option value="">SELECCIÓN DE ESTADO</option>
+                                {lotsStates.map((state, index) => (
+                                    <option key={index} value={state.value.toString()}>
+                                        {state.label}
+                                    </option>
+                                ))}
+                            </select>
+
+                                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            </div>
+                            {errors.is_activate && (
+                                <p className="text-red-500 text-sm mt-1">{errors.is_activate}</p>
+                            )}
+                            </div>
     
                         <div className="col-span-1 md:col-span-2 flex flex-col items-start">
                         {errorMessage && <p className="text-red-600 text-sm mb-3">{errorMessage}</p>}
@@ -309,4 +358,4 @@ const LoteEdit = () => {
         </div>
     );
 }
-export default LoteEdit;    
+export default LoteEdit;

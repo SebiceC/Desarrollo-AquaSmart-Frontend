@@ -20,7 +20,7 @@ const PrediosDetail = () => {
 
         // Hacer la solicitud para obtener los detalles del predio
         const predioResponse = await axios.get(
-          `${API_URL}/plot-lot/plots/${id_plot}/`, // Usar el id_plot en la URL
+          `${API_URL}/plot-lot/plots/${id_plot}`, // Usar el id_plot en la URL
           {
             headers: { Authorization: `Token ${token}` }, // Asegúrate de enviar el token
           }
