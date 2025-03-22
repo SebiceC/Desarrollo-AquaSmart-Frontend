@@ -7,6 +7,7 @@ import InputFilter from "../../../components/InputFilter";
 import Modal from "../../../components/Modal";
 import DeleteUser from "../UserEdit/DeleteUsers";
 import DataTable from "../../../components/DataTable";
+import DeleteSelfModal from "../UserEdit/DeleteSelf";
 
 const UserList = () => {
   const navigate = useNavigate();
@@ -17,7 +18,10 @@ const UserList = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [currentUserDocument, setCurrentUserDocument] = useState(null);
+  const [showDeleteSelfModal, setShowDeleteSelfModal] = useState(false);
   const [filters, setFilters] = useState({
+  
     id: "",
     personType: "",
     startDate: "",
@@ -31,6 +35,29 @@ const UserList = () => {
   };
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
+
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        
+        const response = await axios.get(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Token ${token}` },
+        });
+        
+        setCurrentUserDocument(response.data.document);
+      } catch (error) {
+        console.error("Error al obtener información del usuario actual:", error);
+      }
+    };
+  
+    fetchCurrentUser();
+  }, []);
+
+
+
 
   useEffect(() => {
     const fetchPersonTypes = async () => {
@@ -150,8 +177,14 @@ const filtered = usuarios.filter((user) => {
 
   // Función para abrir el modal de confirmación de eliminación
   const handleDeleteClick = (user) => {
-    setUserToDelete(user);
-    setShowDeleteModal(true);
+    // Verifica si el usuario a eliminar es el usuario actual
+    if (user.document === currentUserDocument) {
+      setUserToDelete(user);
+      setShowDeleteSelfModal(true);
+    } else {
+      setUserToDelete(user);
+      setShowDeleteModal(true);
+    }
   };
 
   // Función que se ejecuta cuando la eliminación ha sido exitosa
@@ -230,6 +263,17 @@ const filtered = usuarios.filter((user) => {
             user={userToDelete}
             showModal={showDeleteModal}
             setShowModal={setShowDeleteModal}
+            onDeleteSuccess={handleDeleteSuccess}
+            setModalMessage={setModalMessage}
+            setShowErrorModal={setShowModal}
+          />
+        )}
+
+        {showDeleteSelfModal && userToDelete && (
+          <DeleteSelfModal
+            user={userToDelete}
+            showModal={showDeleteSelfModal}
+            setShowModal={setShowDeleteSelfModal}
             onDeleteSuccess={handleDeleteSuccess}
             setModalMessage={setModalMessage}
             setShowErrorModal={setShowModal}

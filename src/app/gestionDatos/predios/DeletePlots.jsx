@@ -69,7 +69,7 @@ const DeletePlots = ({
 
                     {/* Mensaje */}
                     <p className="mb-6">
-                        ¡Estás seguro en eliminar el predio!
+                        ¿Estás seguro en eliminar el predio?
                     </p>
 
                     {/* Botones */}

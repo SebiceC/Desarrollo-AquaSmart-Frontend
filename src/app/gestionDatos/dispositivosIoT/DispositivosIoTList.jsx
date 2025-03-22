@@ -2,28 +2,24 @@ import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InputFilter from "../../../components/InputFilterLote";
+import InputFilterIoT from "../../../components/InputFilterIoT";
 import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-
-
+import DeleteIoT from "./DeleteIoT";
 
 const DispositivosIoTList = () => {
   const navigate = useNavigate();
-  const [lotes, setLotes] = useState([]);
+  const [dispositivos, setDispositivos] = useState([]);
   const [predios, setPredios] = useState([]);
-  const [filteredLotes, setFilteredLotes] = useState(null); // Cambiado a null para controlar si se han aplicado filtros
+  const [filteredDispositivos, setFilteredDispositivos] = useState(null);
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [loteToDelete, setLoteToDelete] = useState(null);
+  const [dispositivoToDelete, setDispositivoToDelete] = useState(null);
   const [filters, setFilters] = useState({
-    id: "",
-    ownerDocument: "",
-    plotId:"",
-    lotId: "",
-    cropType: "",
+    iot_id: "",
+    name: "",
+    plotId: "",
     startDate: "",
     endDate: "",
     isActive: "",
@@ -40,36 +36,53 @@ const DispositivosIoTList = () => {
           setShowModal(true);
           return;
         }
-        
-        // Obtener la lista de predios
+
+        // Obtener la lista de predios primero
         const prediosResponse = await axios.get(`${API_URL}/plot-lot/plots/list`, {
           headers: { Authorization: `Token ${token}` },
         });
         
         setPredios(prediosResponse.data);
-        console.log("Todos los predios:", prediosResponse.data);
+        
 
-        // Obtener la lista de lotes
-        const lotesResponse = await axios.get(`${API_URL}/plot-lot/lots/list`, {
+        // Obtener la lista de dispositivos
+        const dispositivosResponse = await axios.get(`${API_URL}/iot/iot-devices`, {
           headers: { Authorization: `Token ${token}` },
         });
 
-        // Combinar la información de lotes y predios
-        const lotesConPredios = lotesResponse.data.map(lote => {
-          // Buscar el predio correspondiente
-          const predio = prediosResponse.data.find(p => p.id_plot === lote.plot);
-          
-          return {
-            ...lote,
-            predioOwner: predio ? predio.owner : "No disponible"
-          };
-        });
-
-        // Store all plots, both active and inactive
-        setLotes(lotesConPredios);
-        console.log("Todos los lotes con propietarios:", lotesConPredios);
+        setDispositivos(dispositivosResponse.data);
+        console.log("Todos los dispositivos IoT:", dispositivosResponse.data);
+        
+        // Para cada dispositivo que tenga id_plot, obtener los detalles del predio
+        for (const dispositivo of dispositivosResponse.data) {
+          if (dispositivo.id_plot) {
+            try {
+              // Hacer consulta para obtener detalles del predio específico
+              const predioResponse = await axios.get(`${API_URL}/plot-lot/plots/${dispositivo.id_plot}`, {
+                headers: { Authorization: `Token ${token}` },
+              });
+              
+              console.log(`Detalles del predio ${dispositivo.id_plot} para dispositivo ${dispositivo.iot_id}:`, 
+                          predioResponse.data);
+              
+              // Actualizar la lista de predios con este detalle si no existe
+              setPredios(prevPredios => {
+                const existingIndex = prevPredios.findIndex(p => p.id_plot === dispositivo.id_plot);
+                if (existingIndex !== -1) {
+                  // Si el predio ya existe, no hacer nada
+                  return prevPredios;
+                } else {
+                  // Si el predio no existe, añadirlo a la lista
+                  return [...prevPredios, predioResponse.data];
+                }
+              });
+            } catch (error) {
+              console.error(`Error al obtener detalles del predio ${dispositivo.id_plot}:`, error);
+            }
+          }
+        }
       } catch (error) {
-        console.error("Error al obtener la lista de lotes o predios:", error);
+        console.error("Error al obtener datos:", error);
         setModalMessage("Error al cargar los datos. Por favor, intente más tarde.");
         setShowModal(true);
       }
@@ -85,183 +98,208 @@ const DispositivosIoTList = () => {
     });
   };
 
-  // Modified applyFilters function to show modal when owner ID doesn't exist
   const applyFilters = () => {
     try {
       // Verificamos si hay al menos un filtro aplicado
       const hasActiveFilters = 
-        filters.id.trim() !== "" || 
-        filters.lotId.trim() !== "" || 
-        filters.ownerDocument.trim() !== "" || 
-        filters.startDate !== "" || 
-        filters.endDate !== "" || 
-        filters.isActive !== "";
-      
-
-      // Validación de ID
-      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
-        !/^\d+$/.test(filters.id.trim())) {
+        filters.iot_id.trim() !== "" || 
+        filters.name.trim() !== "" || 
+        filters.plotId.trim() !== "" || 
+        filters.isActive !== "" ||
+        filters.startDate !== "" ||
+        filters.endDate !== "";
+  
+      // Validación de ID del dispositivo
+      if (filters.iot_id.trim() !== "" && !/^\d{5}$/.test(filters.iot_id.trim()) &&
+        !/^\d+$/.test(filters.iot_id.trim())) {
+        setModalMessage("El campo ID del dispositivo contiene caracteres no válidos o el dispositivo no existe");
+        setShowModal(true);
+        setFilteredDispositivos([]);
+        return;
+      }
+  
+      // Validación de nombre del dispositivo - Mejorada
+      if (filters.name.trim() !== "") {
+        // Permitir búsqueda flexible (no solo con formato IOT-XXXXX)
+        // Esto permite búsquedas parciales del nombre del dispositivo
+        if (filters.name.trim().startsWith("IOT-") && !/^IOT-\d{5}$/.test(filters.name.trim())) {
+          setModalMessage("Si usa el formato IOT-XXXXX, el nombre debe seguir ese patrón exactamente");
+          setShowModal(true);
+          setFilteredDispositivos([]);
+          return;
+        }
+      }
+  
+      // Validación de ID del predio
+      if (filters.plotId.trim() !== "" && !/^PR-\d{7}$/.test(filters.plotId.trim()) &&
+        !/^\d+$/.test(filters.plotId.trim())) {
         setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredDispositivos([]);
         return;
       }
-
-      // Validación de formato del ID del lote
-      if (filters.lotId.trim() !== "" && !/^LOTE-\d{7}$/.test(filters.lotId.trim()) &&
-        !/^\d+$/.test(filters.lotId.trim())) {
-        setModalMessage("El campo ID del lote contiene caracteres no válidos o el lote no existe");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
-      }
-
-      // Validación de formato del documento del propietario
-      if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo ID del propietario contiene caracteres no válidos o el propietario no existe");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
-      }
-
+  
       // Validación de fechas
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
         setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredDispositivos([]);
         return;
       }
-
-      // Filtrado de lotes
-      const filtered = lotes.filter((lots) => {
-        // Modificación para permitir búsqueda parcial por ID
-        const matchesId = filters.id.trim() === "" ||
-          (filters.id.trim().length > 0 &&
-            lots.plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
-      
-        // Modificación para permitir búsqueda parcial por ID del lote
-        const matchesIdlote = filters.lotId.trim() === "" ||
-        (filters.lotId.trim().length > 0 &&
-          (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
-           lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
-        // Ahora buscamos en el predioOwner en lugar de owner
-        const matchesOwner = filters.ownerDocument.trim() === "" ||
-          lots.predioOwner.includes(filters.ownerDocument.trim());
-
-        // Modificado para incluir lotes tanto activos como inactivos
-        const matchesStatus =
-          filters.isActive === "" ||
-          lots.is_activate === (filters.isActive === "true");
-
-
-        // Manejo de fechas - enfoque idéntico al que funciona en UserList
+  
+      // Filtrado de dispositivos
+      const filtered = dispositivos.filter((dispositivo) => {
+        // Filtro por ID del dispositivo
+        const matchesIotId = filters.iot_id.trim() === "" ||
+          (filters.iot_id.trim().length > 0 &&
+            dispositivo.iot_id.toLowerCase().includes(filters.iot_id.trim().toLowerCase()));
+  
+        // Filtro por nombre del dispositivo - Mejorado para búsqueda más flexible
+        const matchesName = filters.name.trim() === "" ||
+          (dispositivo.name && dispositivo.name.toLowerCase().includes(filters.name.trim().toLowerCase()));
+  
+        // Filtro por ID del predio
+        const matchesPlotId = filters.plotId.trim() === "" ||
+          (dispositivo.id_plot && dispositivo.id_plot.toLowerCase().includes(filters.plotId.trim().toLowerCase()));
+  
+        // Filtro por estado (activo/inactivo)
+        let matchesStatus = true;
+        if (filters.isActive !== "") {
+          // Convierte filters.isActive a booleano explícitamente
+          const isActiveFilter = filters.isActive === "true";
+          matchesStatus = dispositivo.is_active === isActiveFilter;
+        }
+  
+        // Filtro por fecha - Similar al implementado en LotesList
         let matchesDate = true; // Por defecto asumimos que coincide
         
         if (filters.startDate !== "" || filters.endDate !== "") {
-          // Solo verificamos fechas si hay algún filtro de fecha
+          // Buscar el predio asociado al dispositivo para obtener su fecha
+          const predioAsociado = predios.find(predio => predio.id_plot === dispositivo.id_plot);
           
-          // Convertir fecha de predio a formato YYYY-MM-DD
-          const loteDate = new Date(lots.registration_date);
-          const loteDateStr = loteDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
-          
-          // Verificar límite inferior
-          if (filters.startDate !== "") {
-            const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
-            if (loteDateStr < startDateStr) {
-              matchesDate = false;
+          if (predioAsociado && predioAsociado.registration_date) {
+            // Convertir fecha de predio a formato YYYY-MM-DD
+            const deviceDate = new Date(predioAsociado.registration_date);
+            const deviceDateStr = deviceDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
+            
+            // Verificar límite inferior
+            if (filters.startDate !== "") {
+              const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+              if (deviceDateStr < startDateStr) {
+                matchesDate = false;
+              }
             }
-          }
-          
-          // Verificar límite superior
-          if (matchesDate && filters.endDate !== "") {
-            const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
-            if (loteDateStr > endDateStr) {
-              matchesDate = false;
+            
+            // Verificar límite superior
+            if (matchesDate && filters.endDate !== "") {
+              const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+              if (deviceDateStr > endDateStr) {
+                matchesDate = false;
+              }
             }
+          } else {
+            // Si el dispositivo no tiene predio asociado o fecha, no coincide con filtros de fecha
+            matchesDate = false;
           }
         }
-
-        return matchesId && matchesIdlote && matchesOwner && matchesDate && matchesStatus;
+  
+        return matchesIotId && matchesName && matchesPlotId && matchesStatus && matchesDate;
       });
-
-      // Validación adicional para ID del predio no existente
-      if (filters.id.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El predio filtrado no existe.");
+  
+      // Validaciones adicionales para resultados vacíos
+      if (filters.iot_id.trim() !== "" && filtered.length === 0) {
+        setModalMessage("El dispositivo filtrado no existe.");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredDispositivos([]);
         return;
       }
-
-      // Validación adicional para ID del lote no existente
-      if (filters.lotId.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El lote filtrado no existe.");
+  
+      if (filters.name.trim() !== "" && filtered.length === 0) {
+        setModalMessage("No se encontraron dispositivos con el nombre especificado.");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredDispositivos([]);
         return;
       }
-
-      // Validación adicional para documento del propietario no existente
-      if (filters.ownerDocument.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El ID del propietario no se encuentra asociado a ningún registro");
+  
+      if (filters.plotId.trim() !== "" && filtered.length === 0) {
+        setModalMessage("No hay dispositivos asociados al predio especificado.");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredDispositivos([]);
         return;
       }
-
+  
       // Validación para rango de fechas sin resultados
-      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
-        setModalMessage("No hay lotes registrados en el rango de fechas especificado.");
+      if ((filters.startDate !== "" || filters.endDate !== "") && filtered.length === 0) {
+        setModalMessage("No hay dispositivos registrados en el rango de fechas especificado.");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredDispositivos([]);
         return;
       }
-
-      setFilteredLotes(filtered); // Actualiza filteredLotes solo cuando se aplican filtros
+  
+      // Imprime los resultados para depuración
+      console.log("Filtros aplicados:", filters);
+      console.log("Dispositivos filtrados:", filtered);
+      console.log("Dispositivos inactivos:", filtered.filter(d => !d.is_active).length);
+  
+      setFilteredDispositivos(filtered);
     } catch (error) {
-      setModalMessage("¡El lote filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
+      console.error("Error al aplicar filtros:", error);
+      setModalMessage("¡El dispositivo filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
       setShowModal(true);
-      setFilteredLotes([]);
+      setFilteredDispositivos([]);
     }
   };
-
-  const handleDelete = (lots) => {
-    setLoteToDelete(lots);
+  const handleDelete = (dispositivo) => {
+    setDispositivoToDelete(dispositivo);
     setShowDeleteModal(true);
   };
-  
-  const handleDeleteSuccess = (lotsId) => {
-    // Actualizar la lista de lotes
-    setLotes(lotes.filter(lots => lots.id_lot !== lotsId));
 
-    // Si hay lotes filtrados, actualizar esa lista también
-    if (filteredLotes && filteredLotes.length > 0) {
-      setFilteredLotes(filteredLotes.filter(lots => lots.id_lot !== lotsId));
+  const handleDeleteSuccess = (iot_id) => {
+    // Actualizar la lista de dispositivos
+    setDispositivos(dispositivos.filter(dispositivo => dispositivo.iot_id !== iot_id));
+
+    // Si hay dispositivos filtrados, actualizar esa lista también
+    if (filteredDispositivos && filteredDispositivos.length > 0) {
+      setFilteredDispositivos(filteredDispositivos.filter(dispositivo => dispositivo.iot_id !== iot_id));
     }
   };
 
-
   // Configuración de columnas para DataTable
-  const columns = [
-    { key: "id_lot", label: "ID Lote" },
-    { key: "crop_type", label: "Tipo de Cultivo" },
-    { key: "plot", label: "ID Predio" },
-    { key: "predioOwner", label: "Propietario del Predio" }, // Cambiado de owner a predioOwner
-    { key: "is_activate", label: "Estado", render: (lote) => lote.is_activate ? "Activo" : "Inactivo" },
+  const getColumns = () => [
+    { key: "iot_id", label: "ID Dispositivo" },
+    { key: "name", label: "Nombre" },
+    { key: "device_type_name", label: "Tipo", responsive: "hidden md:table-cell" },
+    { key: "id_plot", label: "ID Predio" },
+    { key: "is_active", label: "Estado", render: (dispositivo) => dispositivo.is_active ? "Activo" : "Inactivo" },
     {
       key: "registration_date",
-      label: "Registro",
+      label: "Registro Predio",
       responsive: "hidden sm:table-cell",
-      render: (lote) => new Date(lote.registration_date).toLocaleDateString()
+      render: (dispositivo) => {
+        // Si el dispositivo no tiene id_plot, no hay predio asociado
+        if (!dispositivo.id_plot) {
+          return "N/A";
+        }
+        
+        // Buscar el predio asociado al dispositivo
+        const predioAsociado = predios.find(predio => predio.id_plot === dispositivo.id_plot);
+        
+
+        
+        return predioAsociado && predioAsociado.registration_date
+          ? new Date(predioAsociado.registration_date).toLocaleDateString()
+          : "N/A";
+      }
     }
   ];
 
   // Manejadores para las acciones
-  const handleView = (lote) => {
-    navigate(`/gestionDatos/lotes/${lote.id_lot}`);
+  const handleView = (dispositivo) => {
+    navigate(`/gestionDatos/dispositivosIoT/${dispositivo.iot_id}`);
   };
 
-  const handleEdit = (lote) => {
-    navigate(`/gestionDatos/lotes/${lote.id_lot}/update`);
+  const handleEdit = (dispositivo) => {
+    navigate(`/gestionDatos/dispositivosIoT/${dispositivo.iot_id}/update`);
   };
 
   return (
@@ -269,14 +307,13 @@ const DispositivosIoTList = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Lista de Lotes del distrito
+          Lista de Dispositivos IoT del distrito
         </h1>
 
-        <InputFilter
+        <InputFilterIoT
           filters={filters}
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
-          showPersonTypeFilter={false}
         />
 
         {/* Modal de mensajes */}
@@ -286,42 +323,42 @@ const DispositivosIoTList = () => {
             onClose={() => {
               setShowModal(false);
               if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
-                setFilteredLotes(null);
+                setFilteredDispositivos(null);
               }
             }}
-            title={modalMessage === "Lote eliminado correctamente" ? "Éxito" : "Error"}
+            title={modalMessage === "Dispositivo eliminado correctamente" ? "Éxito" : "Error"}
             btnMessage="Cerrar"
           >
             <p>{modalMessage}</p>
           </Modal>
         )}
 
-        {showDeleteModal && loteToDelete && (
-          <DeleteLotes
-          lots={loteToDelete}
-          showModal={showDeleteModal}
-          setShowModal={setShowDeleteModal}
-          onDeleteSuccess={handleDeleteSuccess}
-          setModalMessage={setModalMessage}
-          setShowErrorModal={setShowModal}
+        {showDeleteModal && dispositivoToDelete && (
+          <DeleteIoT
+            dispositivo={dispositivoToDelete}
+            showModal={showDeleteModal}
+            setShowModal={setShowDeleteModal}
+            onDeleteSuccess={handleDeleteSuccess}
+            setModalMessage={setModalMessage}
+            setShowErrorModal={setShowModal}
           />
         )}
 
         {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
-        {filteredLotes !== null && (
+        {filteredDispositivos !== null && (
           <DataTable
-            columns={columns}
-            data={filteredLotes}
-            emptyMessage="No se encontraron lotes con los filtros aplicados."
+            columns={getColumns()}
+            data={filteredDispositivos}
+            emptyMessage="No se encontraron dispositivos con los filtros aplicados."
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
         )}
         
-        {filteredLotes === null && (
+        {filteredDispositivos === null && (
           <div className="text-center my-10 text-gray-600">
-            No hay lotes para mostrar. Aplica filtros para ver resultados.
+            No hay dispositivos para mostrar. Aplica filtros para ver resultados.
           </div>
         )}
       </div>
