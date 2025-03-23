@@ -404,27 +404,10 @@ const UpdateInformation = () => {
           <form onSubmit={handleSubmit} className="w-full">
             {/* Grid más adaptable */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+              
               <div className="relative">
                 <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                    errors.role ? "bg-red-100" : "bg-white"
-                  }`}
-                  name="role"
-                  value={formData.role || ""}
-                  onChange={handleChange}
-                >
-                  <option value="">SELECCIÓN DE ROL</option>
-                  {roles.map((role, index) => (
-                    <option key={index} value={role.name || role}>
-                      {role.name || role}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-              <div className="relative">
-                <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                  className={`w-[85%] border border-gray-300 rounded px-3 py-2 appearance-none ${
                     errors.person_type_name ? "bg-red-100" : "bg-white"
                   }`}
                   name="person_type_name"
@@ -438,7 +421,7 @@ const UpdateInformation = () => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="absolute right-18 top-1/2 transform -translate-y-3 lg:-translate-y-6 text-gray-400" />
                 {errors.person_type_name && (
                   <p className="text-red-500 text-sm mt-1">{errors.person_type_name}</p>
                 )}
@@ -452,7 +435,7 @@ const UpdateInformation = () => {
                   type="text"
                   name="document"
                   value={formData.document || ""}
-                  className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-gray-500 cursor-not-allowed"
+                  className="w-[85%] bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-gray-500 cursor-not-allowed"
                   disabled
                   readOnly
                   aria-label="Documento de identidad (no editable)"
