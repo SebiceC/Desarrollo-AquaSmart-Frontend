@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import axios from "axios"
@@ -7,6 +5,7 @@ import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import BackButton from "../../../components/BackButton"
 import Button from "../../../components/Button"
+import ErrorDisplay from "../../../components/error-display"
 
 const PreRegistroDetail = () => {
   const { document } = useParams()
@@ -40,7 +39,31 @@ const PreRegistroDetail = () => {
           setButtonsVisible(false)
         }
       } catch (err) {
-        setError("No se pudo cargar la información del registro.")
+        console.error("Error al obtener el registro:", err)
+
+        let errorMessage = "No se pudo cargar la información del registro."
+
+        if (err.response) {
+          if (err.response.status === 403) {
+            errorMessage = "No tiene permisos para acceder a este registro."
+            if (err.response.data?.detail) {
+              errorMessage = err.response.data.detail
+            }
+          } else if (err.response.data?.detail) {
+            errorMessage = err.response.data.detail
+          } else if (err.response.data?.message) {
+            errorMessage = err.response.data.message
+          }
+
+          console.log("Código de estado:", err.response.status)
+          console.log("Mensaje de error:", errorMessage)
+        } else if (err.request) {
+          errorMessage = "No se pudo conectar con el servidor. Verifique su conexión a internet."
+        } else {
+          errorMessage = `Error de configuración: ${err.message}`
+        }
+
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }
@@ -85,7 +108,14 @@ const PreRegistroDetail = () => {
     )
   }
 
-  if (error) return <p>{error}</p>
+  if (error) {
+    return (
+      <div>
+        <NavBar />
+        <ErrorDisplay message={error} backTo="/gestionDatos/pre-registros" backText="Regresar a la lista" />
+      </div>
+    )
+  }
 
   const handleReject = () => {
     setRejectReasonVisible(true)
@@ -95,7 +125,6 @@ const PreRegistroDetail = () => {
   const handleRejectReasonChange = (event) => {
     const value = event.target.value
     setRejectReason(value)
-    // Habilitar el botón solo si hay al menos 5 caracteres
     setIsSubmitEnabled(value.trim().length >= 5)
   }
 
@@ -120,7 +149,6 @@ const PreRegistroDetail = () => {
       const token = localStorage.getItem("token")
       const API_URL = import.meta.env.VITE_APP_API_URL
 
-      // Usar la ruta correcta para el rechazo
       const response = await axios.post(
         `${API_URL}/users/reject-user/${document}`,
         {
@@ -149,10 +177,20 @@ const PreRegistroDetail = () => {
       }
     } catch (error) {
       console.error("Error al rechazar usuario:", error.response || error)
+
+      let errorMessage =
+        "Ocurrió un error al procesar la solicitud de rechazo. Verifique su conexión e intente nuevamente."
+
+      if (error.response) {
+        if (error.response.data?.detail) {
+          errorMessage = error.response.data.detail
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message
+        }
+      }
+
       setModalTitle("Error en el servidor")
-      setModalMessage(
-        "Ocurrió un error al procesar la solicitud de rechazo. Verifique su conexión e intente nuevamente.",
-      )
+      setModalMessage(errorMessage)
     } finally {
       setIsSubmitting(false)
       setShowModal(true)
@@ -166,7 +204,6 @@ const PreRegistroDetail = () => {
       const token = localStorage.getItem("token")
       const API_URL = import.meta.env.VITE_APP_API_URL
 
-      // Usar la ruta correcta para la aprobación y envío de correo
       const response = await axios.patch(
         `${API_URL}/users/admin/register/${document}`,
         {
@@ -195,10 +232,20 @@ const PreRegistroDetail = () => {
       }
     } catch (error) {
       console.error("Error al aprobar usuario:", error.response || error)
+
+      let errorMessage =
+        "Ocurrió un error al procesar la solicitud de aprobación. Verifique su conexión e intente nuevamente."
+
+      if (error.response) {
+        if (error.response.data?.detail) {
+          errorMessage = error.response.data.detail
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message
+        }
+      }
+
       setModalTitle("Error en el servidor")
-      setModalMessage(
-        "Ocurrió un error al procesar la solicitud de aprobación. Verifique su conexión e intente nuevamente.",
-      )
+      setModalMessage(errorMessage)
     } finally {
       setIsSubmitting(false)
       setShowModal(true)
@@ -215,14 +262,12 @@ const PreRegistroDetail = () => {
     <div>
       <NavBar />
       <div className="max-w-3xl mx-auto p-8 mt-32 bg-white rounded-xl shadow-md">
-        {/* Encabezado con estilo mejorado */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-[#365486] mb-2">Aprobación de Pre Registro</h1>
           <p className="text-sm text-gray-600">Información enviada por el usuario para su verificación</p>
           <div className="w-16 h-1 bg-[#365486] mx-auto mt-3 rounded-full"></div>
         </div>
 
-        {/* Tarjeta de información del usuario */}
         <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-1">
@@ -247,8 +292,8 @@ const PreRegistroDetail = () => {
             </div>
             <div className="space-y-1">
               <p className="text-sm">
-                <span className="font-medium text-black">Teléfono: </span>
-                <span className="text-gray-600 font-medium">{registro.phone}</span>
+                <span className="font-medium text-black">ID: </span>
+                <span className="text-gray-600 font-medium">{registro.document}</span>
               </p>
             </div>
             <div className="space-y-1">
@@ -259,8 +304,8 @@ const PreRegistroDetail = () => {
             </div>
             <div className="space-y-1">
               <p className="text-sm">
-                <span className="font-medium text-black">ID: </span>
-                <span className="text-gray-600 font-medium">{registro.document}</span>
+                <span className="font-medium text-black">Teléfono: </span>
+                <span className="text-gray-600 font-medium">{registro.phone}</span>
               </p>
             </div>
             <div className="space-y-1">
@@ -292,7 +337,6 @@ const PreRegistroDetail = () => {
           </div>
         </div>
 
-        {/* Sección de documentos */}
         <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-100">
           <h3 className="text-md font-medium text-[#365486] mb-3">Documentos adjuntos</h3>
           {registro.drive_folder_id ? (
@@ -323,7 +367,6 @@ const PreRegistroDetail = () => {
           )}
         </div>
 
-        {/* Sección de rechazo */}
         {rejectReasonVisible && (
           <div className="bg-red-50 rounded-lg p-6 mb-8 border border-red-100">
             <h3 className="text-md font-medium text-red-700 mb-3">Justificación del rechazo</h3>
@@ -365,7 +408,6 @@ const PreRegistroDetail = () => {
           </div>
         )}
 
-        {/* Botones de acción */}
         {buttonsVisible && !registro?.is_registered && (
           <div className="flex justify-center gap-5 my-8">
             <Button
@@ -385,20 +427,17 @@ const PreRegistroDetail = () => {
           </div>
         )}
 
-        {/* Mensaje de estado aprobado */}
         {registro?.is_registered && (
           <div className="bg-green-50 border border-green-100 rounded-lg p-4 my-6 text-center">
             <p className="text-green-700 font-medium">Este pre-registro ya ha sido aprobado previamente.</p>
           </div>
         )}
 
-        {/* Botón de regreso */}
         <div className="flex justify-start mt-8">
           <BackButton to="/gestionDatos/pre-registros" text="Regresar a la lista" className="hover:bg-blue-50" />
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <Modal
           showModal={showModal}

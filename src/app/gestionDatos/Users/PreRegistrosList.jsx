@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import NavBar from "../../../components/NavBar";
 import Modal from "../../../components/Modal";
+import DataTable from "../../../components/DataTable";
+import { Search } from "lucide-react";
 
 const PreRegistrosList = () => {
   const navigate = useNavigate();
@@ -23,8 +27,6 @@ const PreRegistrosList = () => {
       try {
         const token = localStorage.getItem("token");
         const API_URL = import.meta.env.VITE_APP_API_URL;
-        //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
-
         const response = await axios.get(`${API_URL}/users/admin/listed`, {
           headers: { Authorization: `Token ${token}` },
         });
@@ -34,7 +36,36 @@ const PreRegistrosList = () => {
         setFilteredRegistros([]);
       } catch (err) {
         console.error("Error al obtener los pre-registros:", err);
-        setError("No se pudieron cargar los pre-registros.");
+
+        // Extract detailed error message from response
+        let errorMessage = "No se pudieron cargar los pre-registros.";
+
+        if (err.response) {
+          // If we have a response object with data
+          if (err.response.status === 403) {
+            errorMessage =
+              "No tiene permisos para acceder a los pre-registros.";
+            if (err.response.data?.detail) {
+              errorMessage = err.response.data.detail;
+            }
+          } else if (err.response.data?.detail) {
+            errorMessage = err.response.data.detail;
+          } else if (err.response.data?.message) {
+            errorMessage = err.response.data.message;
+          }
+
+          console.log("Código de estado:", err.response.status);
+          console.log("Mensaje de error:", errorMessage);
+        } else if (err.request) {
+          // Request was made but no response received
+          errorMessage =
+            "No se pudo conectar con el servidor. Verifique su conexión a internet.";
+        } else {
+          // Error in setting up the request
+          errorMessage = `Error de configuración: ${err.message}`;
+        }
+
+        setError(errorMessage);
       }
     };
 
@@ -42,6 +73,7 @@ const PreRegistrosList = () => {
   }, []);
 
   const openErrorModal = (message) => {
+    console.log("Error message:", message);
     setModalMessage(message);
     setShowModal(true);
   };
@@ -50,7 +82,11 @@ const PreRegistrosList = () => {
     try {
       navigate(`/gestionDatos/pre-registros/${documentId}`);
     } catch (error) {
-      openErrorModal("Ocurrió un error al intentar redirigir al registro.");
+      console.error("Error al redirigir:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Ocurrió un error al intentar redirigir al registro.";
+      openErrorModal(errorMessage);
     }
   };
 
@@ -138,33 +174,113 @@ const PreRegistrosList = () => {
 
       setFilteredRegistros(filtered);
     } catch (error) {
-      openErrorModal("Ocurrió un error al aplicar los filtros.");
+      console.error("Error al aplicar filtros:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Ocurrió un error al aplicar los filtros.";
+      openErrorModal(errorMessage);
     }
   };
+
+  const columns = [
+    {
+      key: "document",
+      label: "ID del usuario",
+      render: (item) => item.document,
+    },
+    {
+      key: "date_joined",
+      label: "Fecha",
+      render: (item) =>
+        item.date_joined
+          ? new Date(item.date_joined).toLocaleDateString("es-ES", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
+          : "Fecha no disponible",
+    },
+    {
+      key: "status",
+      label: "Estado",
+      render: (item) => (
+        <span
+          className={`font-bold
+            ${item.is_active && item.is_registered ? "text-green-600" : ""}
+            ${!item.is_active && item.is_registered ? "text-red-600" : ""}
+            ${!item.is_registered ? "text-yellow-600" : ""}
+          `}
+        >
+          {item.is_active && item.is_registered
+            ? "Aprobado"
+            : !item.is_active && item.is_registered
+            ? "Inactivo"
+            : "Pendiente"}
+        </span>
+      ),
+    },
+    {
+      key: "action",
+      label: "Acción",
+      render: (item) => (
+        <button
+          onClick={() => handleRedirect(item.document)}
+          className="bg-[#365486] hover:bg-[#42A5F5] text-white text-xs px-4 py-1 h-8 rounded-lg w-24"
+        >
+          {item.is_active && item.is_registered
+            ? "Ver"
+            : !item.is_active && item.is_registered
+            ? "Ver"
+            : "Responder"}
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div>
       <NavBar />
-      <div className="max-w-5xl mx-auto p-6 mt-20">
-        <h1 className="text-center text-xl font-medium mb-8">
-          Aprobación de Pre Registro
+      <div className="container mx-auto p-4 md:p-8 lg:p-20">
+        <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
+          Solicitudes de pre registros
         </h1>
 
         {error && <p className="text-center text-red-600">{error}</p>}
 
         <div className="mb-6">
-          <p className="text-sm text-gray-600 mb-4">
-            Completa al menos una (1) de las opciones de filtro
-          </p>
+          <div className="p-4 rounded-lg flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between flex-wrap">
+            <div className="relative w-full lg:w-[22%] xl:w-1/5">
+              <span className="absolute left-3 top-2 text-gray-400">
+                <Search size={18} />
+              </span>
+              <input
+                type="text"
+                placeholder="Buscar por ID de usuario"
+                className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+                onInput={(e) => {
+                  e.target.value = e.target.value.replace(/[^0-9]/g, "");
+                }}
+                value={filters.id}
+                onChange={(e) => handleFilterChange("id", e.target.value)}
+                maxLength={15}
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-1">
-              <label className="block text-xs text-gray-500 mb-1">
-                Buscar por ID
-              </label>
-              <div className="relative w-full flex items-center">
+            <div className="relative w-full lg:w-[22%] xl:w-1/5">
+              <select
+                className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+                value={filters.status}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
+              >
+                <option value="todos">ESTADO</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="aprobado">Aprobado</option>
+                <option value="rechazado">Inactivo</option>
+              </select>
+              <span className="absolute top-3 right-4 text-gray-400">
                 <svg
-                  className="absolute left-3 h-5 w-5 text-gray-400"
+                  className="w-5 h-5"
+                  xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -172,156 +288,67 @@ const PreRegistrosList = () => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
                   />
                 </svg>
+              </span>
+            </div>
+
+            <div className="w-full lg:w-[30%] xl:w-1/3">
+              <p className="text-gray-500 text-sm text-center mb-1">
+                Filtrar por fecha de registro
+              </p>
+              <div className="flex items-center bg-gray-100 rounded-full px-1 w-full border border-gray-300">
+                <span className="text-gray-400 px-2 flex-shrink-0">
+                  <Search size={18} />
+                </span>
+
                 <input
-                  type="text"
-                  placeholder="Buscar por ID de usuario"
-                  className="w-full pl-10 py-2.5 bg-[#F6F6F6] border border-gray-300 rounded-lg text-gray-500 placeholder:text-gray-500 h-11"
-                  onInput={(e) => {
-                    e.target.value = e.target.value.replace(/[^0-9]/g, "");
-                  }}
-                  value={filters.id}
-                  onChange={(e) => handleFilterChange("id", e.target.value)}
+                  type="date"
+                  name="startDate"
+                  className="w-full min-w-0 px-3 py-2 bg-transparent focus:outline-none text-gray-500 text-sm"
+                  value={filters.startDate || ""}
+                  onChange={(e) =>
+                    handleFilterChange("startDate", e.target.value)
+                  }
+                />
+
+                <span className="text-gray-400 px-2 flex-shrink-0">|</span>
+
+                <input
+                  type="date"
+                  name="endDate"
+                  className="w-full min-w-0 px-3 py-2 bg-transparent focus:outline-none text-gray-500 text-sm"
+                  value={filters.endDate || ""}
+                  onChange={(e) =>
+                    handleFilterChange("endDate", e.target.value)
+                  }
                 />
               </div>
-            </div>
-            <div className="md:col-span-1">
-              <label className="block text-xs text-gray-500 mb-1">
-                Fecha inicial
-              </label>
-              <input
-                type="date"
-                className="w-full border border-gray-300 rounded-lg p-2 h-11 cursor-pointer"
-                value={filters.startDate}
-                onChange={(e) =>
-                  handleFilterChange("startDate", e.target.value)
-                }
-              />
+              <div className="flex justify-between text-gray-400 text-xs px-2 mt-1">
+                <span>Inicio</span>
+                <span>Fin</span>
+              </div>
             </div>
 
-            <div className="md:col-span-1">
-              <label className="block text-xs text-gray-500 mb-1">
-                Fecha final
-              </label>
-              <input
-                type="date"
-                className="w-full border border-gray-300 rounded-lg p-2 h-11 cursor-pointer"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange("endDate", e.target.value)}
-              />
-            </div>
-
-            <div className="md:col-span-1">
-              <label className="block text-xs text-gray-500 mb-1">Estado</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg p-2 h-11"
-                value={filters.status}
-                onChange={(e) => handleFilterChange("status", e.target.value)}
-              >
-                <option value="todos">Todos</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="aprobado">Aprobado</option>
-                <option value="rechazado">Inactivo</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-center mt-4">
             <button
               onClick={applyFilters}
-              className="bg-[#365486] hover:bg-[#2f4275] text-white px-8 py-2 rounded-lg"
+              className="bg-[#365486] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#344663] hover:scale-105 w-full lg:w-auto"
             >
               Filtrar
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 px-4 text-center font-medium">
-                  ID del usuario
-                </th>
-                <th className="py-2 px-4 text-center font-medium">Fecha</th>
-                <th className="py-2 px-4 text-center font-medium">Estado</th>
-                <th className="py-2 px-4 text-center font-medium">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRegistros.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-500">
-                    No hay usuarios para mostrar. Aplica filtros para ver
-                    resultados.
-                  </td>
-                </tr>
-              ) : (
-                filteredRegistros.map((registro, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-3 px-4 text-center align-middle">
-                      {registro.document}
-                    </td>
-                    <td className="py-3 px-4 text-center align-middle">
-                      {registro.date_joined
-                        ? new Date(registro.date_joined).toLocaleDateString(
-                            "es-ES",
-                            {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                            }
-                          )
-                        : "Fecha no disponible"}
-                    </td>
-
-                    <td className="py-3 px-4 text-center align-middle">
-                      <span
-                        className={`font-bold
-                          ${
-                            registro.is_active && registro.is_registered
-                              ? "text-green-600"
-                              : ""
-                          }
-                          ${
-                            !registro.is_active && registro.is_registered
-                              ? "text-red-600"
-                              : ""
-                          }
-                          ${!registro.is_registered ? "text-yellow-600" : ""}
-                        `}
-                      >
-                        {registro.is_active && registro.is_registered
-                          ? "Aprobado"
-                          : !registro.is_active && registro.is_registered
-                          ? "Inactivo"
-                          : "Pendiente"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center align-middle">
-                      <button
-                        onClick={() => handleRedirect(registro.document)}
-                        className="bg-[#365486] hover:bg-[#42A5F5] text-white text-xs px-4 py-1 h-8 rounded-lg"
-                      >
-                        {registro.is_active && registro.is_registered
-                          ? "Ver"
-                          : !registro.is_active && registro.is_registered
-                          ? "Ver"
-                          : "Responder"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={columns}
+          data={filteredRegistros}
+          emptyMessage="No hay usuarios para mostrar. Aplica filtros para ver resultados."
+          actions={false}
+        />
       </div>
 
-      {/* Modal */}
       {showModal && (
         <Modal
           showModal={showModal}

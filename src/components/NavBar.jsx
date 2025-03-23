@@ -385,10 +385,6 @@ function NavBar() {
               text="Gestión de registros"
               subItems={[
                 {
-                  direction: "/gestionRegistros/usuarios",
-                  text: "Registro de Usuarios",
-                },
-                {
                   direction: "/gestionRegistros/predios",
                   text: "Registro de Predios",
                 },
