@@ -32,25 +32,40 @@ const UserUpdateInformation = () => {
           return;
         }
 
+        // Paso 1: Obtener perfil del usuario
         const profileResponse = await axios.get(`${API_URL}/users/profile`, {
           headers: { Authorization: `Token ${token}` },
+        }).catch(profileError => {
+          console.error("Error al obtener perfil:", profileError);
+          throw profileError;
         });
 
         const userData = profileResponse.data;
         
-        const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userData.document}/permissions`, {
-          headers: { Authorization: `Token ${token}` },
-        });
+        // Paso 2: Obtener permisos del usuario
+        let role = "Sin rol asignado";
+        try {
+          const permissionsResponse = await axios.get(`${API_URL}/users/${userData.id}/permissions`, {
+            headers: { Authorization: `Token ${token}` },
+          });
+          
+          role = permissionsResponse.data?.role || "Sin rol asignado";
+        } catch (permissionsError) {
+          console.warn("No se pudieron obtener los permisos:", permissionsError);
+        }
 
-        const role = permissionsResponse.data.role || "Sin rol asignado";
-        setUser({ ...userData, role });
+        // Combinar datos de usuario con rol
+        const userWithRole = { ...userData, role };
+        setUser(userWithRole);
 
+        // Establecer datos del formulario
         setFormData({
           email: userData.email || "",
           phone: userData.phone || "",
         });
 
       } catch (err) {
+        console.error("Error al cargar datos:", err);
         setShowErrorModal2(true);
       }
     };
@@ -134,20 +149,12 @@ const UserUpdateInformation = () => {
 
                 <div className="mt-4">
                 <p className="text-sm font-medium mb-2">Documentos actuales:</p>
-                <ul className="space-y-1">
-                    {user.attachments?.map((doc, index) => (
-                    <li key={index} className="text-sm text-gray-600">
-                        <a
-                        href={`https://drive.google.com/drive/u/1/folders/${user.folder_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                        >
-                        {doc}
-                        </a>
-                    </li>
-                    ))}
-                </ul>
+                <div className="space-y-1">
+                <div className="mt-2 space-y-2">
+                                <span>{user.drive_folder_id || "Carpeta no disponible"}</span>
+
+                            </div>
+                </div>
                 </div>
               </div>
 
@@ -235,7 +242,7 @@ const UserUpdateInformation = () => {
         title="Formulario sin cambios"
         btnMessage="Aceptar"
       >
-        <p>No se realizo ningun cambio en su informaicon personal.</p>
+        <p>No se realizó ningún cambio en su información personal.</p>
       </Modal>
     </div>
   );
