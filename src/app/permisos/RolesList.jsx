@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import RolesSystem from "./roles-system"
 import UsersSystem from "./users-system"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, CheckCircle, Info, X } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertCircle, CheckCircle, Info, X, ChevronDown, ChevronRight } from "lucide-react"
 import axios from "axios"
 
 const RolesSystem = () => {
@@ -28,6 +28,8 @@ const RolesSystem = () => {
   const [morePermissionsSearchTerm, setMorePermissionsSearchTerm] = useState("")
   // Añadir estado para el error de permisos
   const [permissionsError, setPermissionsError] = useState("")
+  // Estado para controlar qué grupos están expandidos
+  const [expandedGroups, setExpandedGroups] = useState({})
 
   // Estados para notificaciones y confirmaciones
   const [notification, setNotification] = useState(null)
@@ -77,14 +79,26 @@ const RolesSystem = () => {
     })
   }
 
-  // Función para obtener todos los roles (grupos)
+  // Modificar la función fetchRoles para usar la ruta correcta
   const fetchRoles = async () => {
     try {
       setIsLoading(true)
       const { instance } = setupAxios()
 
+      // Quitar el prefijo /api ya que está incluido en la URL base
       const response = await instance.get("/admin/groups")
-      setRoles(response.data)
+
+      // Verificar si la respuesta tiene la estructura esperada
+      if (Array.isArray(response.data)) {
+        setRoles(response.data)
+      } else if (response.data.results && Array.isArray(response.data.results)) {
+        // Si la API ahora devuelve un objeto con una propiedad 'results'
+        setRoles(response.data.results)
+      } else {
+        console.error("Formato de respuesta inesperado:", response.data)
+        setError("Error en el formato de respuesta de roles.")
+      }
+
       setIsLoading(false)
     } catch (error) {
       console.error("Error al obtener roles:", error)
@@ -99,8 +113,19 @@ const RolesSystem = () => {
     try {
       const { instance } = setupAxios()
 
+      // Quitar el prefijo /api
       const response = await instance.get("/admin/permissions")
-      setAllPermissions(response.data)
+
+      // Verificar si la respuesta tiene la estructura esperada
+      if (Array.isArray(response.data)) {
+        setAllPermissions(response.data)
+      } else if (response.data.results && Array.isArray(response.data.results)) {
+        // Si la API ahora devuelve un objeto con una propiedad 'results'
+        setAllPermissions(response.data.results)
+      } else {
+        console.error("Formato de respuesta inesperado:", response.data)
+        showNotification("Error en el formato de respuesta de permisos.", "error")
+      }
     } catch (error) {
       console.error("Error al obtener permisos:", error)
       setError("Error al cargar los permisos. Por favor, intente de nuevo.")
@@ -113,8 +138,23 @@ const RolesSystem = () => {
     try {
       const { instance } = setupAxios()
 
+      // Quitar el prefijo /api
       const response = await instance.get("/admin/grouped_permissions")
-      setGroupedPermissions(response.data)
+
+      // Verificar si la respuesta tiene la estructura esperada
+      if (typeof response.data === "object" && response.data !== null) {
+        setGroupedPermissions(response.data)
+
+        // Inicializar todos los grupos como expandidos
+        const initialExpandedState = {}
+        Object.keys(response.data).forEach((appLabel) => {
+          initialExpandedState[appLabel] = true
+        })
+        setExpandedGroups(initialExpandedState)
+      } else {
+        console.error("Formato de respuesta inesperado:", response.data)
+        showNotification("Error en el formato de respuesta de permisos agrupados.", "error")
+      }
     } catch (error) {
       console.error("Error al obtener permisos agrupados:", error)
       showNotification("Error al cargar los permisos agrupados.", "error")
@@ -163,19 +203,31 @@ const RolesSystem = () => {
     return ""
   }
 
-  // Manejadores de eventos para roles
+  // Modificar la función handleEditPermissions para usar la ruta correcta
   const handleEditPermissions = async (role) => {
     setCurrentRole(role)
 
     try {
       const { instance } = setupAxios()
 
-      // Obtener los permisos actuales del rol
+      // Quitar el prefijo /api
       const response = await instance.get(`/admin/groups/${role.id}/permissions`)
 
-      // Extraer los IDs de los permisos
-      const permissionIds = response.data.map((p) => p.id)
-      setEditedPermissions(permissionIds)
+      // Verificar si la respuesta tiene la estructura esperada
+      if (Array.isArray(response.data)) {
+        // Extraer los IDs de los permisos
+        const permissionIds = response.data.map((p) => p.id)
+        setEditedPermissions(permissionIds)
+      } else if (response.data.results && Array.isArray(response.data.results)) {
+        // Si la API ahora devuelve un objeto con una propiedad 'results'
+        const permissionIds = response.data.results.map((p) => p.id)
+        setEditedPermissions(permissionIds)
+      } else {
+        console.error("Formato de respuesta inesperado:", response.data)
+        showNotification("Error en el formato de respuesta de permisos del rol.", "error")
+        return
+      }
+
       setIsEditModalOpen(true)
     } catch (error) {
       console.error("Error al obtener permisos del rol:", error)
@@ -183,7 +235,7 @@ const RolesSystem = () => {
     }
   }
 
-  const handleSavePermissions = async () => {
+  const handleSavePermissions = async (role) => {
     if (currentRole) {
       // Verificar si hay al menos un permiso seleccionado
       if (editedPermissions.length === 0) {
@@ -208,7 +260,14 @@ const RolesSystem = () => {
 
       // Obtener los permisos actuales del rol
       const currentPermissionsResponse = await instance.get(`/admin/groups/${currentRole.id}/permissions`)
-      const currentPermissionIds = currentPermissionsResponse.data.map((p) => p.id)
+
+      // Extraer los IDs de los permisos actuales
+      let currentPermissionIds = []
+      if (Array.isArray(currentPermissionsResponse.data)) {
+        currentPermissionIds = currentPermissionsResponse.data.map((p) => p.id)
+      } else if (currentPermissionsResponse.data.results && Array.isArray(currentPermissionsResponse.data.results)) {
+        currentPermissionIds = currentPermissionsResponse.data.results.map((p) => p.id)
+      }
 
       // Permisos a añadir (están en editedPermissions pero no en currentPermissionIds)
       const permissionsToAdd = editedPermissions.filter((id) => !currentPermissionIds.includes(id))
@@ -253,13 +312,16 @@ const RolesSystem = () => {
     setIsDeleteModalOpen(true)
   }
 
+  // Modificar la función confirmDeleteRole para usar una ruta que exista
   const confirmDeleteRole = async () => {
     if (currentRole) {
       try {
         setIsSaving(true)
         const { instance } = setupAxios()
 
-        await instance.delete(`/admin/groups/${currentRole.id}/`)
+        // Intentar usar una ruta alternativa o un método POST en lugar de DELETE
+        // Opción 1: Intentar sin la barra final
+        await instance.delete(`/admin/groups/${currentRole.id}`)
 
         // Actualizar la lista de roles
         setRoles(roles.filter((role) => role.id !== currentRole.id))
@@ -275,10 +337,16 @@ const RolesSystem = () => {
           } else if (typeof error.response.data === "string") {
             showNotification(`Error: ${error.response.data}`, "error")
           } else {
-            showNotification("Error al eliminar el rol. Puede que tenga usuarios asignados.", "error")
+            showNotification(
+              "Error al eliminar el rol. Puede que tenga usuarios asignados o la ruta no existe en el backend.",
+              "error",
+            )
           }
         } else {
-          showNotification("Error al eliminar el rol. Por favor, intente de nuevo.", "error")
+          showNotification(
+            "Error al eliminar el rol. Por favor, intente de nuevo o contacte al administrador del sistema.",
+            "error",
+          )
         }
       } finally {
         setIsSaving(false)
@@ -294,6 +362,7 @@ const RolesSystem = () => {
     setIsCreateModalOpen(true)
   }
 
+  // Modificar la función handleSaveNewRole para validar que haya permisos seleccionados
   const handleSaveNewRole = async () => {
     // Limpiar errores previos
     setNameError("")
@@ -314,32 +383,34 @@ const RolesSystem = () => {
 
     // Validar que se haya seleccionado al menos un permiso
     if (!newRole.permissions.length) {
-      // Mostrar confirmación en lugar de error directo
-      showConfirmation(
-        "Advertencia",
-        "Estás a punto de crear un rol sin permisos. ¿Estás seguro de que deseas continuar?",
-        async () => {
-          await createNewRole()
-        },
-        "warning",
-      )
+      setPermissionsError("Debe seleccionar al menos un permiso para crear el rol.")
       return
     }
 
     await createNewRole()
   }
 
+  // Modificar la función createNewRole para asegurar que los permisos se asignen correctamente
   const createNewRole = async () => {
     try {
       setIsSaving(true)
       const { instance } = setupAxios()
 
-      // Primero crear el rol
-      const createResponse = await instance.post("/admin/groups/", {
+      // Primero crear el rol - Quitar el prefijo /api y la barra final
+      const createResponse = await instance.post("/admin/groups", {
         name: newRole.name,
       })
 
-      const createdRole = createResponse.data
+      // Verificar si la respuesta tiene la estructura esperada
+      let createdRole
+      if (createResponse.data && createResponse.data.id) {
+        createdRole = createResponse.data
+      } else {
+        console.error("Formato de respuesta inesperado:", createResponse.data)
+        showNotification("Error en el formato de respuesta al crear el rol.", "error")
+        setIsSaving(false)
+        return
+      }
 
       // Si hay permisos seleccionados, asignarlos al nuevo rol
       if (newRole.permissions.length > 0) {
@@ -397,6 +468,198 @@ const RolesSystem = () => {
     }
   }
 
+  // Función para alternar la expansión de un grupo
+  const toggleGroupExpansion = (groupName) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupName]: !prev[groupName],
+    }))
+  }
+
+  // Función para seleccionar/deseleccionar todos los permisos de un modelo
+  const toggleModelPermissions = (appLabel, model, permissions, isEditing) => {
+    if (isEditing) {
+      // Para el modo de edición
+      const permissionIds = permissions.map((p) => p.id)
+      const allSelected = permissionIds.every((id) => editedPermissions.includes(id))
+
+      if (allSelected) {
+        // Si todos están seleccionados, deseleccionar todos
+        setEditedPermissions((prev) => prev.filter((id) => !permissionIds.includes(id)))
+      } else {
+        // Si no todos están seleccionados, seleccionar todos
+        setEditedPermissions((prev) => {
+          const newPermissions = [...prev]
+          permissionIds.forEach((id) => {
+            if (!newPermissions.includes(id)) {
+              newPermissions.push(id)
+            }
+          })
+          return newPermissions
+        })
+      }
+    } else {
+      // Para el modo de creación
+      const permissionIds = permissions.map((p) => p.id)
+      const allSelected = permissionIds.every((id) => newRole.permissions.includes(id))
+
+      if (allSelected) {
+        // Si todos están seleccionados, deseleccionar todos
+        setNewRole((prev) => ({
+          ...prev,
+          permissions: prev.permissions.filter((id) => !permissionIds.includes(id)),
+        }))
+      } else {
+        // Si no todos están seleccionados, seleccionar todos
+        setNewRole((prev) => {
+          const currentPermissions = Array.isArray(prev.permissions) ? [...prev.permissions] : []
+          permissionIds.forEach((id) => {
+            if (!currentPermissions.includes(id)) {
+              currentPermissions.push(id)
+            }
+          })
+
+          // Limpiar el error de permisos si se selecciona al menos un permiso
+          if (permissionsError && currentPermissions.length > 0) {
+            setPermissionsError("")
+          }
+
+          return {
+            ...prev,
+            permissions: currentPermissions,
+          }
+        })
+      }
+    }
+  }
+
+  // Función para seleccionar/deseleccionar todos los permisos de una aplicación
+  const toggleAppPermissions = (appLabel, models, isEditing) => {
+    // Obtener todos los IDs de permisos de esta aplicación
+    const allPermissionIds = []
+    Object.values(models).forEach((permissions) => {
+      permissions.forEach((permission) => {
+        allPermissionIds.push(permission.id)
+      })
+    })
+
+    if (isEditing) {
+      // Para el modo de edición
+      const allSelected = allPermissionIds.every((id) => editedPermissions.includes(id))
+
+      if (allSelected) {
+        // Si todos están seleccionados, deseleccionar todos
+        setEditedPermissions((prev) => prev.filter((id) => !allPermissionIds.includes(id)))
+      } else {
+        // Si no todos están seleccionados, seleccionar todos
+        setEditedPermissions((prev) => {
+          const newPermissions = [...prev]
+          allPermissionIds.forEach((id) => {
+            if (!newPermissions.includes(id)) {
+              newPermissions.push(id)
+            }
+          })
+          return newPermissions
+        })
+      }
+    } else {
+      // Para el modo de creación
+      const allSelected = allPermissionIds.every((id) => newRole.permissions.includes(id))
+
+      if (allSelected) {
+        // Si todos están seleccionados, deseleccionar todos
+        setNewRole((prev) => ({
+          ...prev,
+          permissions: prev.permissions.filter((id) => !allPermissionIds.includes(id)),
+        }))
+      } else {
+        // Si no todos están seleccionados, seleccionar todos
+        setNewRole((prev) => {
+          const currentPermissions = Array.isArray(prev.permissions) ? [...prev.permissions] : []
+          allPermissionIds.forEach((id) => {
+            if (!currentPermissions.includes(id)) {
+              currentPermissions.push(id)
+            }
+          })
+
+          // Limpiar el error de permisos si se selecciona al menos un permiso
+          if (permissionsError && currentPermissions.length > 0) {
+            setPermissionsError("")
+          }
+
+          return {
+            ...prev,
+            permissions: currentPermissions,
+          }
+        })
+      }
+    }
+  }
+
+  // Función para verificar si todos los permisos de un modelo están seleccionados
+  const areAllModelPermissionsSelected = (permissions, isEditing) => {
+    const permissionIds = permissions.map((p) => p.id)
+    if (isEditing) {
+      return permissionIds.every((id) => editedPermissions.includes(id))
+    } else {
+      return permissionIds.every((id) => newRole.permissions.includes(id))
+    }
+  }
+
+  // Función para verificar si algunos permisos de un modelo están seleccionados
+  const areSomeModelPermissionsSelected = (permissions, isEditing) => {
+    const permissionIds = permissions.map((p) => p.id)
+    if (isEditing) {
+      return (
+        permissionIds.some((id) => editedPermissions.includes(id)) &&
+        !permissionIds.every((id) => editedPermissions.includes(id))
+      )
+    } else {
+      return (
+        permissionIds.some((id) => newRole.permissions.includes(id)) &&
+        !permissionIds.every((id) => newRole.permissions.includes(id))
+      )
+    }
+  }
+
+  // Función para verificar si todos los permisos de una aplicación están seleccionados
+  const areAllAppPermissionsSelected = (models, isEditing) => {
+    const allPermissionIds = []
+    Object.values(models).forEach((permissions) => {
+      permissions.forEach((permission) => {
+        allPermissionIds.push(permission.id)
+      })
+    })
+
+    if (isEditing) {
+      return allPermissionIds.every((id) => editedPermissions.includes(id))
+    } else {
+      return allPermissionIds.every((id) => newRole.permissions.includes(id))
+    }
+  }
+
+  // Función para verificar si algunos permisos de una aplicación están seleccionados
+  const areSomeAppPermissionsSelected = (models, isEditing) => {
+    const allPermissionIds = []
+    Object.values(models).forEach((permissions) => {
+      permissions.forEach((permission) => {
+        allPermissionIds.push(permission.id)
+      })
+    })
+
+    if (isEditing) {
+      return (
+        allPermissionIds.some((id) => editedPermissions.includes(id)) &&
+        !allPermissionIds.every((id) => editedPermissions.includes(id))
+      )
+    } else {
+      return (
+        allPermissionIds.some((id) => newRole.permissions.includes(id)) &&
+        !allPermissionIds.every((id) => newRole.permissions.includes(id))
+      )
+    }
+  }
+
   // Función auxiliar para combinar clases de Tailwind
   const cn = (...classes) => {
     return classes.filter(Boolean).join(" ")
@@ -450,8 +713,9 @@ const RolesSystem = () => {
     )
   }
 
-  // Modificar la función que muestra los permisos adicionales
+  // Modificar la función handleViewMorePermissions para asegurar que se muestren todos los permisos adicionales
   const handleViewMorePermissions = (permissions) => {
+    console.log("Permisos a mostrar:", permissions.slice(3)) // Agregar log para depuración
     setCurrentPermissions(permissions.slice(3))
     setMorePermissionsSearchTerm("") // Resetear el término de búsqueda
     setIsViewMorePermissionsModalOpen(true)
@@ -479,15 +743,16 @@ const RolesSystem = () => {
       key: "name",
       label: "Nombre",
     },
+    // Modificar la renderización de los permisos en la tabla para asegurar que se muestren correctamente
     {
       key: "permissions",
       label: "Permisos",
       render: (role) => (
         <div className="flex flex-wrap gap-1">
           {role.permissions && role.permissions.length > 0 ? (
-            role.permissions.slice(0, 3).map((perm) => (
+            role.permissions.slice(0, 3).map((perm, idx) => (
               <span
-                key={perm.id}
+                key={`perm-${perm.id || idx}`}
                 className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100"
               >
                 {perm.name}
@@ -500,7 +765,10 @@ const RolesSystem = () => {
             <div className="relative inline-block">
               <button
                 className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 hover:bg-gray-200"
-                onClick={() => handleViewMorePermissions(role.permissions)}
+                onClick={() => {
+                  console.log("Permisos completos:", role.permissions)
+                  handleViewMorePermissions(role.permissions)
+                }}
               >
                 +{role.permissions.length - 3} más
               </button>
@@ -621,6 +889,204 @@ const RolesSystem = () => {
     )
   }
 
+  // Modificar la función fetchUserPermissions para usar la ruta correcta
+  const fetchUserPermissions = async (document) => {
+    try {
+      const { instance } = setupAxios()
+
+      // Usar la ruta correcta según el backend
+      const permissionsResponse = await instance.get(`/admin/users/${document}/permissions`)
+
+      // Adaptar a la nueva estructura de respuesta
+      const permissionsData = permissionsResponse.data
+
+      // Transformar la estructura de datos para mantener compatibilidad
+      const transformedData = {
+        direct_permissions: permissionsData.Permisos_Usuario || [],
+        group_permissions: [],
+        all_permissions: [],
+      }
+
+      // Procesar los permisos de grupo
+      if (permissionsData.Permisos_Rol) {
+        Object.entries(permissionsData.Permisos_Rol).forEach(([groupName, permissions]) => {
+          permissions.forEach((perm) => {
+            if (typeof perm === "object" && perm !== null) {
+              // Añadir el nombre del grupo al permiso
+              perm.group_name = groupName
+              transformedData.group_permissions.push(perm)
+            }
+          })
+        })
+      }
+
+      // Obtener detalles del usuario
+      const userResponse = await instance.get(`/users/details/${document}`)
+
+      // Verificar si la respuesta tiene la estructura esperada
+      const userData = userResponse.data
+
+      // Obtener los grupos del usuario
+      const userGroups = userData.groups || []
+
+      return {
+        permissions: transformedData,
+        groups: userGroups,
+        userData: userData,
+      }
+    } catch (error) {
+      console.error("Error al obtener los permisos del usuario:", error)
+      showNotification("Error al obtener los permisos del usuario.", "error")
+      return {
+        permissions: {
+          direct_permissions: [],
+          group_permissions: [],
+          all_permissions: [],
+        },
+        groups: [],
+        userData: {},
+      }
+    }
+  }
+
+  // Componente para renderizar los permisos agrupados con selección por grupo
+  const GroupedPermissionsSelector = ({ isEditing }) => {
+    return (
+      <>
+        {Object.entries(groupedPermissions)
+          .filter(([appLabel, models]) => {
+            // Verificar si hay permisos que coincidan con la búsqueda en este grupo
+            if (!permissionSearchTerm.trim()) return true
+
+            for (const [model, permissions] of Object.entries(models)) {
+              const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
+              if (filteredPermissions.length > 0) {
+                return true
+              }
+            }
+            return false
+          })
+          .map(([appLabel, models]) => {
+            const isAppExpanded = expandedGroups[appLabel]
+            const allAppSelected = areAllAppPermissionsSelected(models, isEditing)
+            const someAppSelected = areSomeAppPermissionsSelected(models, isEditing)
+
+            return (
+              <div key={appLabel} className="mb-8">
+                <div className="flex items-center mb-4">
+                  <button
+                    onClick={() => toggleGroupExpansion(appLabel)}
+                    className="mr-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  >
+                    {isAppExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                  </button>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`app-${appLabel}-${isEditing ? "edit" : "new"}`}
+                      checked={allAppSelected}
+                      className={`mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+                        someAppSelected ? "indeterminate" : ""
+                      }`}
+                      onChange={() => toggleAppPermissions(appLabel, models, isEditing)}
+                      ref={(el) => {
+                        if (el && someAppSelected) {
+                          el.indeterminate = true
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor={`app-${appLabel}-${isEditing ? "edit" : "new"}`}
+                      className="text-lg font-medium capitalize cursor-pointer"
+                      onClick={() => toggleGroupExpansion(appLabel)}
+                    >
+                      {appLabel.replace("_", " ")}
+                    </label>
+                  </div>
+                </div>
+
+                {isAppExpanded && (
+                  <>
+                    {Object.entries(models)
+                      .filter(([model, permissions]) => {
+                        // No mostrar este modelo si no hay permisos que coincidan con la búsqueda
+                        if (!permissionSearchTerm.trim()) return true
+
+                        const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
+                        return filteredPermissions.length > 0
+                      })
+                      .map(([model, permissions]) => {
+                        const allModelSelected = areAllModelPermissionsSelected(permissions, isEditing)
+                        const someModelSelected = areSomeModelPermissionsSelected(permissions, isEditing)
+                        const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
+
+                        return (
+                          <div key={model} className="mb-6 ml-6">
+                            <div className="flex items-center mb-2">
+                              <input
+                                type="checkbox"
+                                id={`model-${appLabel}-${model}-${isEditing ? "edit" : "new"}`}
+                                checked={allModelSelected}
+                                className={`mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+                                  someModelSelected ? "indeterminate" : ""
+                                }`}
+                                onChange={() => toggleModelPermissions(appLabel, model, permissions, isEditing)}
+                                ref={(el) => {
+                                  if (el && someModelSelected) {
+                                    el.indeterminate = true
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`model-${appLabel}-${model}-${isEditing ? "edit" : "new"}`}
+                                className="text-md font-medium capitalize cursor-pointer"
+                              >
+                                {model.replace("_", " ")}
+                              </label>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-6">
+                              {filteredPermissions.map((permission) => (
+                                <div
+                                  key={permission.id}
+                                  className="flex items-start space-x-2 border p-3 rounded-md overflow-hidden"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    id={`${isEditing ? "edit" : "new"}-${permission.id}`}
+                                    checked={
+                                      isEditing
+                                        ? editedPermissions.includes(permission.id)
+                                        : newRole.permissions.includes(permission.id)
+                                    }
+                                    onChange={() => togglePermission(permission.id, isEditing)}
+                                    className="mt-1"
+                                  />
+                                  <div className="grid gap-1">
+                                    <label
+                                      htmlFor={`${isEditing ? "edit" : "new"}-${permission.id}`}
+                                      className="text-sm font-medium leading-tight cursor-pointer break-words"
+                                    >
+                                      {permission.name}
+                                    </label>
+                                    <p className="text-sm text-gray-500">{permission.codename}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                  </>
+                )}
+              </div>
+            )
+          })}
+      </>
+    )
+  }
+
   return (
     <div className="relative">
       {/* Notificación */}
@@ -708,7 +1174,7 @@ const RolesSystem = () => {
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm"></div>
 
           {/* Contenido del modal */}
-          <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg relative z-10" style={{ maxHeight: "80vh" }}>
+          <div className="bg-white rounded-lg w-full max-w-4xl shadow-lg relative z-10" style={{ maxHeight: "80vh" }}>
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-semibold">Editar permisos del rol: {currentRole?.name}</h2>
               <button onClick={() => setIsEditModalOpen(false)} className="text-gray-500 hover:text-gray-700">
@@ -759,66 +1225,8 @@ const RolesSystem = () => {
                 </div>
               )}
 
-              {Object.entries(groupedPermissions).map(([appLabel, models]) => {
-                // Verificar si hay permisos que coincidan con la búsqueda en este grupo
-                let hasMatchingPermissions = false
-
-                for (const [model, permissions] of Object.entries(models)) {
-                  const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
-                  if (filteredPermissions.length > 0) {
-                    hasMatchingPermissions = true
-                    break
-                  }
-                }
-
-                // Solo mostrar el grupo si tiene permisos que coincidan con la búsqueda
-                if (!hasMatchingPermissions && permissionSearchTerm.trim()) {
-                  return null
-                }
-
-                return (
-                  <div key={appLabel} className="mb-8">
-                    <h3 className="text-lg font-medium mb-4 capitalize">{appLabel.replace("_", " ")}</h3>
-
-                    {Object.entries(models).map(([model, permissions]) => {
-                      const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
-
-                      // No mostrar este modelo si no hay permisos que coincidan con la búsqueda
-                      if (filteredPermissions.length === 0 && permissionSearchTerm.trim()) {
-                        return null
-                      }
-
-                      return (
-                        <div key={model} className="mb-6">
-                          <h4 className="text-md font-medium mb-2 capitalize">{model.replace("_", " ")}</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {filteredPermissions.map((permission) => (
-                              <div key={permission.id} className="flex items-start space-x-2 border p-3 rounded-md">
-                                <input
-                                  type="checkbox"
-                                  id={`edit-${permission.id}`}
-                                  checked={editedPermissions.includes(permission.id)}
-                                  onChange={() => togglePermission(permission.id, true)}
-                                  className="mt-1"
-                                />
-                                <div className="grid gap-1">
-                                  <label
-                                    htmlFor={`edit-${permission.id}`}
-                                    className="text-sm font-medium leading-none cursor-pointer"
-                                  >
-                                    {permission.name}
-                                  </label>
-                                  <p className="text-sm text-gray-500">{permission.codename}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
+              {/* Usar el componente de permisos agrupados */}
+              <GroupedPermissionsSelector isEditing={true} />
             </div>
             <div className="p-3 border-t flex justify-end space-x-2">
               <button
@@ -853,7 +1261,7 @@ const RolesSystem = () => {
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm"></div>
 
           {/* Contenido del modal */}
-          <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg relative z-10" style={{ maxHeight: "80vh" }}>
+          <div className="bg-white rounded-lg w-full max-w-4xl shadow-lg relative z-10" style={{ maxHeight: "80vh" }}>
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-semibold">Crear nuevo rol</h2>
               <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-500 hover:text-gray-700">
@@ -937,66 +1345,8 @@ const RolesSystem = () => {
                 </div>
               )}
 
-              {Object.entries(groupedPermissions).map(([appLabel, models]) => {
-                // Verificar si hay permisos que coincidan con la búsqueda en este grupo
-                let hasMatchingPermissions = false
-
-                for (const [model, permissions] of Object.entries(models)) {
-                  const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
-                  if (filteredPermissions.length > 0) {
-                    hasMatchingPermissions = true
-                    break
-                  }
-                }
-
-                // Solo mostrar el grupo si tiene permisos que coincidan con la búsqueda
-                if (!hasMatchingPermissions && permissionSearchTerm.trim()) {
-                  return null
-                }
-
-                return (
-                  <div key={appLabel} className="mb-8">
-                    <h3 className="text-lg font-medium mb-4 capitalize">{appLabel.replace("_", " ")}</h3>
-
-                    {Object.entries(models).map(([model, permissions]) => {
-                      const filteredPermissions = filterPermissionsBySearchTerm(permissions, permissionSearchTerm)
-
-                      // No mostrar este modelo si no hay permisos que coincidan con la búsqueda
-                      if (filteredPermissions.length === 0 && permissionSearchTerm.trim()) {
-                        return null
-                      }
-
-                      return (
-                        <div key={model} className="mb-6">
-                          <h4 className="text-md font-medium mb-2 capitalize">{model.replace("_", " ")}</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {filteredPermissions.map((permission) => (
-                              <div key={permission.id} className="flex items-start space-x-2 border p-3 rounded-md">
-                                <input
-                                  type="checkbox"
-                                  id={`new-${permission.id}`}
-                                  checked={newRole.permissions.includes(permission.id)}
-                                  onChange={() => togglePermission(permission.id, false)}
-                                  className="mt-1"
-                                />
-                                <div className="grid gap-1">
-                                  <label
-                                    htmlFor={`new-${permission.id}`}
-                                    className="text-sm font-medium leading-none cursor-pointer"
-                                  >
-                                    {permission.name}
-                                  </label>
-                                  <p className="text-sm text-gray-500">{permission.codename}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
+              {/* Usar el componente de permisos agrupados */}
+              <GroupedPermissionsSelector isEditing={false} />
             </div>
 
             <div className="p-3 border-t flex justify-end space-x-2">
@@ -1079,6 +1429,7 @@ const RolesSystem = () => {
         </div>
       )}
 
+      {/* Modificar el componente que muestra los permisos adicionales en el modal */}
       {isViewMorePermissionsModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-40" style={{ marginTop: "60px" }}>
           {/* Fondo difuminado alrededor del modal */}
@@ -1109,6 +1460,11 @@ const RolesSystem = () => {
               </div>
 
               <div className="overflow-y-auto" style={{ maxHeight: "300px" }}>
+                {/* Agregar información de depuración */}
+                <div className="mb-2 text-xs text-gray-500">
+                  Mostrando {currentPermissions.length} permisos adicionales
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {currentPermissions
                     .filter(
@@ -1116,8 +1472,11 @@ const RolesSystem = () => {
                         perm.name.toLowerCase().includes(morePermissionsSearchTerm.toLowerCase()) ||
                         perm.codename.toLowerCase().includes(morePermissionsSearchTerm.toLowerCase()),
                     )
-                    .map((perm) => (
-                      <div key={perm.id} className="p-2 border rounded-md flex flex-col justify-center min-h-[60px]">
+                    .map((perm, index) => (
+                      <div
+                        key={`perm-${perm.id || index}`}
+                        className="p-2 border rounded-md flex flex-col justify-center min-h-[60px]"
+                      >
                         <p className="font-medium text-sm">{perm.name}</p>
                         <p className="text-xs text-gray-500">{perm.codename}</p>
                       </div>
@@ -1152,4 +1511,3 @@ const RolesSystem = () => {
 }
 
 export default RolesSystem
-
