@@ -6,6 +6,7 @@ import Modal from "../../../components/Modal"
 import Button from "../../../components/Button"
 import InputItem from "../../../components/InputItem"
 import BackButton from "../../../components/BackButton"
+import ErrorDisplay from "../../../components/error-display"
 import { useNavigate, useParams } from "react-router-dom"
 import axios from "axios"
 
@@ -21,12 +22,14 @@ const ActualizacionPredios = () => {
     extension: "",
     latitud: "",
     longitud: "",
+    plot_name: "",
   })
   const [originalData, setOriginalData] = useState({})
 
   // Estados para carga y envío
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [loadError, setLoadError] = useState(null)
 
   // Estados para errores
   const [validationErrors, setValidationErrors] = useState({})
@@ -38,6 +41,7 @@ const ActualizacionPredios = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showFormErrorModal, setShowFormErrorModal] = useState(false)
   const [showNoChangeErrorModal, setShowNoChangeErrorModal] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   // Cargar datos del predio
   useEffect(() => {
@@ -45,6 +49,13 @@ const ActualizacionPredios = () => {
       try {
         setLoading(true)
         const token = localStorage.getItem("token")
+        if (!token) {
+          setLoadError("No hay sesión activa. Por favor, inicie sesión nuevamente.")
+          setLoading(false)
+          setTimeout(() => navigate("/login"), 2000)
+          return
+        }
+
         const API_URL = import.meta.env.VITE_APP_API_URL
 
         const response = await axios.get(`${API_URL}/plot-lot/plots/${id_plot}`, {
@@ -52,7 +63,11 @@ const ActualizacionPredios = () => {
         })
 
         const predioData = response.data
-        const fechaRegistro = new Date(predioData.registration_date).toLocaleDateString()
+        const fechaRegistro = new Date(predioData.registration_date).toLocaleDateString("es-ES", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })
 
         const formattedData = {
           predio: predioData.id_plot,
@@ -61,6 +76,7 @@ const ActualizacionPredios = () => {
           extension: predioData.plot_extension.toString(),
           latitud: predioData.latitud,
           longitud: predioData.longitud,
+          plot_name: predioData.plot_name || "",
         }
 
         setFormData(formattedData)
@@ -68,7 +84,22 @@ const ActualizacionPredios = () => {
         setLoading(false)
       } catch (error) {
         console.error("Error al obtener los datos del predio", error)
-        setErrorMessage("Error al cargar los datos del predio. Por favor, intente más tarde.")
+
+        let errorMessage = "Error al cargar los datos del predio. Por favor, intente más tarde."
+
+        if (error.response) {
+          if (error.response.status === 403) {
+            errorMessage = "No tiene permisos para acceder a este predio."
+          } else if (error.response.status === 404) {
+            errorMessage = "El predio solicitado no existe."
+          } else if (error.response.data?.detail) {
+            errorMessage = error.response.data.detail
+          }
+        } else if (error.request) {
+          errorMessage = "No se pudo conectar con el servidor. Verifique su conexión a internet."
+        }
+
+        setLoadError(errorMessage)
         setLoading(false)
       }
     }
@@ -76,58 +107,56 @@ const ActualizacionPredios = () => {
     if (id_plot) {
       fetchPredioData()
     }
-  }, [id_plot])
-
-  // Validación de campos numéricos
-  const validateNumericField = (name, value) => {
-    // Verificar si contiene letras
-    if (/[a-zA-Z]/.test(value)) {
-      return `ERROR: El campo ${name} no debe contener letras`
-    }
-
-    // Convertir a número para validar cero o negativos
-    const numValue = Number.parseFloat(value)
-
-    // Verificar si es cero o negativo
-    if (!isNaN(numValue) && numValue <= 0) {
-      return `ERROR: El campo ${name} no debe ser cero o negativo`
-    }
-
-    return "" // Sin error
-  }
+  }, [id_plot, navigate])
 
   // Manejar cambios en los campos del formulario
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+
+    // Aplicar las mismas validaciones que en el registro de predios
+    if (name === "latitud" || name === "longitud") {
+      // Validar formato: hasta 3 dígitos enteros y 6 decimales
+      if (/^-?\d{0,3}(\.\d{0,6})?$/.test(value)) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }))
+      }
+    } else if (name === "extension") {
+      // Validar formato: hasta 6 dígitos enteros y 2 decimales
+      if (/^\d{0,6}(\.\d{0,2})?$/.test(value)) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }))
+      }
+    } else if (name === "dueno" || name === "plot_name") {
+      // Validar longitud máxima: 20 caracteres
+      if (value.length <= 20) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }))
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
 
     // Limpiar mensajes de error
     setErrorMessage("")
     setGeoRefError("")
     setUserError("")
 
-    // Validar campos numéricos en tiempo real
-    if (name === "extension" || name === "latitud" || name === "longitud") {
-      const fieldLabel = name === "extension" ? "Extensión de tierra" : name === "latitud" ? "Latitud" : "Longitud"
-
-      const error = validateNumericField(fieldLabel, value)
-
-      if (error) {
-        setValidationErrors((prev) => ({
-          ...prev,
-          [name]: error,
-        }))
-      } else {
-        // Eliminar el error si ya no existe
-        setValidationErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors[name]
-          return newErrors
-        })
-      }
+    // Limpiar errores de validación específicos
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[name]
+        return newErrors
+      })
     }
   }
 
@@ -137,7 +166,8 @@ const ActualizacionPredios = () => {
       formData.dueno === originalData.dueno &&
       formData.extension === originalData.extension &&
       formData.latitud === originalData.latitud &&
-      formData.longitud === originalData.longitud
+      formData.longitud === originalData.longitud &&
+      formData.plot_name === originalData.plot_name
 
     if (isUnchanged) {
       setShowNoChangeErrorModal(true)
@@ -151,28 +181,54 @@ const ActualizacionPredios = () => {
     const errors = {}
     let isValid = true
 
-    // Validar dueño (no debe estar vacío)
-    if (!formData.dueno.trim()) {
-      errors.dueno = "ERROR: El campo Dueño del predio es obligatorio"
+    // Validar que todos los campos requeridos estén completos
+    Object.entries(formData).forEach(([key, value]) => {
+      // Excluir campos de solo lectura
+      if (key !== "predio" && key !== "fechaRegistro") {
+        if (!value.trim()) {
+          errors[key] = "Este campo es obligatorio"
+          isValid = false
+        }
+      }
+    })
+
+    // Validaciones específicas para cada campo
+    if (formData.dueno && !/^\d+$/.test(formData.dueno)) {
+      errors.dueno = "El ID del dueño debe contener solo números"
       isValid = false
     }
 
-    // Validar campos numéricos
-    const fieldsToValidate = [
-      { name: "extension", label: "Extensión de tierra", value: formData.extension },
-      { name: "latitud", label: "Latitud", value: formData.latitud },
-      { name: "longitud", label: "Longitud", value: formData.longitud },
-    ]
+    if (formData.dueno && formData.dueno.length > 20) {
+      errors.dueno = "El ID del dueño no debe exceder los 20 caracteres"
+      isValid = false
+    }
 
-    for (const field of fieldsToValidate) {
-      const error = validateNumericField(field.label, field.value)
-      if (error) {
-        errors[field.name] = error
-        isValid = false
-      }
+    if (formData.plot_name && formData.plot_name.length > 20) {
+      errors.plot_name = "El nombre del predio no debe exceder los 20 caracteres"
+      isValid = false
+    }
+
+    if (formData.extension && !/^\d{1,6}(\.\d{1,2})?$/.test(formData.extension)) {
+      errors.extension = "La extensión debe ser un número con hasta 6 dígitos y 2 decimales"
+      isValid = false
+    }
+
+    if (formData.latitud && !/^-?\d{1,3}(\.\d{1,6})?$/.test(formData.latitud)) {
+      errors.latitud = "La latitud debe ser un número con hasta 3 dígitos y 6 decimales"
+      isValid = false
+    }
+
+    if (formData.longitud && !/^-?\d{1,3}(\.\d{1,6})?$/.test(formData.longitud)) {
+      errors.longitud = "La longitud debe ser un número con hasta 3 dígitos y 6 decimales"
+      isValid = false
     }
 
     setValidationErrors(errors)
+
+    if (!isValid) {
+      setErrorMessage("Por favor, complete todos los campos obligatorios correctamente.")
+    }
+
     return isValid
   }
 
@@ -201,6 +257,7 @@ const ActualizacionPredios = () => {
           { field: "extension", pattern: /plot_extension.*?string='(.*?)',/ },
           { field: "latitud", pattern: /latitud.*?string='(.*?)',/ },
           { field: "longitud", pattern: /longitud.*?string='(.*?)',/ },
+          { field: "plot_name", pattern: /plot_name.*?string='(.*?)',/ },
         ]
 
         for (const { field, pattern } of fieldPatterns) {
@@ -241,6 +298,7 @@ const ActualizacionPredios = () => {
       { backend: "plot_extension", form: "extension" },
       { backend: "latitud", form: "latitud" },
       { backend: "longitud", form: "longitud" },
+      { backend: "plot_name", form: "plot_name" },
     ]
 
     for (const { backend, form } of fieldMappings) {
@@ -260,7 +318,8 @@ const ActualizacionPredios = () => {
     if (
       backendErrors.duplicate_coordinates ||
       (backendErrors.non_field_errors &&
-        backendErrors.non_field_errors.some((error) => error.includes("georeferenciación")))
+        backendErrors.non_field_errors.some((error) => error.includes("georeferenciación"))) ||
+      backendErrors.detail === "La georeferenciación ya está asignada a otro predio."
     ) {
       setGeoRefError("ERROR: La georeferenciación ingresada ya está asignada a otro predio.")
       return true
@@ -285,8 +344,8 @@ const ActualizacionPredios = () => {
     return false
   }
 
-  // Manejar envío del formulario
-  const handleSubmit = async (e) => {
+  // Manejar confirmación antes de enviar
+  const handleConfirmSubmit = (e) => {
     e.preventDefault()
 
     // Evitar múltiples envíos
@@ -303,19 +362,36 @@ const ActualizacionPredios = () => {
       return
     }
 
+    // Llamar directamente a handleSubmit en lugar de mostrar el modal
+    handleSubmit()
+  }
+
+  // Manejar envío del formulario
+  const handleSubmit = async () => {
+    // Evitar múltiples envíos
+    if (submitting) return
+
     // Iniciar proceso de envío
     setSubmitting(true)
+    // Eliminamos la línea: setShowConfirmModal(false)
 
     try {
       const token = localStorage.getItem("token")
+      if (!token) {
+        setErrorMessage("ERROR: Sesión expirada. Por favor, inicie sesión nuevamente.")
+        setTimeout(() => navigate("/login"), 2000)
+        return
+      }
+
       const API_URL = import.meta.env.VITE_APP_API_URL
 
       // Preparar los datos para enviar
       const updateData = {
         owner: formData.dueno,
-        plot_extension: Number.parseFloat(formData.extension),
-        latitud: Number.parseFloat(formData.latitud),
-        longitud: Number.parseFloat(formData.longitud),
+        plot_extension: formData.extension ? Number.parseFloat(formData.extension) : null,
+        latitud: formData.latitud ? Number.parseFloat(formData.latitud) : null,
+        longitud: formData.longitud ? Number.parseFloat(formData.longitud) : null,
+        plot_name: formData.plot_name,
       }
 
       // Enviar solicitud
@@ -361,13 +437,33 @@ const ActualizacionPredios = () => {
     }
   }
 
+  // Renderizar pantalla de error
+  if (loadError) {
+    return (
+      <div>
+        <NavBar />
+        <ErrorDisplay message={loadError} backTo="/gestionDatos/predios" backText="Regresar a la lista de predios" />
+      </div>
+    )
+  }
+
   // Renderizar pantalla de carga
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div>
         <NavBar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-lg">Cargando...</div>
+        <div className="max-w-7xl mx-auto p-6 mt-24 bg-white rounded-lg shadow animate-pulse">
+          <h1 className="text-xl font-medium text-center mb-2 bg-gray-300 h-6 w-1/3 mx-auto rounded"></h1>
+          <p className="text-sm text-gray-400 text-center mb-6 bg-gray-200 h-4 w-1/2 mx-auto rounded"></p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="space-y-2 mb-4">
+                <div className="bg-gray-300 h-4 w-3/4 rounded"></div>
+                <div className="bg-gray-200 h-10 w-full rounded"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -377,32 +473,45 @@ const ActualizacionPredios = () => {
   return (
     <div>
       <NavBar />
-      <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6">
+      <div className="w-full min-h-screen flex flex-col items-center pt-24 bg-white p-6">
         <div className="w-full max-w-3xl">
-          <h2 className="text-center text-2xl font-bold mb-8">Actualización de Predios</h2>
+          <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">Actualización de Predios</h2>
+          <p className="text-sm text-gray-600 text-center mb-6">Modifique los datos del predio y guarde los cambios</p>
+          <div className="w-16 h-1 bg-[#365486] mx-auto mb-6 rounded-full"></div>
         </div>
         <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleConfirmSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               {/* Campo Predio (solo lectura) */}
               <InputItem
                 id="predio"
                 name="predio"
-                labelName="Predio"
+                labelName="ID Predio"
                 value={formData.predio}
-                style={{ backgroundColor: "#cbcbcb" }}
-                className="text-black"
+                style={{ backgroundColor: "#f3f4f6" }}
+                className="text-gray-600"
                 readOnly
+              />
+
+              {/* Campo Nombre del Predio */}
+              <InputItem
+                id="plot_name"
+                name="plot_name"
+                labelName="Nombre del predio"
+                value={formData.plot_name}
+                onChange={handleChange}
+                placeholder="Ej: La divina"
+                error={validationErrors.plot_name}
               />
 
               {/* Campo Fecha de Registro (solo lectura) */}
               <InputItem
                 id="fechaRegistro"
                 name="fechaRegistro"
-                labelName="Fecha de registro del predio"
+                labelName="Fecha de registro"
                 value={formData.fechaRegistro}
-                style={{ backgroundColor: "#cbcbcb" }}
-                className="text-black"
+                style={{ backgroundColor: "#f3f4f6" }}
+                className="text-gray-600"
                 readOnly
               />
 
@@ -413,7 +522,7 @@ const ActualizacionPredios = () => {
                 labelName="Latitud"
                 value={formData.latitud}
                 onChange={handleChange}
-                placeholder="Ej: 40.7128"
+                placeholder="Ej: 2.879568"
                 error={validationErrors.latitud}
               />
             </div>
@@ -437,7 +546,7 @@ const ActualizacionPredios = () => {
                 labelName="Extensión de tierra (m²)"
                 value={formData.extension}
                 onChange={handleChange}
-                placeholder="Ej: 1000"
+                placeholder="Ej: 200"
                 error={validationErrors.extension}
               />
 
@@ -448,7 +557,7 @@ const ActualizacionPredios = () => {
                 labelName="Longitud"
                 value={formData.longitud}
                 onChange={handleChange}
-                placeholder="Ej: -74.0060"
+                placeholder="Ej: -75.293823"
                 error={validationErrors.longitud}
               />
             </div>
@@ -459,16 +568,16 @@ const ActualizacionPredios = () => {
               {userError && <p className="text-[#F90000] text-sm mb-2">{userError}</p>}
               {errorMessage && <p className="text-[#F90000] text-sm mb-2">{errorMessage}</p>}
 
-              {/* Botones de acción */}
+              {/* Botones de acción - Invertidos como solicitado */}
               <div className="flex justify-between w-full mt-2">
+                <BackButton to="/gestionDatos/predios" text="Regresar a la lista" />
                 <Button
                   text={submitting ? "Actualizando..." : "Actualizar"}
                   disabled={submitting}
                   color="bg-[#365486]"
                   hoverColor="hover:bg-[#2f4275]"
-                  onClick={() => {}}
+                  type="submit"
                 />
-                <BackButton to="/gestionDatos/predios" />
               </div>
             </div>
           </form>
@@ -512,3 +621,4 @@ const ActualizacionPredios = () => {
 }
 
 export default ActualizacionPredios
+
