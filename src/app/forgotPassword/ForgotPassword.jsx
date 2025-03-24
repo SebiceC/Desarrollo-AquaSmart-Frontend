@@ -47,7 +47,7 @@ const ForgotPassword = () => {
 
             openModal(
                 "TOKEN ENVIADO",
-                "Se ha enviado un token de 6 caracteres a tu número de teléfono registrado.",
+                "Se ha enviado un token de 6 caracteres a tu correo electrónico registrado.",
                 "CONFIRMAR",
                 handleConfirm
             );
