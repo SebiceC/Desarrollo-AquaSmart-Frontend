@@ -82,7 +82,7 @@ const UsersSystem = () => {
     try {
       const { instance } = setupAxios()
 
-      const response = await instance.get("/admin/groups/")
+      const response = await instance.get("/admin/groups")
       setRoles(response.data)
 
       // Cargar los permisos de cada rol

@@ -83,7 +83,7 @@ const RolesSystem = () => {
       setIsLoading(true)
       const { instance } = setupAxios()
 
-      const response = await instance.get("/admin/groups/")
+      const response = await instance.get("/admin/groups")
       setRoles(response.data)
       setIsLoading(false)
     } catch (error) {
