@@ -75,7 +75,7 @@ function UserInformation() {
                                 <IoDocument className="text-gray-600 mr-2" /> Anexos
                             </p>
                             <div className="mt-2 space-y-2">
-                                <span>{user.drive_folder_id || "Carpeta no disponible"}</span>
+                                <span className="break-all">{user.drive_folder_id || "Carpeta no disponible"}</span>
 
                             </div>
                         </div>

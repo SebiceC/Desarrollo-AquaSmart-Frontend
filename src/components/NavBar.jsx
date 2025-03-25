@@ -87,7 +87,7 @@ function NavBar() {
                             { direction: "/gestionDatos/users", text: "Usuarios" },
                             { direction: "/gestionDatos/predios", text: "Predios" },
                             { direction: "/gestionDatos/lotes", text: "Lotes" },
-                            { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                            { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos" },
                         ]}
                     />
                     <NavItem
