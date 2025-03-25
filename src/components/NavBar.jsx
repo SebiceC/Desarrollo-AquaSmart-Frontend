@@ -94,7 +94,6 @@ function NavBar() {
                         direction="/gestionRegistros"
                         text="Gestión de registros"
                         subItems={[
-                            { direction: "/gestionRegistros/usuarios", text: "Registro de Usuarios" },
                             { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
                             { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
                             { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
@@ -119,7 +118,6 @@ function NavBar() {
                             },
                         ]}
                     />
-                    <NavItem direction="/mispredios/:document" text="Predios y Lotes" />
                     <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                     <NavItem direction="/permisos" text="Permisos" />
                 </ul>
