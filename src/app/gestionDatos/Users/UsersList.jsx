@@ -220,6 +220,7 @@ const filtered = usuarios.filter((user) => {
       responsive: "hidden md:table-cell",
       render: (user) => new Date(user.date_joined).toLocaleDateString()
     },
+    
   ];
 
   // Manejadores de acciones para la tabla
