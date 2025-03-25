@@ -17,7 +17,6 @@ const UpdateInformation = () => {
     first_name: "",
     last_name: "",
     document: "",
-    role: "",
     email: "",
     phone: "",
     person_type_name: "",
@@ -25,7 +24,6 @@ const UpdateInformation = () => {
     attachments: [],
   });
   const [personTypes, setPersonTypes] = useState([]);
-  const [roles, setRoles] = useState([]);
   const [userStates] = useState([
     { value: true, label: "Activo" },
     { value: false, label: "Inactivo" }
@@ -44,12 +42,6 @@ const UpdateInformation = () => {
         console.log("Tipos de persona disponibles:", personTypesResponse.data); // Debug
         setPersonTypes(personTypesResponse.data);
 
-        const token = localStorage.getItem("token");
-        const rolesResponse = await axios.get(`${API_URL}/admin/roles`, {
-          headers: { Authorization: `Token ${token}` },
-        });
-        console.log("Roles disponibles:", rolesResponse.data); // Debug
-        setRoles(rolesResponse.data);
       } catch (error) {
         console.error("Error al obtener las opciones:", error);
       }
@@ -58,77 +50,92 @@ const UpdateInformation = () => {
     fetchOptions();
   }, [API_URL]);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
+// Función fetchUserData corregida con las rutas correctas
+
+useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No hay sesión activa.");
+        return;
+      }
+
+      // Primero, obtenemos los datos del usuario
+      const usersResponse = await axios.get(`${API_URL}/users/admin/listed`, {
+        headers: { Authorization: `Token ${token}` },
+      });
+
+      const userData = usersResponse.data.find((user) => user.document === userId);
+      console.log("Datos del usuario:", userData); // Debug
+
+      if (!userData) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      // Ahora usamos la ruta correcta para obtener los permisos
+      // Usando el formato /users/{user_id}/permissions en lugar de /admin/users/{userId}/permissions
+      let role = "Sin rol asignado";
+      
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("No hay sesión activa.");
-          return;
-        }
-
-        const usersResponse = await axios.get(`${API_URL}/users/admin/listed`, {
-          headers: { Authorization: `Token ${token}` },
-        });
-
-        const userData = usersResponse.data.find((user) => user.document === userId);
-        console.log("Datos del usuario:", userData); // Debug
-
-        if (!userData) {
-          throw new Error("Usuario no encontrado");
-        }
-
-        const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userId}/permissions`, {
+        // Usamos la nueva ruta correcta
+        const permissionsResponse = await axios.get(`${API_URL}/users/${userData.id || userId}/permissions`, {
           headers: { Authorization: `Token ${token}` },
         });
         console.log("Permisos del usuario:", permissionsResponse.data); // Debug
-
-        const role = permissionsResponse.data.role || "Sin rol asignado";
         
-        // Asegurarse de que is_active sea booleano
-        const userWithCorrectTypes = {
-          ...userData,
-          role,
-          is_active: userData.is_active === true || userData.is_active === "true" ? true : false
-        };
-        
-        setUser(userWithCorrectTypes);
-
-        // Recuperar el tipo de persona usando el ID
-        let personTypeName = "";
-        if (userData.person_type) {
-          if (typeof userData.person_type === 'number') {
-            const personType = personTypes.find(type => type.personTypeId === userData.person_type);
-            personTypeName = personType ? personType.typeName : "";
-          } else if (userData.person_type.typeName) {
-            personTypeName = userData.person_type.typeName;
-          }
+        if (permissionsResponse.data && permissionsResponse.data.role) {
+          role = permissionsResponse.data.role;
         }
-        console.log("Tipo de persona cargado:", personTypeName); // Debug
-
-        setFormData({
-          first_name: userData.first_name || "",
-          last_name: userData.last_name || "",
-          document: userData.document || "",
-          role: role,
-          email: userData.email || "",
-          phone: userData.phone || "",
-          person_type_name: personTypeName,
-          is_active: userData.is_active === true || userData.is_active === "true", // Asegurar que is_active sea siempre booleano
-          attachments: userData.attachments || [],
-        });
-        
-        console.log("Estado del usuario cargado (is_active):", userData.is_active, "convertido a:", userData.is_active === true || userData.is_active === "true");
-      } catch (err) {
-        console.error("Error al cargar los datos:", err);
-        setShowErrorModal2(true);
+      } catch (permissionsError) {
+        console.warn("No se pudieron obtener los permisos del usuario:", permissionsError);
+        // Continuamos con el valor predeterminado del rol
       }
-    };
+      
+      // Asegurarse de que is_active sea booleano
+      const userWithCorrectTypes = {
+        ...userData,
+        role,
+        is_active: userData.is_active === true || userData.is_active === "true" ? true : false
+      };
+      
+      setUser(userWithCorrectTypes);
 
-    if (API_URL && userId && personTypes.length > 0) {
-      fetchUserData();
+      // Recuperar el tipo de persona usando el ID
+      let personTypeName = "";
+      if (userData.person_type) {
+        if (typeof userData.person_type === 'number') {
+          const personType = personTypes.find(type => type.personTypeId === userData.person_type);
+          personTypeName = personType ? personType.typeName : "";
+        } else if (userData.person_type.typeName) {
+          personTypeName = userData.person_type.typeName;
+        }
+      }
+      console.log("Tipo de persona cargado:", personTypeName); // Debug
+
+      setFormData({
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+        document: userData.document || "",
+        role: role,
+        email: userData.email || "",
+        phone: userData.phone || "",
+        person_type_name: personTypeName,
+        is_active: userData.is_active === true || userData.is_active === "true", // Asegurar que is_active sea siempre booleano
+        attachments: userData.attachments || [],
+      });
+      
+      console.log("Estado del usuario cargado (is_active):", userData.is_active, "convertido a:", userData.is_active === true || userData.is_active === "true");
+    } catch (err) {
+      console.error("Error al cargar los datos:", err);
+      setShowErrorModal2(true);
     }
-  }, [API_URL, userId, personTypes]); // Añadir personTypes como dependencia
+  };
+
+  if (API_URL && userId && personTypes.length > 0) {
+    fetchUserData();
+  }
+}, [API_URL, userId, personTypes]); // Añadir personTypes como dependencia
 
   // Función para obtener los campos que han sido modificados 
   const getChangedFields = (formData, originalData) => {
@@ -310,10 +317,10 @@ const UpdateInformation = () => {
           formDataToSend.append('is_active', boolValue ? "true" : "false");
           
           // También enviar como valor numérico 1 o 0 (usado en algunos backends)
-          formDataToSend.append('is_active_numeric', boolValue ? 1 : 0);
+          formDataToSend.append('is_active', boolValue ? 1 : 0);
           
           console.log("Enviando is_active como:", boolValue ? "true" : "false");
-          console.log("Enviando is_active_numeric como:", boolValue ? 1 : 0);
+          console.log("Enviando is_active como:", boolValue ? 1 : 0);
         } 
         else {
           formDataToSend.append(key, changedFields[key]);

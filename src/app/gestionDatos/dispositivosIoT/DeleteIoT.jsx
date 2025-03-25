@@ -69,7 +69,7 @@ const DeleteIoT = ({
 
                     {/* Mensaje */}
                     <p className="mb-6">
-                        ¿Estás seguro en eliminar el dispositivo?
+                        ¿Estás seguro que deseas eliminar el dispositivo?
                     </p>
 
                     {/* Botones */}

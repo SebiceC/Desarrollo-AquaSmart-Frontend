@@ -273,7 +273,7 @@ const DispositivosIoTList = () => {
     { key: "is_active", label: "Estado", render: (dispositivo) => dispositivo.is_active ? "Activo" : "Inactivo" },
     {
       key: "registration_date",
-      label: "Registro Predio",
+      label: "Registro Dispositivo",
       responsive: "hidden sm:table-cell",
       render: (dispositivo) => {
         // Si el dispositivo no tiene id_plot, no hay predio asociado

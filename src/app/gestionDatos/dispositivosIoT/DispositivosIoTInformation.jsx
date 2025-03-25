@@ -5,6 +5,7 @@ import axios from "axios";
 import { FaUser, FaPhone, FaEnvelope } from "react-icons/fa";
 import NavBar from "../../../components/NavBar";
 import Modal from "../../../components/Modal";
+import BackButton from "../../../components/BackButton";
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -104,6 +105,9 @@ function DispositivosIoTInformation() {
                                 </p>
                             </div>
                         )}
+                        <div className="flex justify-between w-full mt-4">
+                            <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar a la lista" />
+                        </div>
                     </div>
                 </div>
             </div>
