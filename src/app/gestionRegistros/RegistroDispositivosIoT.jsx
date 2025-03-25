@@ -656,7 +656,7 @@ const RegistroDispositivos = () => {
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+        <div className="bg-white p-6 w-full max-w-3xl">
           {loading && !showSuccessModal ? (
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#365486]"></div>
