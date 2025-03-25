@@ -49,6 +49,10 @@ const RegistroPredios = () => {
         if (Object.keys(newErrors).length > 0) {
             setErrorMessage("Por favor, complete todos los campos obligatorios.");
         }
+
+        if (parseFloat(formData.land_size) <= 0) {
+            newErrors.land_size = "El tamaño del predio no puede ser 0.";
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -104,7 +108,7 @@ const RegistroPredios = () => {
                 <h2 className="text-center text-2xl font-bold mb-8 mt-12">
                     Formulario de Registro de Predios
                 </h2>
-                <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+                <div className="bg-white p-6 w-full max-w-3xl">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputItem
                             label="Dueño del predio"
