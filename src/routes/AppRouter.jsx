@@ -32,6 +32,10 @@ import RegistroDispositivosIoT from "../app/gestionRegistros/RegistroDispositivo
 import PermissionsSystem from "../app/permisos/index"
 import DispositivoEdit from "../app/gestionDatos/dispositivosIoT/DispositivoEdit";
 
+import PlotLotUsers from "../app/infoprediosylotes/PlotLotUsersList";
+import MiPlotLotDetail from "../app/infoprediosylotes/PlotLotUsersDetail";
+import LotUsersDetail from "../app/infoprediosylotes/LotUsersDetail";
+
 const AppRouter = () => {
     return (
         <Routes>
@@ -74,6 +78,9 @@ const AppRouter = () => {
             <Route path="/gestionRegistros/dispositivosIoT" element={<ProtectedRoute element={<RegistroDispositivosIoT/>}/>}/>            
             <Route path="/permisos" element={<ProtectedRoute element={<PermissionsSystem/>}/>}/>
             <Route path="/gestionDatos/dispositivosIoT/:iot_id/update" element={<ProtectedRoute element={<DispositivoEdit />} />} />
+            <Route path="/mispredios/:document" element={<ProtectedRoute element={<PlotLotUsers />} />} />
+            <Route path="/mispredios/predio/:id_plot" element={<ProtectedRoute element={<MiPlotLotDetail />} />} />
+            <Route path="/mislotes/lote/:id_lot" element={<ProtectedRoute element={<LotUsersDetail />} />} />
         </Routes>
     );
 };

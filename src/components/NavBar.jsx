@@ -119,6 +119,7 @@ function NavBar() {
                             },
                         ]}
                     />
+                    <NavItem direction="/mispredios/:document" text="Predios y Lotes" />
                     <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                     <NavItem direction="/permisos" text="Permisos" />
                 </ul>
