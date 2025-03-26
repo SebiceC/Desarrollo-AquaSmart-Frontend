@@ -111,7 +111,7 @@ function NavBar() {
                         direction="/historialConsumo"
                         text="Historial de consumo"
                         subItems={[
-                            { direction: "/historialConsumo/diario", text: "Consumo Diario" },
+                            { direction: "/historial-consumo/distrito", text: "Historial del distrito" },
                             {
                                 direction: "/historialConsumo/mensual",
                                 text: "Consumo Mensual",
