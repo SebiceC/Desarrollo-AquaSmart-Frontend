@@ -36,6 +36,8 @@ import PlotLotUsers from "../app/infoprediosylotes/PlotLotUsersList";
 import MiPlotLotDetail from "../app/infoprediosylotes/PlotLotUsersDetail";
 import LotUsersDetail from "../app/infoprediosylotes/LotUsersDetail";
 
+import HistorialDistrito from "../app/HistorialConsumo/HistorialDistrito";
+
 const AppRouter = () => {
     return (
         <Routes>
@@ -81,6 +83,7 @@ const AppRouter = () => {
             <Route path="/mispredios/:document" element={<ProtectedRoute element={<PlotLotUsers />} />} />
             <Route path="/mispredios/predio/:id_plot" element={<ProtectedRoute element={<MiPlotLotDetail />} />} />
             <Route path="/mislotes/lote/:id_lot" element={<ProtectedRoute element={<LotUsersDetail />} />} />
+            <Route path="/historial-consumo/distrito" element={<ProtectedRoute element={<HistorialDistrito />} />} />
         </Routes>
     );
 };
