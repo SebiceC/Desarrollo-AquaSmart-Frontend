@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut, HelpCircle, Minus, Bell } from "lucide-react";
 import NavItem from "./NavItem";
 import axios from "axios";
+import NotificationBell from "./NotificationBell";
 
 function NavBar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -59,12 +60,15 @@ function NavBar() {
     return (
         <header className="w-full fixed top-0 bg-[#DCF2F1] z-50">
             <nav className="px-5 py-2 flex justify-between items-center">
-                <div className="flex items-center gap-5">
-                    <Bell size={24} />
-                    <Link to="/home">
-                        <img src="/img/logo.png" alt="Logo" className="w-[250px]" />
-                    </Link>
+            <div className="flex items-center gap-1">
+                <div className="relative flex items-center ml-auto mr-4">
+                    <NotificationBell />
                 </div>
+
+                <Link to="/home">
+                    <img src="/img/logo.png" alt="Logo" className="w-[250px]" />
+                </Link>
+            </div>
 
                 <ul className="hidden lg:flex space-x-1 font-semibold">
                     <NavItem direction="/perfil" text="Perfil" />
@@ -79,10 +83,20 @@ function NavBar() {
                         direction="/gestionDatos"
                         text="Gestión de datos"
                         subItems={[
+                            { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
                             { direction: "/gestionDatos/users", text: "Usuarios" },
                             { direction: "/gestionDatos/predios", text: "Predios" },
                             { direction: "/gestionDatos/lotes", text: "Lotes" },
-                            { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                            { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos" },
+                        ]}
+                    />
+                    <NavItem
+                        direction="/gestionRegistros"
+                        text="Gestión de registros"
+                        subItems={[
+                            { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                            { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                            { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
                         ]}
                     />
                     <NavItem
@@ -104,7 +118,7 @@ function NavBar() {
                             },
                         ]}
                     />
-                    <NavItem direction="/predicciones" text="Predicciones" />
+                    <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                     <NavItem direction="/permisos" text="Permisos" />
                 </ul>
 
@@ -130,7 +144,7 @@ function NavBar() {
                     )}
 
                     {/* Contenedor de enlaces, SOLO ESTE será desplazable */}
-                    <div className="flex flex-col space-y-4 font-medium overflow-y-auto h-[calc(100vh-180px)]">
+                    <div className="flex flex-col space-y-4 font-medium overflow-y-auto h-[calc(100vh-230px)]">
                         <NavItem direction="/perfil" text="Perfil" />
                         <NavItem
                             direction="/control-IoT"
@@ -143,10 +157,20 @@ function NavBar() {
                             direction="/gestionDatos"
                             text="Gestión de datos"
                             subItems={[
+                                { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
                                 { direction: "/gestionDatos/users", text: "Usuarios" },
                                 { direction: "/gestionDatos/predios", text: "Predios" },
                                 { direction: "/gestionDatos/lotes", text: "Lotes" },
                                 { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/gestionRegistros"
+                            text="Gestión de registros"
+                            subItems={[
+                                { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                                { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                                { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
                             ]}
                         />
                         <NavItem
@@ -165,7 +189,7 @@ function NavBar() {
                                 { direction: "/historialConsumo/mensual", text: "Consumo Mensual" },
                             ]}
                         />
-                        <NavItem direction="/predicciones" text="Predicciones" />
+                        <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                         <NavItem direction="/permisos" text="Permisos" />
                     </div>
 

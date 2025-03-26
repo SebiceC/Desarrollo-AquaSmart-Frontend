@@ -3,7 +3,7 @@ import { FaUser, FaPhone, FaEnvelope, FaSignOutAlt } from "react-icons/fa";
 import NavBar from "../components/NavBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, Minus } from "lucide-react";
 
 
 const Perfil = () => {
@@ -86,7 +86,7 @@ const Perfil = () => {
                             <div className="mt-4 text-gray-700 space-y-2">
                                 <p className="flex items-center justify-center space-x-2">
                                     <FaUser className="text-gray-600" />
-                                    <span>{user.person_type_name}</span>
+                                    <span>Persona: {user.person_type_name}</span>
                                 </p>
                                 <p className="flex items-center justify-center space-x-2">
                                     <FaPhone className="text-gray-600" />
@@ -101,10 +101,21 @@ const Perfil = () => {
                     ) : (
                         <p className="text-gray-600 mt-4">Cargando perfil...</p>
                     )}
+                    <div className="flex flex-col items-center gap-5">
+                        <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663]"
+                            onClick={() => navigate('/perfil/actualizar-informacion')}>
+                            Editar
+                        </button>
 
-                    <button className="w-[50%] mt-4 bg-[#365486] text-white py-2  hover:bg-[#344663] hover:scale-105 transition-all duration-300">
-                        Editar
-                    </button>
+                        <Minus className="w-full h-[2px] bg-gray-400" />
+
+                        
+                        <button className="w-[70%] bg-[#365486] text-white py-2 px-2 hover:bg-[#344663]    "
+                            onClick={() => navigate('/mispredios/:document')}>
+                            Ver mis predios y lotes
+                        </button>
+
+                    </div>
 
                     {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                 </div>
