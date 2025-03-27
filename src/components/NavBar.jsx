@@ -93,7 +93,7 @@ function NavBar() {
               { direction: "/gestionDatos/lotes", text: "Lotes" },
               {
                 direction: "/gestionDatos/dispositivosIoT",
-                text: "Dispositvos IoT",
+                text: "Dispositvos",
               },
             ]}
           />
@@ -101,10 +101,6 @@ function NavBar() {
             direction="/gestionRegistros"
             text="Gestión de registros"
             subItems={[
-              {
-                direction: "/gestionRegistros/usuarios",
-                text: "Registro de Usuarios",
-              },
               {
                 direction: "/gestionRegistros/predios",
                 text: "Registro de Predios",

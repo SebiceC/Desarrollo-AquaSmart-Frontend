@@ -13,7 +13,7 @@ const PermissionsSystem = () => {
       <NavBar />
       <div className="min-h-screen flex flex-col mt-15">
         <div className="flex-1 container mx-auto px-6 py-8 max-w-7xl">
-          <div className="bg-white rounded-lg shadow-xl p-6">
+          <div className="p-6">
             <h1 className="text-2xl font-semibold mb-6 text-center">Gestión de Permisos</h1>
 
             {/* Tabs para cambiar entre roles y usuarios */}

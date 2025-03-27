@@ -178,48 +178,50 @@ const PreRegister = () => {
     setErrors({});
   };
 
-  // Manejar el envío del formulario con Axios
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
 
-    const formDataToSend = new FormData();
-    Object.keys(formData).forEach((key) => {
-      if (key !== "attachments") {
-        formDataToSend.append(key, formData[key]);
-      }
-    });
+// Manejar el envío del formulario con Axios
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    formData.attachments.forEach((file) => {
-      formDataToSend.append("attachments", file);
-    });
-
-    try {
-      const response = await axios.post(
-        `${API_URL}/users/pre-register`,
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      if (response.status === 201) {
-        resetForm(); // Limpiamos el formulario
-        setShowSuccessModal(true);
-      } else {
-        throw new Error("Error al enviar el formulario");
-      }
-    } catch (error) {
-      console.error("Error al enviar el formulario:", error);
-      if (error.response && error.response.status === 400) {
-        setShowDuplicateIdModal(true);
-      } else {
-        setShowErrorModal(true);
-      }
+  const formDataToSend = new FormData();
+  // Excluir confirmPassword ya que no existe en el backend
+  Object.keys(formData).forEach((key) => {
+    if (key !== "attachments" && key !== "confirmPassword") {
+      formDataToSend.append(key, formData[key]);
     }
-  };
+  });
+
+  formData.attachments.forEach((file) => {
+    formDataToSend.append("attachments", file);
+  });
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/users/pre-register`,
+      formDataToSend,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (response.status === 201) {
+      resetForm(); // Limpiamos el formulario
+      setShowSuccessModal(true);
+    } else {
+      throw new Error("Error al enviar el formulario");
+    }
+  } catch (error) {
+    console.error("Error al enviar el formulario:", error);
+    if (error.response && error.response.status === 400) {
+      setShowDuplicateIdModal(true);
+    } else {
+      setShowErrorModal(true);
+    }
+  }
+};
 
   return (
     <div className="w-full h-full min-h-screen bg-white">

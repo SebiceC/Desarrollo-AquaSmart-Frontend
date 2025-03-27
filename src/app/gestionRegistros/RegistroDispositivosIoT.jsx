@@ -656,16 +656,16 @@ const RegistroDispositivos = () => {
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+        <div className="bg-white p-6 w-full max-w-3xl">
           {loading && !showSuccessModal ? (
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#365486]"></div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
               {/* Campo de Nombre */}
-              <div className="flex flex-col">
-                <label htmlFor="name" className="block text-sm mb-2">
+              <div className="flex flex-col w-full">
+                <label htmlFor="name" className="block text-sm font-medium mb-1">
                   Nombre del Dispositivo <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -683,9 +683,9 @@ const RegistroDispositivos = () => {
                 {fieldErrors.name && renderFieldError(fieldErrors.name)}
               </div>
 
-              {/* Campo de Tipo de Dispositivo con búsqueda */}
-              <div className="flex flex-col">
-                <label htmlFor="device_type" className="block text-sm mb-2">
+              {/* Tipo de Dispositivo */}
+              <div className="flex flex-col w-full">
+                <label htmlFor="device_type" className="block text-sm font-medium mb-1">
                   Tipo de Dispositivo <span className="text-red-500">*</span>
                 </label>
                 <SearchableSelect
@@ -694,102 +694,70 @@ const RegistroDispositivos = () => {
                   value={formData.device_type}
                   onChange={handleChange}
                   options={tiposDispositivoOptions}
-                  placeholder="SELECCIONE TIPO DE DISPOSITIVO"
+                  placeholder="SELECCIONE TIPO"
                   hasError={errors.device_type}
-                  required={true}
+                  required
+                  className="w-full"
                 />
               </div>
 
-              {/* Mensaje informativo cuando se selecciona Válvula 48 */}
-              {isValvula48 && (
-                <div className="flex flex-col md:col-span-2 mt-2 mb-2">
-                  <div className="w-full border border-gray-100 bg-gray-50 rounded px-4 py-3 text-gray-600 text-sm flex items-center">
-                    <Info className="h-4 w-4 text-gray-400 mr-2" />
-                    <p>
-                      Los dispositivos de tipo "Válvula 48" se asignan a la bocatoma y no requieren selección de predio
-                      ni lote.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Contenedor para campos de predio y lote (oculto para Válvula 48) */}
-              <div
-                className={`grid grid-cols-1 md:grid-cols-2 gap-6 col-span-2 ${showPlotFields ? "block" : "hidden"}`}
-              >
-                {/* Campo de Predio con búsqueda */}
-                <div className="flex flex-col">
-                  <label htmlFor="id_plot" className="block text-sm mb-2">
-                    Predio a asignar <span className="text-red-500">*</span>
-                  </label>
-                  <SearchableSelect
-                    id="id_plot"
-                    name="id_plot"
-                    value={formData.id_plot}
-                    onChange={handleChange}
-                    options={prediosOptions}
-                    placeholder="SELECCIONE UN PREDIO"
-                    hasError={errors.id_plot}
-                    required={showPlotFields}
-                  />
-                </div>
-
-                {/* Campo de Lote con búsqueda o mensaje informativo */}
-                <div className="flex flex-col">
-                  <label htmlFor="id_lot" className="block text-sm mb-2">
-                    Lote a asignar
-                  </label>
-                  <div className="relative">
-                    {loadingLotes ? (
-                      <div className="w-full border border-gray-300 rounded px-3 py-2 flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#365486] mr-2"></div>
-                        <span className="text-gray-500">Cargando lotes...</span>
-                      </div>
-                    ) : lotes.length > 0 ? (
-                      <SearchableSelect
-                        id="id_lot"
-                        name="id_lot"
-                        value={formData.id_lot}
-                        onChange={handleChange}
-                        options={lotesOptions}
-                        placeholder="SELECCIONE UN LOTE (OPCIONAL)"
-                        hasError={errors.id_lot}
-                      />
-                    ) : formData.id_plot ? (
-                      <div className="w-full border border-gray-100 bg-gray-50 rounded px-3 py-2 text-gray-500 text-sm flex items-center">
-                        <Info className="h-4 w-4 text-gray-400 mr-2" />
-                        No hay lotes disponibles para este predio
-                      </div>
-                    ) : (
-                      <div className="w-full border border-gray-200 rounded px-3 py-2 text-gray-400 bg-gray-50">
-                        Seleccione un predio primero
-                      </div>
-                    )}
-                  </div>
-                  {errors.id_lot && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
-                </div>
-              </div>
-
-              {/* Campo de Estado con búsqueda */}
-              <div className="flex flex-col">
-                <label htmlFor="is_active" className="block text-sm mb-2">
-                  Estado <span className="text-red-500">*</span>
+              {/* Campo de Predio */}
+              <div className="flex flex-col w-full">
+                <label htmlFor="id_plot" className="block text-sm font-medium mb-1">
+                  Predio a asignar <span className="text-red-500">*</span>
                 </label>
                 <SearchableSelect
-                  id="is_active"
-                  name="is_active"
-                  value={formData.is_active}
+                  id="id_plot"
+                  name="id_plot"
+                  value={formData.id_plot}
                   onChange={handleChange}
-                  options={estadoOptions}
-                  placeholder="SELECCIONE ESTADO"
-                  hasError={errors.is_active}
-                  required={true}
+                  options={prediosOptions}
+                  placeholder="SELECCIONE UN PREDIO"
+                  hasError={errors.id_plot}
+                  required
+                  className="w-full"
                 />
+              </div>
+
+              {/* Campo de Lote (bloqueado si no hay predio seleccionado) */}
+              <div className="flex flex-col w-full">
+                <label htmlFor="id_lot" className="block text-sm font-medium mb-1">
+                  Lote a asignar
+                </label>
+                <div className="relative">
+                  {loadingLotes ? (
+                    <div className="w-full border border-gray-300 rounded px-3 py-2 flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#365486] mr-2"></div>
+                      <span className="text-gray-500">Cargando lotes...</span>
+                    </div>
+                  ) : lotes.length > 0 ? (
+                    <SearchableSelect
+                      id="id_lot"
+                      name="id_lot"
+                      value={formData.id_lot}
+                      onChange={handleChange}
+                      options={lotesOptions}
+                      placeholder="SELECCIONE UN LOTE (OPCIONAL)"
+                      hasError={errors.id_lot}
+                      className={`w-full ${!formData.id_plot ? "opacity-50 cursor-not-allowed" : ""}`}
+                      disabled={!formData.id_plot} // Deshabilita si no hay predio seleccionado
+                    />
+                  ) : formData.id_plot ? (
+                    <div className="w-full border border-gray-100 bg-gray-50 rounded px-3 py-2 text-gray-500 text-sm flex items-center">
+                      <Info className="h-4 w-4 text-gray-400 mr-2" />
+                      No hay lotes disponibles para este predio
+                    </div>
+                  ) : (
+                    <div className="w-full border border-gray-200 rounded px-3 py-2 text-gray-400 bg-gray-50">
+                      Seleccione un predio primero
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Campo de Características */}
-              <div className="flex flex-col col-span-1 md:col-span-2">
-                <label htmlFor="characteristics" className="block text-sm mb-2">
+              <div className="flex flex-col col-span-1 md:col-span-2 w-full">
+                <label htmlFor="characteristics" className="block text-sm font-medium mb-1">
                   Características <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -798,34 +766,28 @@ const RegistroDispositivos = () => {
                   value={formData.characteristics}
                   onChange={handleChange}
                   placeholder="Describa las características del dispositivo"
-                  className={`w-full border resize-none h-24 ${errors.characteristics || fieldErrors.characteristics ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
+                  className={`w-full border resize-none h-24 ${errors.characteristics ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
                   maxLength={300}
                   required
                 />
-                <div
-                  className={`text-xs ${formData.characteristics.length > 280 ? "text-amber-500" : "text-gray-400"} ${formData.characteristics.length >= 300 ? "text-red-600" : ""} text-right mt-1`}
-                >
+                <div className="text-xs text-gray-400 text-right mt-1">
                   {formData.characteristics.length}/300 caracteres
                 </div>
-                {errors.characteristics && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
-                {fieldErrors.characteristics && renderFieldError(fieldErrors.characteristics)}
               </div>
 
-              {/* Eliminar el mensaje de error de aquí */}
-              <div className="col-span-1 md:col-span-2 flex flex-col items-start">
-                {/* Botones de acción */}
-                <div className="flex justify-between w-full mt-2">
-                  <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar a la lista" />
-                  <button
-                    type="submit"
-                    className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275] disabled:bg-gray-400"
-                    disabled={loading}
-                  >
-                    {loading ? "Registrando..." : "Registrar"}
-                  </button>
-                </div>
+              {/* Botones en columna en móvil y fila en escritorio */}
+              <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row gap-3 sm:justify-between w-full mt-4">
+                <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar a la lista" className="w-full sm:w-auto" />
+                <button
+                  type="submit"
+                  className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275] disabled:bg-gray-400 w-full sm:w-auto"
+                  disabled={loading}
+                >
+                  {loading ? "Registrando..." : "Registrar"}
+                </button>
               </div>
             </form>
+
           )}
         </div>
 

@@ -36,23 +36,15 @@ function UserInformation() {
               </p>
             </div>
 
-            {/* Anexos */}
+            {/* Anexos del usuario */}
             <div className="text-left">
               <p className="flex items-center font-semibold">
                 <IoDocument className="text-gray-600 mr-2" /> Anexos
               </p>
               <div className="mt-2 space-y-2">
-                {["anexo1.pdf", "anexo2.pdf", "anexo3.pdf"].map(
-                  (file, index) => (
-                    <p
-                      key={index}
-                      className="flex items-center space-x-2 text-blue-600 cursor-pointer"
-                    >
-                      <span>{file}</span>
-                      <MdDownload className="text-gray-600" />
-                    </p>
-                  )
-                )}
+                <span className="break-all">
+                  {user.drive_folder_id || "Carpeta no disponible"}
+                </span>
               </div>
             </div>
           </div>
