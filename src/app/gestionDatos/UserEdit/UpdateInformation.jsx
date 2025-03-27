@@ -453,7 +453,7 @@ useEffect(() => {
               </div>
               <InputItem label="Nombre" name="first_name" value={formData.first_name} onChange={handleChange} error={errors.first_name} required maxLength={20} />
               <InputItem label="Apellidos" name="last_name" value={formData.last_name} onChange={handleChange} error={errors.last_name} required maxLength={20} />
-              <InputItem label="Teléfono" type="tel" name="phone" value={formData.phone} onChange={handleChange} error={errors.phone} required maxLength={13} />
+              <InputItem label="Teléfono" type="tel" name="phone" value={formData.phone} onChange={handleChange} error={errors.phone} required maxLength={10} />
               <InputItem label="Correo electrónico" type="email" name="email" value={formData.email} onChange={handleChange} error={errors.email} required maxLength={50} />
               
               <div className="relative">
