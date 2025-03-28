@@ -112,6 +112,7 @@ function NavBar() {
                         text="Historial de consumo"
                         subItems={[
                             { direction: "/historial-consumo/distrito", text: "Historial del distrito" },
+                            { direction: "/historial-consumo/predio", text: "Historial del predio" },
                             {
                                 direction: "/historialConsumo/mensual",
                                 text: "Consumo Mensual",
@@ -186,7 +187,7 @@ function NavBar() {
                             text="Historial de consumo"
                             subItems={[
                                 { direction: "/historialConsumo/diario", text: "Consumo Diario" },
-                                { direction: "/historialConsumo/mensual", text: "Consumo Mensual" },
+                                { direction: "/historial-consumo/predio", text: "Historial del predio" },
                             ]}
                         />
                         <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
