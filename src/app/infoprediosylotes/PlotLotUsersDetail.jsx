@@ -74,8 +74,8 @@ const MiPlotLotDetail = () => {
         const predioData = predioResponse.data;
         
         // Validate if the predio belongs to the logged-in user
-        if (userData && userData.document && predioData.owner_document) {
-          if (userData.document !== predioData.owner_document) {
+        if (userData && userData.document && predioData.owner) {
+          if (userData.document !== predioData.owner) {
             throw {
               response: {
                 status: 403,
@@ -264,14 +264,8 @@ const MiPlotLotDetail = () => {
                 </div>
                 <div>
                   <p className="text-sm">
-                    <span className="font-medium text-black">Dueño del predio: </span>
-                    <span className="text-gray-600 font-medium">{predio.owner || "No disponible"}</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm">
                     <span className="font-medium text-black">Documento del dueño: </span>
-                    <span className="text-gray-600 font-medium">{predio.owner_document || "No disponible"}</span>
+                    <span className="text-gray-600 font-medium">{predio.owner || "No disponible"}</span>
                   </p>
                 </div>
                 <div>
