@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, ChevronDown } from 'lucide-react';
+import { Calendar, ChevronDown, List } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import NavBar from "../../components/NavBar";
 import Modal from "../../components/Modal";
@@ -12,6 +12,8 @@ const HistorialPredioDetail = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [plotDetails, setPlotDetails] = useState(null);
+  const [showLotes, setShowLotes] = useState(false);
   
   // Estado para las fechas seleccionadas
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
@@ -154,6 +156,44 @@ const HistorialPredioDetail = () => {
     
     fetchData();
   }, [groupByOption, startDate, endDate, dateValidationError, id_plot]);
+
+  useEffect(() => {
+    // Modificar el fetch para obtener detalles del predio y lotes
+    const fetchPlotDetails = async () => {
+      try {
+        const token = localStorage.getItem('token'); // Ajusta según tu método de autenticación
+        
+        const response = await fetch(`${API_URL}/plot-lot/plots/${id_plot}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Error al cargar los detalles del predio');
+        }
+        
+        const data = await response.json();
+        setPlotDetails(data);
+      } catch (err) {
+        console.error('Error en la carga de detalles:', err);
+        // Datos mock en caso de error
+        setPlotDetails({
+          id: id_plot,
+          name: 'Predio de Ejemplo',
+          lots: [
+            { id: 1, name: 'No hay datos disponibles', area: 1000, crop: 'No hay datos disponibles' }
+          ]
+        });
+      }
+    };
+
+    if (id_plot) {
+      fetchPlotDetails();
+    }
+  }, [id_plot]);
   
   // Process data based on selected time range
   const processDataByTimeRange = (rawData, groupOption) => {
@@ -485,10 +525,58 @@ const HistorialPredioDetail = () => {
               <span>Descargar Historial</span>
             </button>
           </div>
+
+           {/* Nuevo bloque para lotes asociados */}
+           <div className="mt-8 border-t pt-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Lotes del Predio {plotDetails?.plot_name}</h2>
+                <p className="text-sm text-gray-600">
+                  Propietario: {plotDetails?.owner_name} | Extensión de tierra: {plotDetails?.plot_extension} m²
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowLotes(!showLotes)}
+                className="flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg"
+              >
+                <List size={16} />
+                <span>{showLotes ? 'Ocultar' : 'Ver'} Lotes</span>
+              </button>
+            </div>
+
+            {showLotes && plotDetails?.lotes && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {plotDetails.lotes.map((lote) => (
+                  <div 
+                    key={lote.id_lot} 
+                    className="bg-gray-50 p-4 rounded-lg border hover:shadow-sm transition-shadow"
+                  >
+                    <h3 className="font-semibold text-gray-800 mb-2">Lote {lote.id_lot}</h3>
+                    <p className="text-sm text-gray-600">
+                      Tipo de Cultivo: {lote.crop_type}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Variedad: {lote.crop_variety}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Tipo de Suelo: {lote.soil_type}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Estado: {lote.is_activate ? 'Activo' : 'Inactivo'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Fecha de Registro: {new Date(lote.registration_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
 
 export default HistorialPredioDetail;
