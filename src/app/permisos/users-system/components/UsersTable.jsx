@@ -2,7 +2,7 @@
 
 import { Eye, UserCog } from "lucide-react"
 
-const UsersTable = ({ filteredUsers, handleViewUserPermissions, handleEditUserPermissions }) => {
+const UsersTable = ({ filteredUsers, handleViewUserPermissions, handleEditUserPermissions, getRoleName }) => {
   // Definir las columnas para la tabla
   const columns = [
     {
@@ -16,8 +16,26 @@ const UsersTable = ({ filteredUsers, handleViewUserPermissions, handleEditUserPe
       render: (user) => `${user.first_name || ""} ${user.last_name || ""}`,
     },
     {
-      key: "email",
-      label: "Email",
+      key: "roles",
+      label: "Roles",
+      render: (user) => {
+        // Si el usuario tiene roles asignados
+        if (user.groups && user.groups.length > 0) {
+          return (
+            <div className="flex flex-wrap gap-1">
+              {user.groups.map((roleId, index) => (
+                <span
+                  key={`role-${roleId}-${index}`}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {getRoleName(roleId)}
+                </span>
+              ))}
+            </div>
+          )
+        }
+        return <span className="text-gray-500 text-sm">Sin roles asignados</span>
+      },
     },
     {
       key: "status",
@@ -98,4 +116,3 @@ const UsersTable = ({ filteredUsers, handleViewUserPermissions, handleEditUserPe
 import { Check, X } from "lucide-react"
 
 export default UsersTable
-

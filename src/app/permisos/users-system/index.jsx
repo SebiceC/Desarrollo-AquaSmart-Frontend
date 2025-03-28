@@ -44,6 +44,10 @@ const UsersSystem = () => {
   const [isSaving, setIsSaving] = useState(false)
   const [permissionsSearchTerm, setPermissionsSearchTerm] = useState("")
   const [morePermissionsSearchTerm, setMorePermissionsSearchTerm] = useState("")
+  const [rolesLoaded, setRolesLoaded] = useState(false)
+
+  // Añadir un estado para controlar la carga progresiva
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false)
 
   // Función para mostrar notificaciones
   const showNotification = (message, type = "info", duration = 5000) => {
@@ -77,24 +81,23 @@ const UsersSystem = () => {
       const response = await instance.get("/admin/groups")
 
       // Verificar si la respuesta tiene la estructura esperada
+      let rolesData = []
       if (Array.isArray(response.data)) {
-        setRoles(response.data)
+        rolesData = response.data
       } else if (response.data.results && Array.isArray(response.data.results)) {
         // Si la API ahora devuelve un objeto con una propiedad 'results'
-        setRoles(response.data.results)
+        rolesData = response.data.results
       } else {
         console.error("Formato de respuesta inesperado:", response.data)
         setError("Error en el formato de respuesta de roles.")
+        return []
       }
+
+      setRoles(rolesData)
+      console.log("Roles cargados:", rolesData)
 
       // Cargar los permisos de cada rol
       const rolePermissionsObj = {}
-      const rolesData = Array.isArray(response.data)
-        ? response.data
-        : response.data.results && Array.isArray(response.data.results)
-          ? response.data.results
-          : []
-
       for (const role of rolesData) {
         try {
           const permissionsResponse = await instance.get(`/admin/groups/${role.id}/permissions`)
@@ -112,9 +115,13 @@ const UsersSystem = () => {
         }
       }
       setRolePermissions(rolePermissionsObj)
+      setRolesLoaded(true)
+      return rolesData
     } catch (error) {
+      console.error("Error al cargar los roles:", error)
       setError("Error al cargar los roles. Por favor, intente de nuevo.")
       showNotification("Error al cargar los roles. Por favor, intente de nuevo.", "error")
+      return []
     }
   }
 
@@ -170,30 +177,117 @@ const UsersSystem = () => {
     }
   }
 
-  // Función para obtener todos los usuarios
-  const fetchUsers = async () => {
+  // Función para obtener todos los usuarios con sus roles
+  const fetchUsers = async (rolesData) => {
     try {
       setIsLoading(true)
       const { instance } = setupAxios()
 
-      // Quitar el prefijo /api
+      // Obtener la lista de usuarios
       const response = await instance.get("/users/admin/listed")
 
       // Verificar si la respuesta tiene la estructura esperada
+      let usersData = []
       if (Array.isArray(response.data)) {
-        setUsers(response.data)
+        usersData = response.data
       } else if (response.data.results && Array.isArray(response.data.results)) {
-        // Si la API ahora devuelve un objeto con una propiedad 'results'
-        setUsers(response.data.results)
+        usersData = response.data.results
       } else {
         console.error("Formato de respuesta inesperado:", response.data)
         setError("Error en el formato de respuesta de usuarios.")
+        setIsLoading(false)
+        return
       }
 
+      console.log("Usuarios obtenidos:", usersData.length)
+
+      // Primero, mostrar los usuarios sin roles para mejorar la percepción de velocidad
+      const initialUsersWithEmptyRoles = usersData.map((user) => ({
+        ...user,
+        groups: [],
+      }))
+
+      setUsers(initialUsersWithEmptyRoles)
       setIsLoading(false)
+
+      // Luego, procesar los roles en segundo plano
+      setIsLoadingRoles(true)
+
+      // Usar Promise.all para hacer las solicitudes en paralelo en lugar de secuencialmente
+      const userRolesPromises = usersData.map(async (user) => {
+        try {
+          // Obtener los permisos del usuario y sus detalles en paralelo
+          const [permissionsResponse, userResponse] = await Promise.all([
+            instance.get(`/admin/users/${user.document}/permissions`),
+            instance.get(`/users/details/${user.document}`),
+          ])
+
+          // Extraer los roles del usuario de los permisos
+          const userRoles = []
+
+          // Si hay permisos de rol, extraer los nombres de los roles
+          if (permissionsResponse.data && permissionsResponse.data.Permisos_Rol) {
+            const roleNames = Object.keys(permissionsResponse.data.Permisos_Rol)
+
+            // Convertir los nombres de roles a IDs de roles
+            for (const roleName of roleNames) {
+              const role = rolesData.find((r) => r.name === roleName)
+              if (role) {
+                userRoles.push(role.id)
+              }
+            }
+          }
+
+          // Si hay grupos en la respuesta del usuario, añadirlos a los roles
+          if (userResponse.data && userResponse.data.groups && userResponse.data.groups.length > 0) {
+            // Combinar con los roles ya encontrados, evitando duplicados
+            userResponse.data.groups.forEach((groupId) => {
+              if (!userRoles.includes(groupId)) {
+                userRoles.push(groupId)
+              }
+            })
+          }
+
+          return {
+            ...user,
+            groups: userRoles,
+          }
+        } catch (error) {
+          console.error(`Error al obtener roles para el usuario ${user.document}:`, error)
+          return {
+            ...user,
+            groups: [],
+          }
+        }
+      })
+
+      // Procesar los resultados en lotes para actualizar la UI progresivamente
+      const batchSize = 5 // Procesar 5 usuarios a la vez
+      const totalUsers = userRolesPromises.length
+
+      for (let i = 0; i < totalUsers; i += batchSize) {
+        const batch = userRolesPromises.slice(i, i + batchSize)
+        const resolvedBatch = await Promise.all(batch)
+
+        // Actualizar los usuarios con los roles obtenidos
+        setUsers((prevUsers) => {
+          const newUsers = [...prevUsers]
+          for (let j = 0; j < resolvedBatch.length; j++) {
+            const index = i + j
+            if (index < newUsers.length) {
+              newUsers[index] = resolvedBatch[j]
+            }
+          }
+          return newUsers
+        })
+      }
+
+      setIsLoadingRoles(false)
     } catch (error) {
+      console.error("Error al cargar los usuarios:", error)
       setError("Error al cargar los usuarios. Por favor, intente de nuevo.")
       setIsLoading(false)
+      setIsLoadingRoles(false)
       showNotification("Error al cargar los usuarios. Por favor, intente de nuevo.", "error")
     }
   }
@@ -276,10 +370,23 @@ const UsersSystem = () => {
     }
   }
 
-  // Cargar datos al montar el componente
+  // Cargar datos al montar el componente - asegurando el orden correcto
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([fetchUsers(), fetchRoles(), fetchPermissions(), fetchGroupedPermissions()])
+      try {
+        // Primero cargar los roles
+        const rolesData = await fetchRoles()
+
+        // Luego cargar los permisos
+        await fetchPermissions()
+        await fetchGroupedPermissions()
+
+        // Finalmente cargar los usuarios con sus roles
+        await fetchUsers(rolesData)
+      } catch (error) {
+        console.error("Error al cargar los datos:", error)
+        setIsLoading(false)
+      }
     }
 
     loadData()
@@ -609,7 +716,8 @@ const UsersSystem = () => {
         }
 
         // Actualizar la lista de usuarios y cerrar el modal
-        await fetchUsers()
+        const rolesData = await fetchRoles()
+        await fetchUsers(rolesData)
         setIsEditUserPermissionsModalOpen(false)
 
         // Mostrar mensaje de éxito o advertencia
@@ -691,6 +799,13 @@ const UsersSystem = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+
+        {isLoadingRoles && (
+          <div className="flex items-center text-sm text-gray-500">
+            <div className="w-4 h-4 border-2 border-gray-300 border-t-[#365486] rounded-full animate-spin mr-2"></div>
+            Cargando roles de usuarios...
+          </div>
+        )}
       </div>
 
       {/* Tabla de usuarios */}
@@ -698,6 +813,7 @@ const UsersSystem = () => {
         filteredUsers={filteredUsers}
         handleViewUserPermissions={handleViewUserPermissions}
         handleEditUserPermissions={handleEditUserPermissions}
+        getRoleName={getRoleName}
       />
 
       {/* Modales */}
@@ -749,4 +865,3 @@ const UsersSystem = () => {
 }
 
 export default UsersSystem
-
