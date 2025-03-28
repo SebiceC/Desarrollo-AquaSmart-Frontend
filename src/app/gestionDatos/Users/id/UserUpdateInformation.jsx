@@ -176,7 +176,7 @@ const UserUpdateInformation = () => {
                   onChange={handleChange}
                   error={errors.phone}
                   placeholder="Ej: 3201234567"
-                  maxLength={13}
+                  maxLength={10}
                   required
                 />
               </div>
