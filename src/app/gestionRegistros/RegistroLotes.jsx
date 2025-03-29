@@ -4,7 +4,8 @@ import axios from "axios";
 import InputItem from "../../components/InputItem";
 import Modal from "../../components/Modal";
 import NavBar from "../../components/NavBar";
-import { ChevronDown } from "lucide-react";
+import BackButton from "../../components/BackButton";
+import { ChevronDown } from 'lucide-react';
 import { PiAsteriskSimpleBold } from "react-icons/pi";
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -71,23 +72,23 @@ const RegistroLotes = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         // Actualizar el estado del formulario
         setFormData((prevData) => ({ ...prevData, [name]: value }));
 
         // Validar campos específicos
         if (name === "tipo_cultivo" || name === "variedad_cultivo" || name === "predio_asignado") {
             const isValid = validateField(name, value);
-            
+
             // Actualizar errores de campo específicos
             setFieldErrors(prev => ({ ...prev, [name]: !isValid }));
-            
+
             // Mostrar mensaje de error general si cualquiera de los campos tiene error
-            const updatedErrors = { 
-                ...fieldErrors, 
-                [name]: !isValid 
+            const updatedErrors = {
+                ...fieldErrors,
+                [name]: !isValid
             };
-            
+
             if (!isValid) {
                 if (name === "predio_asignado") {
                     setErrorMessage("ERROR, el predio solo puede contener letras, números y máximo un guión");
@@ -186,11 +187,13 @@ const RegistroLotes = () => {
     return (
         <div>
             <NavBar />
-            <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6 mt-10 lg:mt-0">
-                <h2 className="text-center text-2xl font-bold mb-8 mt-12">
-                    Formulario de Registro de Lotes
-                </h2>
-                <div className="bg-white p-10 w-full max-w-3xl">
+            <div className="w-full min-h-screen flex flex-col items-center pt-34 bg-white p-6">
+                <div className="w-full max-w-3xl">
+                    <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">
+                        Formulario de Registro de Lotes
+                    </h2>
+                </div>
+                <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputItem
                             label={
@@ -255,18 +258,23 @@ const RegistroLotes = () => {
                             className={`${fieldErrors.variedad_cultivo ? "border-red-100" : "border-gray-300"}`}
                         />
 
-                        {/* General error message */}
-                        {errorMessage && (
-                            <p className="col-span-1 md:col-span-2 text-red-600 text-sm mb-3">{errorMessage}</p>
-                        )}
+                        {/* Contenedor para mensajes de error y botones */}
+                        <div className="col-span-1 md:col-span-2 flex flex-col items-start mt-4">
+                            {/* Mensajes de error */}
+                            {errorMessage && (
+                                <p className="text-[#F90000] text-sm mb-4 w-full">{errorMessage}</p>
+                            )}
 
-                        <div className="col-span-1 md:col-span-2 flex flex-col items-start">
-                            <button
-                                type="submit"
-                                className="bg-blue-900 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-                            >
-                                Registrar
-                            </button>
+                            {/* Botones de acción */}
+                            <div className="flex flex-col lg:flex-row gap-2 justify-between w-full">
+                                <BackButton to="/gestionDatos/lotes" text="Regresar al listado de lotes" />
+                                <button
+                                    type="submit"
+                                    className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275]"
+                                >
+                                    Registrar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -276,7 +284,7 @@ const RegistroLotes = () => {
                     showModal={showSuccessModal}
                     onClose={() => {
                         setShowSuccessModal(false);
-                        navigate("/home");
+                        navigate("/gestionDatos/lotes");
                     }}
                     title="Registro Exitoso"
                     btnMessage="Aceptar"

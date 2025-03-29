@@ -4,6 +4,7 @@ import axios from "axios";
 import InputItem from "../../components/InputItem";
 import Modal from "../../components/Modal";
 import NavBar from "../../components/NavBar";
+import BackButton from "../../components/BackButton";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import { PiAsteriskSimpleBold } from "react-icons/pi";
 
@@ -114,11 +115,13 @@ const UpdatedPassword = () => {
     return (
         <div>
             <NavBar />
-            <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6 my-11">
-                <h2 className="text-center text-2xl font-bold mb-8 mt-12">
-                    Formulario de Actualización de Contraseña
-                </h2>
-                <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+            <div className="w-full min-h-screen flex flex-col items-center pt-34 bg-white p-6">
+                <div className="w-full max-w-3xl">
+                    <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">
+                        Formulario de Actualización de Contraseña
+                    </h2>
+                </div>
+                <div className="bg-white p-6 w-full max-w-3xl">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
                     <div className="relative w-full flex justify-center">
                         <InputItem
@@ -137,7 +140,7 @@ const UpdatedPassword = () => {
                         />
                         <button
                             type="button"
-                            className="absolute right-10 sm:right-15 top-8"
+                            className="absolute right-6 sm:right-15 top-8"
                             onClick={() =>
                                 setShowPassword((prev) => ({
                                     ...prev,
@@ -170,7 +173,7 @@ const UpdatedPassword = () => {
                         />
                         <button
                             type="button"
-                            className="absolute right-10 sm:right-15 top-8"
+                            className="absolute right-6 sm:right-15 top-8"
                             onClick={() =>
                                 setShowPassword((prev) => ({
                                     ...prev,
@@ -203,7 +206,7 @@ const UpdatedPassword = () => {
                         />
                         <button
                             type="button"
-                            className="absolute right-10 sm:right-15 top-8"
+                            className="absolute right-6 sm:right-15 top-8"
                             onClick={() =>
                                 setShowPassword((prev) => ({
                                     ...prev,
@@ -244,16 +247,23 @@ const UpdatedPassword = () => {
                             </div>
                         )}
 
-                        <div className="col-span-1 flex flex-col items-start">
+                        {/* Contenedor para mensajes de error y botones */}
+                        <div className="col-span-1 flex flex-col items-start mt-4">
+                            {/* Mensajes de error */}
                             {errorMessage && (
-                                <p className="text-red-600 text-sm mb-3">{errorMessage}</p>
+                                <p className="text-[#F90000] text-sm mb-4 w-full">{errorMessage}</p>
                             )}
-                            <button
-                                type="submit"
-                                className="bg-blue-900 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-                            >
-                                Actualizar
-                            </button>
+                            
+                            {/* Botones de acción */}
+                            <div className="flex justify-between w-full">
+                                <BackButton to="/home" text="Regresar" />
+                                <button
+                                    type="submit"
+                                    className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275]"
+                                >
+                                    Actualizar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
