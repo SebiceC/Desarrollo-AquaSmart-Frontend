@@ -642,10 +642,7 @@ const RegistroDispositivos = () => {
       <div className="w-full min-h-screen flex flex-col items-center pt-24 bg-white p-6">
         <div className="w-full max-w-3xl">
           <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">Registro de Dispositivos</h2>
-          <p className="text-sm text-gray-600 text-center mb-6">
-            Complete el formulario para registrar un nuevo dispositivo
-          </p>
-
+          
           {/* Mensaje de error general en la parte superior */}
           {errorMessage && (
             <div className="w-full border border-red-100 bg-red-50 rounded px-4 py-3 text-red-600 text-sm mb-6 flex items-start">
