@@ -275,10 +275,10 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
   return (
     <button
       onClick={generatePDF}
-      className="flex items-center gap-2 bg-pink-200 text-red-700 px-4 py-2 rounded-full text-sm hover:bg-red-300"
+      className="flex items-center gap-2 bg-[#4c84de] text-white px-4 py-2 rounded-full text-md font-semibold hover:bg-[#689ce6]"
     >
-      <img src="/img/pdf.png" alt="PDF Icon" width="20" height="20" />
-      <span>Descargar historial</span>
+      <img src="/img/pdf.png" alt="PDF Icon" width="25" height="25" />
+      <span>Descargar PDF</span>
     </button>
   );
 };
