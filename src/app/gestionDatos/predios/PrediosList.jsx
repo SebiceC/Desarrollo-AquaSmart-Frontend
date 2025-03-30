@@ -195,7 +195,22 @@ const PrediosList = () => {
     { key: "id_plot", label: "ID Predio" },
     { key: "plot_name", label: "Nombre" },
     { key: "owner", label: "Propietario" },
-    { key: "is_activate", label: "Estado", render: (predio) => predio.is_activate ? "Activo" : "Inactivo" },
+    {
+      key: "is_activate",
+      label: "Estado",
+      render: (predio) => {
+        const statusText = predio.is_activate ? "Activo" : "Inactivo";
+        const statusClass = predio.is_activate
+          ? "bg-green-100 text-green-800 border border-green-200"
+          : "bg-red-100 text-red-800 border border-red-200";
+
+        return (
+          <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
+            {statusText}
+          </span>
+        );
+      }
+    },
     {
       key: "plot_extension",
       label: "Extensión M2",

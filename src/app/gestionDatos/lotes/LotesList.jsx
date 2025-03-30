@@ -246,7 +246,22 @@ const LotesList = () => {
     { key: "crop_type", label: "Tipo de Cultivo" },
     { key: "plot", label: "ID Predio" },
     { key: "predioOwner", label: "Propietario del Predio" }, // Cambiado de owner a predioOwner
-    { key: "is_activate", label: "Estado", render: (lote) => lote.is_activate ? "Activo" : "Inactivo" },
+    {
+      key: "is_activate",
+      label: "Estado",
+      render: (lote) => {
+        const statusText = lote.is_activate ? "Activo" : "Inactivo";
+        const statusClass = lote.is_activate
+          ? "bg-green-100 text-green-800 border border-green-200"
+          : "bg-red-100 text-red-800 border border-red-200";
+
+        return (
+          <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
+            {statusText}
+          </span>
+        );
+      }
+    },
     {
       key: "registration_date",
       label: "Registro",
