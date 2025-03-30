@@ -204,7 +204,7 @@ const handleSubmit = async (e) => {
     }
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
-      
+      setIsLoading(false);
       if (error.response && error.response.status === 400) {
         // Para errores 400 de Axios
         const errorData = error.response.data;
