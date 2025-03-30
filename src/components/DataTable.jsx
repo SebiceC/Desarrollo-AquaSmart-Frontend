@@ -9,6 +9,7 @@ const DataTable = ({
   onView,
   onEdit,
   onDelete,
+  onConsult,
   actions = true,
   showStatus = true,
 }) => {
@@ -90,6 +91,16 @@ const DataTable = ({
                           aria-label="Editar información"
                         >
                           <Pencil className="text-white" />
+                        </button>
+                      )}
+                      {onConsult && (
+                        <button
+                          className="bg-[#365486] hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                          onClick={() => onConsult(item)}
+                          aria-label="Consulta"
+                        >
+                          {/* <Pencil className="text-white" /> */}
+                          <p className="font-bold text-white">Consulta</p>
                         </button>
                       )}
                     </div>

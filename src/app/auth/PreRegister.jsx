@@ -31,8 +31,11 @@ const PreRegister = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
+  const [showEmailErrorModal, setShowEmailErrorModal] = useState(false);
+  const [showPreRegistroCompletadoModal, setShowPreRegistroCompletadoModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
 
 
   // Obtener los tipos de documento y persona desde el backend
@@ -162,29 +165,13 @@ const PreRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Función para limpiar el formulario
-  const resetForm = () => {
-    setFormData({
-      first_name: "",
-      document_type: "",
-      last_name: "",
-      address: "",
-      person_type: "",
-      phone: "",
-      email: "",
-      document: "",
-      password: "",
-      confirmPassword: "",
-      attachments: [],
-    });
-    setErrors({});
-  };
 
 
 // Manejar el envío del formulario con Axios
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
+  setIsLoading(true);
 
   const formDataToSend = new FormData();
   // Excluir confirmPassword ya que no existe en el backend
@@ -208,21 +195,43 @@ const handleSubmit = async (e) => {
         },
       }
     );
-
+    setIsLoading(false);
     if (response.status === 201) {
-      resetForm(); // Limpiamos el formulario
+      // Limpiamos el formulario
       setShowSuccessModal(true);
     } else {
       throw new Error("Error al enviar el formulario");
     }
-  } catch (error) {
-    console.error("Error al enviar el formulario:", error);
-    if (error.response && error.response.status === 400) {
-      setShowDuplicateIdModal(true);
-    } else {
-      setShowErrorModal(true);
+    } catch (error) {
+      console.error("Error al enviar el formulario:", error);
+      setIsLoading(false);
+      if (error.response && error.response.status === 400) {
+        // Para errores 400 de Axios
+        const errorData = error.response.data;
+        
+        // Si el error viene como string JSON, intentamos parsearlo
+        let parsedError = errorData;
+        if (typeof errorData === 'string') {
+          try {
+            parsedError = JSON.parse(errorData);
+          } catch (e) {
+            // Si no se puede parsear, mantenemos el error original
+          }
+        }
+        
+        // Verificar los casos específicos
+        if (parsedError.email && parsedError.email.includes("Este correo ya está registrado.")) {
+          // Caso específico: Correo ya registrado
+          setShowEmailErrorModal(true);
+        } else if (parsedError.document && parsedError.document.includes("El usuario ya pasó el pre-registro.")) {
+          // Caso específico: Usuario ya pasó el pre-registro
+          setShowPreRegistroCompletadoModal(true);
+        } 
+      } else {
+        // Otros errores (no 400)
+        setShowErrorModal(true);
+      }
     }
-  }
 };
 
   return (
@@ -364,7 +373,7 @@ const handleSubmit = async (e) => {
                   value={formData.document}
                   onChange={handleChange}
                   placeholder="Identificación"
-                  maxLength={15}
+                  maxLength={12}
                   error={errors.document}
                 />
                 <div className="relative w-full flex">
@@ -501,7 +510,7 @@ const handleSubmit = async (e) => {
         showModal={showErrorModal}
         onClose={() => {
           setShowErrorModal(false);
-          resetForm();
+           
         }}
         title="ERROR"
         btnMessage="Aceptar"
@@ -513,7 +522,7 @@ const handleSubmit = async (e) => {
         showModal={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-          resetForm();
+           
         }}
         title="ÉXITO"
         btnMessage="Aceptar"
@@ -525,13 +534,39 @@ const handleSubmit = async (e) => {
         showModal={showDuplicateIdModal}
         onClose={() => {
           setShowDuplicateIdModal(false);
-          resetForm();
+           
         }}
         title="Error de Pre Registro"
         btnMessage="Aceptar"
       >
         <p>Error en el envío del formulario, ya que el número de identificación ya esta registrado o cuenta con un pre-registro.</p>
       </Modal>
+
+      <Modal
+        showModal={showEmailErrorModal}
+        onClose={() => setShowEmailErrorModal(false)}
+        title="Error de Pre Registro"
+        btnMessage="Aceptar"
+      >
+        <p>El correo electrónico ya está registrado en el sistema.</p>
+      </Modal>
+
+      <Modal
+        showModal={showPreRegistroCompletadoModal}
+        onClose={() => setShowPreRegistroCompletadoModal(false)}
+        title="Error de Pre Registro"
+        btnMessage="Aceptar"
+      >
+        <p>EL usuario ya completó el proceso de pre-registro. Por favor inicie sesión.</p>
+      </Modal>
+      {isLoading && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs">
+          <div className="bg-white p-5 rounded-lg shadow-lg flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#67f0dd] mb-3"></div>
+            <p className="text-gray-700">Procesando solicitud...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

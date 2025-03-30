@@ -161,6 +161,16 @@ const PreRegistrosList = () => {
       render: (item) => item.document,
     },
     {
+      key: "first_name",
+      label: "Nombre",
+      render: (item) => item.first_name || "Nombre no disponible",
+    },
+    {
+      key: "last_name",
+      label: "Apellidos",
+      render: (item) => item.last_name || "Apellido no disponible",
+    },
+    {
       key: "date_joined",
       label: "Fecha",
       render: (item) =>
@@ -175,21 +185,23 @@ const PreRegistrosList = () => {
     {
       key: "status",
       label: "Estado",
-      render: (item) => (
-        <span
-          className={`font-bold
-            ${item.is_active && item.is_registered ? "text-green-600" : ""}
-            ${!item.is_active && item.is_registered ? "text-red-600" : ""}
-            ${!item.is_registered ? "text-yellow-600" : ""}
-          `}
-        >
-          {item.is_active && item.is_registered
-            ? "Aprobado"
-            : !item.is_active && item.is_registered
-              ? "Inactivo"
-              : "Pendiente"}
-        </span>
-      ),
+      render: (item) => {
+        let statusText = ""
+        let statusClass = ""
+
+        if (item.is_active && item.is_registered) {
+          statusText = "Aprobado"
+          statusClass = "bg-green-100 text-green-800 border border-green-200"
+        } else if (!item.is_active && item.is_registered) {
+          statusText = "Inactivo"
+          statusClass = "bg-red-100 text-red-800 border border-red-200"
+        } else {
+          statusText = "Pendiente"
+          statusClass = "bg-yellow-100 text-yellow-800 border border-yellow-200"
+        }
+
+        return <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`}>{statusText}</span>
+      },
     },
     {
       key: "action",
@@ -322,3 +334,4 @@ const PreRegistrosList = () => {
 }
 
 export default PreRegistrosList
+

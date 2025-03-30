@@ -77,14 +77,14 @@ const DeletePlots = ({
                     <div className="flex justify-center space-x-4">
                         <button
                             onClick={() => !isProcessing && setShowModal(false)}
-                            className="px-8 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 disabled:opacity-50"
+                            className="px-8 py-2 bg-[#365486] text-white rounded-md hover:bg-blue-500 disabled:opacity-50"
                             disabled={isProcessing}
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={confirmDelete}
-                            className="px-8 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
+                            className="px-8 py-2 bg-red-600 text-white rounded-md hover:bg-red-600 disabled:opacity-50"
                             disabled={isProcessing}
                         >
                             {isProcessing ? "Procesando..." : "Sí, eliminar!"}

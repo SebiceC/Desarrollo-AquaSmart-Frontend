@@ -270,7 +270,22 @@ const DispositivosIoTList = () => {
     { key: "name", label: "Nombre" },
     { key: "device_type_name", label: "Tipo", responsive: "hidden md:table-cell" },
     { key: "id_plot", label: "ID Predio" },
-    { key: "is_active", label: "Estado", render: (dispositivo) => dispositivo.is_active ? "Activo" : "Inactivo" },
+    {
+      key: "is_active",
+      label: "Estado",
+      render: (dispositivo) => {
+        const statusText = dispositivo.is_active ? "Activo" : "Inactivo";
+        const statusClass = dispositivo.is_active
+          ? "bg-green-100 text-green-800 border border-green-200"
+          : "bg-red-100 text-red-800 border border-red-200";
+
+        return (
+          <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
+            {statusText}
+          </span>
+        );
+      }
+    },
     {
       key: "registration_date",
       label: "Registro Dispositivo",

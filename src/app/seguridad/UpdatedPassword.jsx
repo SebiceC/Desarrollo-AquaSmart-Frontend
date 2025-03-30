@@ -4,6 +4,7 @@ import axios from "axios";
 import InputItem from "../../components/InputItem";
 import Modal from "../../components/Modal";
 import NavBar from "../../components/NavBar";
+import BackButton from "../../components/BackButton";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import { PiAsteriskSimpleBold } from "react-icons/pi";
 
@@ -114,146 +115,152 @@ const UpdatedPassword = () => {
     return (
         <div>
             <NavBar />
-            <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6 my-11">
-                <h2 className="text-center text-2xl font-bold mb-8 mt-12">
-                    Formulario de Actualización de Contraseña
-                </h2>
-                <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+            <div className="w-full min-h-screen flex flex-col items-center pt-34 bg-white p-6">
+                <div className="w-full max-w-3xl">
+                    <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">
+                        Formulario de Actualización de Contraseña
+                    </h2>
+                </div>
+                <div className="bg-white p-6 w-full max-w-3xl">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-                    <div className="relative w-full flex justify-center">
-                        <InputItem
-                            labelName={
-                                <>
-                                    Contraseña actual <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
-                                </>
-                            }
-                            type={showPassword.current_password ? "text" : "password"}
-                            name="current_password"
-                            placeholder="Ingrese su contraseña actual"
-                            value={formData.current_password}
-                            onChange={handleChange}
-                            maxLength={20}
-                            error={errors.current_password}
-                        />
-                        <button
-                            type="button"
-                            className="absolute right-10 sm:right-15 top-8"
-                            onClick={() =>
-                                setShowPassword((prev) => ({
-                                    ...prev,
-                                    current_password: !prev.current_password,
-                                }))
-                            }
-                        >
-                            {showPassword.current_password ? (
-                                <EyeSlashIcon className="h-6 w-6 text-gray-500" />
-                            ) : (
-                                <EyeIcon className="h-6 w-6 text-gray-500" />
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="relative w-full flex justify-center">
-                        <InputItem
-                            labelName={
-                                <>
-                                    Nueva contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
-                                </>
-                            }
-                            type={showPassword.new_password ? "text" : "password"}
-                            name="new_password"
-                            placeholder="Ingrese su nueva contraseña"
-                            value={formData.new_password}
-                            onChange={handleChange}
-                            maxLength={20}
-                            error={errors.new_password}
-                        />
-                        <button
-                            type="button"
-                            className="absolute right-10 sm:right-15 top-8"
-                            onClick={() =>
-                                setShowPassword((prev) => ({
-                                    ...prev,
-                                    new_password: !prev.new_password,
-                                }))
-                            }
-                        >
-                            {showPassword.new_password ? (
-                                <EyeSlashIcon className="h-6 w-6 text-gray-500" />
-                            ) : (
-                                <EyeIcon className="h-6 w-6 text-gray-500" />
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="relative w-full flex justify-center">
-                        <InputItem
-                            labelName={
-                                <>
-                                    Confirmar nueva contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
-                                </>
-                            }
-                            type={showPassword.confirm_password ? "text" : "password"}
-                            name="confirm_password"
-                            placeholder="Repita su nueva contraseña"
-                            value={formData.confirm_password}
-                            onChange={handleChange}
-                            maxLength={20}
-                            error={errors.confirm_password}
-                        />
-                        <button
-                            type="button"
-                            className="absolute right-10 sm:right-15 top-8"
-                            onClick={() =>
-                                setShowPassword((prev) => ({
-                                    ...prev,
-                                    confirm_password: !prev.confirm_password,
-                                }))
-                            }
-                        >
-                            {showPassword.confirm_password ? (
-                                <EyeSlashIcon className="h-6 w-6 text-gray-500" />
-                            ) : (
-                                <EyeIcon className="h-6 w-6 text-gray-500" />
-                            )}
-                        </button>
-                    </div>
-
-
-                        {/* Sección de Validaciones de Contraseña */}
-                        {formData.new_password && (
-                            <div className="bg-gray-100 p-4 rounded-md">
-                                <p className="text-sm font-semibold mb-2">Requisitos de contraseña:</p>
-                                <ul className="mt-2 text-sm">
-                                    <li className={passwordValidations.length ? "text-black" : "text-black"}>
-                                        {passwordValidations.length ? "✔" : "✖"} Máximo 20 caracteres, mínimo 8 caracteres
-                                    </li>
-                                    <li className={passwordValidations.uppercase ? "text-black" : "text-black"}>
-                                        {passwordValidations.uppercase ? "✔" : "✖"} Al menos una letra mayúscula
-                                    </li>
-                                    <li className={passwordValidations.lowercase ? "text-black" : "text-black"}>
-                                        {passwordValidations.lowercase ? "✔" : "✖"} Al menos una letra minúscula
-                                    </li>
-                                    <li className={passwordValidations.number ? "text-black" : "text-black"}>
-                                        {passwordValidations.number ? "✔" : "✖"} Al menos un número
-                                    </li>
-                                    <li className={passwordValidations.specialChar ? "text-black" : "text-black"}>
-                                        {passwordValidations.specialChar ? "✔" : "✖"} Al menos un carácter especial (@$!%*?&)
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
-
-                        <div className="col-span-1 flex flex-col items-start">
-                            {errorMessage && (
-                                <p className="text-red-600 text-sm mb-3">{errorMessage}</p>
-                            )}
+                        <div className="relative w-full flex justify-center">
+                            <InputItem
+                                labelName={
+                                    <>
+                                        Contraseña actual <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                                    </>
+                                }
+                                type={showPassword.current_password ? "text" : "password"}
+                                name="current_password"
+                                placeholder="Ingrese su contraseña actual"
+                                value={formData.current_password}
+                                onChange={handleChange}
+                                maxLength={20}
+                                error={errors.current_password}
+                            />
                             <button
-                                type="submit"
-                                className="bg-blue-900 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+                                type="button"
+                                className="absolute right-6 sm:right-15 top-8"
+                                onClick={() =>
+                                    setShowPassword((prev) => ({
+                                        ...prev,
+                                        current_password: !prev.current_password,
+                                    }))
+                                }
                             >
-                                Actualizar
+                                {showPassword.current_password ? (
+                                    <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                                ) : (
+                                    <EyeIcon className="h-6 w-6 text-gray-500" />
+                                )}
                             </button>
+                        </div>
+
+                        <div className="relative w-full flex justify-center">
+                            <InputItem
+                                labelName={
+                                    <>
+                                        Nueva contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                                    </>
+                                }
+                                type={showPassword.new_password ? "text" : "password"}
+                                name="new_password"
+                                placeholder="Ingrese su nueva contraseña"
+                                value={formData.new_password}
+                                onChange={handleChange}
+                                maxLength={20}
+                                error={errors.new_password}
+                            />
+                            <button
+                                type="button"
+                                className="absolute right-6 sm:right-15 top-8"
+                                onClick={() =>
+                                    setShowPassword((prev) => ({
+                                        ...prev,
+                                        new_password: !prev.new_password,
+                                    }))
+                                }
+                            >
+                                {showPassword.new_password ? (
+                                    <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                                ) : (
+                                    <EyeIcon className="h-6 w-6 text-gray-500" />
+                                )}
+                            </button>
+                        </div>
+
+                        <div className="relative w-full flex justify-center">
+                            <InputItem
+                                labelName={
+                                    <>
+                                        Confirmar nueva contraseña <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                                    </>
+                                }
+                                type={showPassword.confirm_password ? "text" : "password"}
+                                name="confirm_password"
+                                placeholder="Repita su nueva contraseña"
+                                value={formData.confirm_password}
+                                onChange={handleChange}
+                                maxLength={20}
+                                error={errors.confirm_password}
+                            />
+                            <button
+                                type="button"
+                                className="absolute right-6 sm:right-15 top-8"
+                                onClick={() =>
+                                    setShowPassword((prev) => ({
+                                        ...prev,
+                                        confirm_password: !prev.confirm_password,
+                                    }))
+                                }
+                            >
+                                {showPassword.confirm_password ? (
+                                    <EyeSlashIcon className="h-6 w-6 text-gray-500" />
+                                ) : (
+                                    <EyeIcon className="h-6 w-6 text-gray-500" />
+                                )}
+                            </button>
+                        </div>
+
+
+                        <div className="p-4">
+                            <p className="text-sm font-semibold mb-2">Requisitos de contraseña:</p>
+                            <ul className="mt-2 text-sm">
+                                <li className={passwordValidations.length ? "text-black" : "text-black"}>
+                                    {passwordValidations.length ? "✔" : "✖"} Máximo 20 caracteres, mínimo 8 caracteres
+                                </li>
+                                <li className={passwordValidations.uppercase ? "text-black" : "text-black"}>
+                                    {passwordValidations.uppercase ? "✔" : "✖"} Al menos una letra mayúscula
+                                </li>
+                                <li className={passwordValidations.lowercase ? "text-black" : "text-black"}>
+                                    {passwordValidations.lowercase ? "✔" : "✖"} Al menos una letra minúscula
+                                </li>
+                                <li className={passwordValidations.number ? "text-black" : "text-black"}>
+                                    {passwordValidations.number ? "✔" : "✖"} Al menos un número
+                                </li>
+                                <li className={passwordValidations.specialChar ? "text-black" : "text-black"}>
+                                    {passwordValidations.specialChar ? "✔" : "✖"} Al menos un carácter especial (@$!%*?&)
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Contenedor para mensajes de error y botones */}
+                        <div className="col-span-1 flex flex-col items-start mt-4">
+                            {/* Mensajes de error */}
+                            {errorMessage && (
+                                <p className="text-[#F90000] text-sm mb-4 w-full">{errorMessage}</p>
+                            )}
+
+                            {/* Botones de acción */}
+                            <div className="flex justify-between w-full">
+                                <BackButton to="/home" text="Regresar" />
+                                <button
+                                    type="submit"
+                                    className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275]"
+                                >
+                                    Actualizar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>

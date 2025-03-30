@@ -642,11 +642,7 @@ const RegistroDispositivos = () => {
       <div className="w-full min-h-screen flex flex-col items-center pt-24 bg-white p-6">
         <div className="w-full max-w-3xl">
           <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">Registro de Dispositivos</h2>
-          <p className="text-sm text-gray-600 text-center mb-6">
-            Complete el formulario para registrar un nuevo dispositivo
-          </p>
-          <div className="w-16 h-1 bg-[#365486] mx-auto mb-6 rounded-full"></div>
-
+          
           {/* Mensaje de error general en la parte superior */}
           {errorMessage && (
             <div className="w-full border border-red-100 bg-red-50 rounded px-4 py-3 text-red-600 text-sm mb-6 flex items-start">
@@ -777,7 +773,7 @@ const RegistroDispositivos = () => {
 
               {/* Botones en columna en móvil y fila en escritorio */}
               <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row gap-3 sm:justify-between w-full mt-4">
-                <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar a la lista" className="w-full sm:w-auto" />
+                <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar al listado de dispositivos" className="w-full sm:w-auto" />
                 <button
                   type="submit"
                   className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275] disabled:bg-gray-400 w-full sm:w-auto"

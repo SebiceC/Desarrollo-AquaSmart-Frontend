@@ -4,6 +4,7 @@ import axios from "axios";
 import InputItem from "../../components/InputItem";
 import Modal from "../../components/Modal";
 import NavBar from "../../components/NavBar";
+import BackButton from "../../components/BackButton";
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -101,15 +102,16 @@ const RegistroPredios = () => {
     };
 
     return (
-        
         <div>
             <NavBar/>
-            <div className="w-full min-h-screen flex flex-col items-center justify-center bg-white p-6">
-                <h2 className="text-center text-2xl font-bold mb-8 mt-12">
-                    Formulario de Registro de Predios
-                </h2>
+            <div className="w-full min-h-screen flex flex-col items-center pt-34 bg-white p-6">
+                <div className="w-full max-w-3xl">
+                    <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">
+                        Formulario de Registro de Predios
+                    </h2>
+                </div>
                 <div className="bg-white p-6 w-full max-w-3xl">
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 flex flex-col justify-center mx-auto ">
                         <InputItem
                             label="Dueño del predio"
                             type="number"
@@ -155,16 +157,24 @@ const RegistroPredios = () => {
                             onChange={handleChange}
                             error={errors.longitude}
                         />
-                        <div className="col-span-1 md:col-span-2 flex flex-col items-start">
+                        
+                        {/* Contenedor para mensajes de error y botones */}
+                        <div className="col-span-1 md:col-span-2 flex flex-col items-start mt-4">
+                            {/* Mensajes de error */}
                             {errorMessage && (
-                                <p className="text-red-600 text-sm mb-3">{errorMessage}</p>
+                                <p className="text-[#F90000] text-sm mb-4 w-full">{errorMessage}</p>
                             )}
-                            <button
-                                type="submit"
-                                className="bg-blue-900 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-                            >
-                                Registrar
-                            </button>
+                            
+                            {/* Botones de acción */}
+                            <div className="flex flex-col lg:flex-row gap-2 justify-between w-full">
+                                <BackButton to="/gestionDatos/predios" text="Regresar al listado de predios" />
+                                <button
+                                    type="submit"
+                                    className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275]"
+                                >
+                                    Registrar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -174,7 +184,7 @@ const RegistroPredios = () => {
                     showModal={showSuccessModal}
                     onClose={() => {
                         setShowSuccessModal(false);
-                        navigate("/home");
+                        navigate("/gestionDatos/predios");
                     }}
                     title="Registro Exitoso"
                     btnMessage="Aceptar"
@@ -183,7 +193,6 @@ const RegistroPredios = () => {
                 </Modal>
             </div>
         </div>
-        
     );
 };
 

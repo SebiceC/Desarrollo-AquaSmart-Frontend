@@ -38,6 +38,15 @@ const ForgotPassword = () => {
             setError("Todos los campos son obligatorios.");
             return;
         }
+        if (document.length < 6) {
+            setError("El documento debe tener al menos 6 caracteres.");
+            return;
+        }
+    
+        if (phone.length < 10) {
+            setError("El teléfono debe tener 10 caracteres.");
+            return;
+        }
 
         try {
             const response = await axios.post(`${API_URL}/users/generate-otp`, {
@@ -241,7 +250,7 @@ const ForgotPassword = () => {
                                     setDocument(value);
                                 }
                             }}
-                            maxLength={11}
+                            maxLength={12}
                         />
                         <InputItem
                             id="phone"

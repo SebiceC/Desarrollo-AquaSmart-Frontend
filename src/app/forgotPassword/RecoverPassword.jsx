@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 import { PiAsteriskSimpleBold } from 'react-icons/pi';
 import Modal from '../../components/Modal';
+import { IoIosWarning } from 'react-icons/io';
 
 
 
@@ -52,7 +53,7 @@ const RecoverPassword = () => {
             uppercase: /[A-Z]/.test(password),
             lowercase: /[a-z]/.test(password),
             number: /\d/.test(password),
-            specialChar: /[!@#$%^&*()_+-={}|:;"'<>,.?/]/.test(password),
+            specialChar: /[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>\/?]/.test(password),
         };
 
         setPasswordValidations(validations);
@@ -138,10 +139,13 @@ const RecoverPassword = () => {
                 <h1 className='text-4xl font-bold pb-8 text-center'>CAMBIO DE CONTRASEÑA</h1>
 
                 {error && (
-                    <span className='w-[80%] text-md text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600'>
+                    <span className="w-[83%] text-sm text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                        <IoIosWarning size={26} className="flex-shrink-0" />
                         {error}
+                        <IoIosWarning size={26} className="flex-shrink-0" />
                     </span>
                 )}
+
                 {success && <p className="text-green-500 text-sm">{success}</p>}
 
                 <form className='flex flex-col items-center w-full' onSubmit={handleRecover}>

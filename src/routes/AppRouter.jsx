@@ -37,6 +37,12 @@ import MiPlotLotDetail from "../app/infoprediosylotes/PlotLotUsersDetail";
 import LotUsersDetail from "../app/infoprediosylotes/LotUsersDetail";
 
 import HistorialDistrito from "../app/HistorialConsumo/HistorialDistrito";
+import HistorialPredio from "../app/HistorialConsumo/HistorialPredio";
+import HistorialPredioDetail from "../app/HistorialConsumo/HistorialPredioDetail";
+import HistorialLoteDetail from "../app/HistorialConsumo/HistorialLoteDetail";
+import HistorialUserPredio from "../app/HistorialConsumo/HistorialUserPredioList";
+import HistorialUserPredioDetail from "../app/HistorialConsumo/HistorialUserPredioDetail";
+
 
 const AppRouter = () => {
     return (
@@ -84,6 +90,11 @@ const AppRouter = () => {
             <Route path="/mispredios/predio/:id_plot" element={<ProtectedRoute element={<MiPlotLotDetail />} />} />
             <Route path="/mislotes/lote/:id_lot" element={<ProtectedRoute element={<LotUsersDetail />} />} />
             <Route path="/historial-consumo/distrito" element={<ProtectedRoute element={<HistorialDistrito />} />} />
+            <Route path="/historial-consumo/predio" element={<ProtectedRoute element={<HistorialPredio />} />} />
+            <Route path="/historial-consumo/predio/:id_plot" element={<ProtectedRoute element={<HistorialPredioDetail />} />} />
+            <Route path="/historial-consumo/predio/:id_plot/lote/:id_lot" element={<ProtectedRoute element={<HistorialLoteDetail />} />} />
+            <Route path="/mispredios/historial-consumoList/:document" element={<ProtectedRoute element={<HistorialUserPredio />} />} />
+            <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
         </Routes>
     );
 };
