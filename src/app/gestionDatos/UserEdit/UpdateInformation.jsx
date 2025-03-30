@@ -473,9 +473,8 @@ const UpdateInformation = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de persona</label>
               <div className="relative">
                 <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                    errors.person_type_name ? "border-red-300" : ""
-                  }`}
+                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.person_type_name ? "border-red-300" : ""
+                    }`}
                   name="person_type_name"
                   value={formData.person_type_name || ""}
                   onChange={handleChange}
@@ -539,139 +538,140 @@ const UpdateInformation = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado del usuario</label>
               <div className="relative">
                 <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                    errors.is_active ? "border-red-300" : ""
-                  }`}
+                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.is_active ? "border-red-300" : ""
+                    } ${formData.is_active === true ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
                   name="is_active"
                   value={formData.is_active === undefined ? "" : formData.is_active.toString()}
                   onChange={(e) => {
-                    const value = e.target.value === "true"
+                    const value = e.target.value === "true";
                     setFormData((prev) => ({
                       ...prev,
                       is_active: value,
-                    }))
-                    setErrors((prev) => ({ ...prev, is_active: "" }))
+                    }));
+                    setErrors((prev) => ({ ...prev, is_active: "" }));
                   }}
+                  disabled={formData.is_active === true}
                 >
-                  <option value="">SELECCIÓN DE ESTADO</option>
-                  {userStates.map((state, index) => (
-                    <option key={index} value={state.value.toString()}>
-                      {state.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-              {errors.is_active && <p className="text-red-500 text-sm mt-1">{errors.is_active}</p>}
+
+
+                <option value="">SELECCIÓN DE ESTADO</option>
+                {userStates.map((state, index) => (
+                  <option key={index} value={state.value.toString()}>
+                    {state.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-
-            {/* Sección de archivos adjuntos */}
-            <div className="col-span-1 md:col-span-2 mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Archivos adjuntos</label>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <label className="border border-gray-300 rounded px-3 py-2 bg-gray-50 text-sm cursor-pointer flex items-center self-start mb-2 sm:mb-0">
-                  <span>Seleccionar archivos</span>
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    multiple
-                    accept=".pdf"
-                  />
-                  <Upload className="ml-2 w-4 h-4" />
-                </label>
-                <span className="sm:ml-2 text-sm text-gray-500">
-                  {formData.attachments.length}/5 archivos seleccionados
-                </span>
-              </div>
-
-              {errors.attachments && <p className="text-red-500 text-sm mt-1">{errors.attachments}</p>}
-
-              {formData.attachments.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium">Archivos seleccionados:</p>
-                  <ul className="mt-2 space-y-2 max-h-40 overflow-y-auto">
-                    {formData.attachments.map((file, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center justify-between text-sm border-b border-gray-100 pb-1"
-                      >
-                        <span className="truncate max-w-xs sm:max-w-md">
-                          {file.name || file} {file.size ? `- ${(file.size / 1024).toFixed(2)}KB` : ""}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(index)}
-                          className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Botones de acción */}
-            <div className="col-span-1 md:col-span-2 flex flex-col lg:flex-row gap-2 justify-between w-full mt-6">
-              <BackButton to="/gestionDatos/users" text="Regresar al listado de usuarios" />
-              <button
-                type="submit"
-                className={`bg-[#365486] hover:bg-[#2f4275] text-white px-5 py-2 rounded-lg transition-colors ${
-                  submitting ? "opacity-70 cursor-not-allowed" : ""
-                }`}
-                disabled={submitting}
-              >
-                {submitting ? "Actualizando..." : "Actualizar"}
-              </button>
-            </div>
-          </form>
+            {errors.is_active && <p className="text-red-500 text-sm mt-1">{errors.is_active}</p>}
         </div>
-      </div>
 
-      {/* Modal de éxito */}
-      <Modal
-        showModal={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false)
-          navigate("/gestionDatos/users")
-        }}
-        title="Actualización Exitosa"
-        btnMessage="Aceptar"
-      >
-        <p>El usuario ha sido actualizado con éxito.</p>
-      </Modal>
+        {/* Sección de archivos adjuntos */}
+        <div className="col-span-1 md:col-span-2 mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Archivos adjuntos</label>
+          <div className="flex flex-col sm:flex-row sm:items-center">
+            <label className="border border-gray-300 rounded px-3 py-2 bg-gray-50 text-sm cursor-pointer flex items-center self-start mb-2 sm:mb-0">
+              <span>Seleccionar archivos</span>
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                onChange={handleFileChange}
+                multiple
+                accept=".pdf"
+              />
+              <Upload className="ml-2 w-4 h-4" />
+            </label>
+            <span className="sm:ml-2 text-sm text-gray-500">
+              {formData.attachments.length}/5 archivos seleccionados
+            </span>
+          </div>
 
-      {/* Modal de error */}
-      <Modal showModal={showErrorModal} onClose={() => setShowErrorModal(false)} title="Error" btnMessage="Volver">
-        <p>{errors.submit || "Ha ocurrido un error al actualizar el usuario"}</p>
-      </Modal>
+          {errors.attachments && <p className="text-red-500 text-sm mt-1">{errors.attachments}</p>}
 
-      {/* Modal de error al cargar datos */}
-      <Modal
-        showModal={showErrorModal2}
-        onClose={() => {
-          setShowErrorModal2(false)
-          navigate("/gestionDatos/users")
-        }}
-        title="Error"
-        btnMessage="Volver"
-      >
-        <p>Error al cargar los datos del usuario. Por favor, intente nuevamente.</p>
-      </Modal>
+          {formData.attachments.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-medium">Archivos seleccionados:</p>
+              <ul className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                {formData.attachments.map((file, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center justify-between text-sm border-b border-gray-100 pb-1"
+                  >
+                    <span className="truncate max-w-xs sm:max-w-md">
+                      {file.name || file} {file.size ? `- ${(file.size / 1024).toFixed(2)}KB` : ""}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(index)}
+                      className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
-      {/* Modal de datos sin cambios */}
-      <Modal
-        showModal={showNoChangesModal}
-        onClose={() => setShowNoChangesModal(false)}
-        title="Sin Cambios"
-        btnMessage="Cerrar"
-      >
-        <p>No se han detectado cambios en los datos del usuario. Modifique al menos un campo antes de actualizar.</p>
-      </Modal>
+        {/* Botones de acción */}
+        <div className="col-span-1 md:col-span-2 flex flex-col lg:flex-row gap-2 justify-between w-full mt-6">
+          <BackButton to="/gestionDatos/users" text="Regresar al listado de usuarios" />
+          <button
+            type="submit"
+            className={`bg-[#365486] hover:bg-[#2f4275] text-white px-5 py-2 rounded-lg transition-colors ${submitting ? "opacity-70 cursor-not-allowed" : ""
+              }`}
+            disabled={submitting}
+          >
+            {submitting ? "Actualizando..." : "Actualizar"}
+          </button>
+        </div>
+      </form>
     </div>
+      </div >
+
+  {/* Modal de éxito */ }
+  < Modal
+showModal = { showSuccessModal }
+onClose = {() => {
+  setShowSuccessModal(false)
+  navigate("/gestionDatos/users")
+}}
+title = "Actualización Exitosa"
+btnMessage = "Aceptar"
+  >
+  <p>El usuario ha sido actualizado con éxito.</p>
+      </Modal >
+
+  {/* Modal de error */ }
+  < Modal showModal = { showErrorModal } onClose = {() => setShowErrorModal(false)} title = "Error" btnMessage = "Volver" >
+    <p>{errors.submit || "Ha ocurrido un error al actualizar el usuario"}</p>
+      </Modal >
+
+  {/* Modal de error al cargar datos */ }
+  < Modal
+showModal = { showErrorModal2 }
+onClose = {() => {
+  setShowErrorModal2(false)
+  navigate("/gestionDatos/users")
+}}
+title = "Error"
+btnMessage = "Volver"
+  >
+  <p>Error al cargar los datos del usuario. Por favor, intente nuevamente.</p>
+      </Modal >
+
+  {/* Modal de datos sin cambios */ }
+  < Modal
+showModal = { showNoChangesModal }
+onClose = {() => setShowNoChangesModal(false)}
+title = "Sin Cambios"
+btnMessage = "Cerrar"
+  >
+  <p>No se han detectado cambios en los datos del usuario. Modifique al menos un campo antes de actualizar.</p>
+      </Modal >
+    </div >
   )
 }
 
