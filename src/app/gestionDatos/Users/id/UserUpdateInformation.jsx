@@ -61,7 +61,6 @@ const UserUpdateInformation = () => {
           }
         } catch (permissionsError) {
           console.warn("No se pudieron obtener los permisos:", permissionsError);
-          setError("No se pudieron obtener los permisos.");
         }
   
         const userWithRole = { ...userData, role };

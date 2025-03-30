@@ -6,7 +6,7 @@ import InputFilter from "../../components/InputFilterPlotLotUser";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
 
-const PlotLotUsersList = () => {
+const HistorialUserPredio = () => {
   const navigate = useNavigate();
   const [predios, setPredios] = useState([]);
   const [filteredPredios, setFilteredPredios] = useState(null);
@@ -134,21 +134,21 @@ const PlotLotUsersList = () => {
     }
   };
 
-  const handleView = (predio) => {
-    navigate(`/mispredios/predio/${predio.id_plot}`);
-  };
-
   const columns = [
     { key: "id_plot", label: "ID Predio" },
     { key: "plot_name", label: "Nombre" },
   ];
+
+  const handleConsult = (predio) => {
+    navigate(`/mispredios/historial-consumoPredio/${predio.id_plot}`);
+  };
 
   return (
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Mis predios
+          Historial de consumo
         </h1>
 
         {loading ? (
@@ -185,8 +185,10 @@ const PlotLotUsersList = () => {
             columns={columns}
             data={filteredPredios}
             emptyMessage="No se encontraron predios con los filtros aplicados."
-            onView={handleView}
-
+            // onView={handleView}
+            // onEdit={handleEdit}
+            // onDelete={handleDelete}
+            onConsult={handleConsult}
           />
         )}
         
@@ -202,4 +204,4 @@ const PlotLotUsersList = () => {
   );
 };
 
-export default PlotLotUsersList;
+export default HistorialUserPredio;
