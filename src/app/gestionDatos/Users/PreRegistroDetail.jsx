@@ -443,14 +443,10 @@ const PreRegistroDetail = () => {
           showModal={showModal}
           onClose={() => {
             setShowModal(false)
-            if (
-              modalMessage.includes("exitosa") ||
-              modalMessage.includes("aprobado") ||
-              modalMessage.includes("rechazado")
-            ) {
+            if (modalMessage.includes("rechazado")) {
               window.location.href = "/gestionDatos/pre-registros"
             }
-          }}
+          }}          
           title={modalTitle}
           btnMessage="Cerrar"
         >
