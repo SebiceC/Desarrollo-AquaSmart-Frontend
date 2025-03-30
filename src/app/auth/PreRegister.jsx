@@ -297,7 +297,7 @@ const handleSubmit = async (e) => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Telefono"
-                  maxLength={13}
+                  maxLength={10}
                   error={errors.phone}
                 />
 
