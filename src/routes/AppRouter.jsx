@@ -42,6 +42,7 @@ import HistorialPredioDetail from "../app/HistorialConsumo/HistorialPredioDetail
 import HistorialLoteDetail from "../app/HistorialConsumo/HistorialLoteDetail";
 import HistorialUserPredio from "../app/HistorialConsumo/HistorialUserPredioList";
 import HistorialUserPredioDetail from "../app/HistorialConsumo/HistorialUserPredioDetail";
+import HistorialUserLoteDetail from "../app/HistorialConsumo/HistorialUserLoteDetail";
 
 
 const AppRouter = () => {
@@ -95,6 +96,7 @@ const AppRouter = () => {
             <Route path="/historial-consumo/predio/:id_plot/lote/:id_lot" element={<ProtectedRoute element={<HistorialLoteDetail />} />} />
             <Route path="/mispredios/historial-consumoList/:document" element={<ProtectedRoute element={<HistorialUserPredio />} />} />
             <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
+            <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
         </Routes>
     );
 };
