@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calendar, ChevronDown, List } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import NavBar from "../../components/NavBar";
 import Modal from "../../components/Modal";
+import { PDFDownloadButton } from "../../components/PdfGenerator"; 
+import { CSVDownloadButton } from "../../components/CsvGenerator";
 
 const HistorialPredioDetail = () => {
   // Extract predio ID from URL
@@ -15,6 +17,7 @@ const HistorialPredioDetail = () => {
   const [error, setError] = useState(null);
   const [plotDetails, setPlotDetails] = useState(null);
   const [showLotes, setShowLotes] = useState(false);
+  const chartRef = useRef(null);
 
   // Estado para las fechas seleccionadas
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
@@ -455,7 +458,7 @@ const HistorialPredioDetail = () => {
             </div>
           </div>
 
-          <div className="h-64 sm:h-80 mt-6">
+          <div className="h-64 sm:h-80 mt-6" ref={chartRef}>
             {dateValidationError ? (
               <div className="flex items-center justify-center h-full">
                 <p className="text-red-500">Por favor, corrija las fechas seleccionadas</p>
@@ -522,12 +525,31 @@ const HistorialPredioDetail = () => {
           </div>
 
           <div className="mt-6 flex justify-center gap-4">
-            <button className="flex items-center gap-2 bg-red-200 text-red-700 px-4 py-2 rounded-md text-sm hover:bg-red-300">
-              <span>Descargar Historial</span>
-            </button>
-            <button className="flex items-center gap-2 bg-green-200 text-green-700 px-4 py-2 rounded-md text-sm hover:bg-green-300">
-              <span>Descargar Historial</span>
-            </button>
+            {!dateValidationError && data.length > 0 ? (
+              <PDFDownloadButton 
+                data={data} 
+                startDate={startDate} 
+                endDate={endDate} 
+                chartRef={chartRef}  // Pasar la referencia
+              />
+            ) : (
+              <button className="flex items-center gap-2 bg-pink-200 text-red-700 px-4 py-2 rounded-full text-sm hover:bg-red-300 opacity-50 cursor-not-allowed">
+                <img src="/img/pdf.png" alt="PDF Icon" width="20" height="20" />
+                <span>Descargar historial</span>
+              </button>
+            )}
+            {!dateValidationError && data.length > 0 ? (
+              <CSVDownloadButton 
+                data={data} 
+                startDate={startDate} 
+                endDate={endDate} 
+              />
+            ) : (
+              <button className="flex items-center gap-2 bg-green-200 text-green-700 px-4 py-2 rounded-full text-sm hover:bg-green-300 opacity-50 cursor-not-allowed">
+                <img src="/img/csv.png" alt="CSV Icon" width="20" height="20" />
+                <span>Descargar historial</span>
+              </button>
+            )}
           </div>
 
           {/* Nuevo bloque para lotes asociados */}
