@@ -104,7 +104,7 @@ const UserList = () => {
     try {
       // Validación de ID (Solo números)
       if (filters.id.trim() !== "" && !/^\d+$/.test(filters.id.trim())) {
-        setModalMessage("El campo de filtrado por ID contiene caracteres no válidos o el usuario no existe");
+        setModalMessage("El campo de filtrado por ID contiene caracteres no válidos");
         setShowModal(true);
         return;
       }
