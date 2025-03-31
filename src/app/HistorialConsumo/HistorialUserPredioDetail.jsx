@@ -439,7 +439,7 @@ const HistorialUserPredioDetail = () => {
   };
 
   const handleLoteClick = (loteId) => {
-    navigate(``);
+    navigate(`/mispredios/historial-consumoPredio/${id_plot}/milote/${loteId}`);
   };
 
   // Si el usuario no es propietario, mostrar solo el mensaje modal y esperar la redirección
@@ -700,7 +700,7 @@ const HistorialUserPredioDetail = () => {
             )}
             {/* Botón de regreso */}
             <div className="flex justify-start mt-5">
-              <BackButton to="/mispredios/historial-consumoList/:document" text="Regresar a la lista de mis predios" className="hover:bg-blue-50" />
+              <BackButton to="/mispredios/historial-consumoPredio/:id_plot" text="Regresar a la lista de mis predios" className="hover:bg-blue-50" />
             </div>
           </div>
         </div>
