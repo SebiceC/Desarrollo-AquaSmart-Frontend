@@ -349,12 +349,17 @@ const handleSubmit = async (e) => {
                   <span className="absolute left-0 top-0 text-red-500 -ml-3">*</span>
                   <div className="relative">
                     <select
-                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.document_type ? "bg-red-100" : "bg-white"
-                        }`}
+                      className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
+                        errors.document_type 
+                          ? "bg-red-100" 
+                          : formData.person_type 
+                            ? "bg-white" 
+                            : "bg-gray-100 text-gray-400"  
+                      }`}
                       name="document_type"
                       value={formData.document_type}
                       onChange={handleChange}
-                      disabled={!formData.person_type} // Deshabilitar si no se ha seleccionado un tipo de persona
+                      disabled={!formData.person_type}
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
                       {filteredDocumentTypes.map((type, index) => (
@@ -363,7 +368,9 @@ const handleSubmit = async (e) => {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                      !formData.person_type ? "text-gray-400" : "text-gray-500"
+                    }`} />  
                   </div>
                   {errors.document_type && (
                     <p className="text-[#F90000]">{errors.document_type}</p>
