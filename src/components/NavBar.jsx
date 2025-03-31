@@ -71,75 +71,59 @@ function NavBar() {
           </Link>
         </div>
 
-        <ul className="hidden lg:flex space-x-1 font-semibold">
-          <NavItem direction="/perfil" text="Perfil" />
-          <NavItem
-            direction="/control-IoT"
-            text="Control IoT"
-            subItems={[
-              { direction: "/control-IoT/sensores", text: "Sensores" },
-            ]}
-          />
-          <NavItem
-            direction="/gestionDatos"
-            text="Gestión de datos"
-            subItems={[
-              {
-                direction: "/gestionDatos/pre-registros",
-                text: "Pre Registros",
-              },
-              { direction: "/gestionDatos/users", text: "Usuarios" },
-              { direction: "/gestionDatos/predios", text: "Predios" },
-              { direction: "/gestionDatos/lotes", text: "Lotes" },
-              {
-                direction: "/gestionDatos/dispositivosIoT",
-                text: "Dispositvos",
-              },
-            ]}
-          />
-          <NavItem
-            direction="/gestionRegistros"
-            text="Gestión de registros"
-            subItems={[
-              {
-                direction: "/gestionRegistros/predios",
-                text: "Registro de Predios",
-              },
-              {
-                direction: "/gestionRegistros/lotes",
-                text: "Registro de Lotes",
-              },
-              {
-                direction: "/gestionRegistros/dispositivosIoT",
-                text: "Registro Dispositivos",
-              },
-            ]}
-          />
-          <NavItem
-            direction="/facturacion"
-            text="Facturación"
-            subItems={[
-              { direction: "/facturacion/historial", text: "Historial" },
-              { direction: "/facturacion/reportes", text: "Reportes" },
-            ]}
-          />
-          <NavItem
-            direction="/historialConsumo"
-            text="Historial de consumo"
-            subItems={[
-              { direction: "/historialConsumo/diario", text: "Consumo Diario" },
-              {
-                direction: "/historialConsumo/mensual",
-                text: "Consumo Mensual",
-              },
-            ]}
-          />
-          <NavItem
-            direction="/seguridad/actualizar-contrasena"
-            text="Seguridad"
-          />
-          <NavItem direction="/permisos" text="Permisos" />
-        </ul>
+                <ul className="hidden lg:flex space-x-1 font-semibold">
+                    <NavItem direction="/perfil" text="Perfil" />
+                    <NavItem
+                        direction="/control-IoT"
+                        text="Control IoT"
+                        subItems={[
+                            { direction: "/control-IoT/sensores", text: "Sensores" },
+                        ]}
+                    />
+                    <NavItem
+                        direction="/gestionDatos"
+                        text="Gestión de datos"
+                        subItems={[
+                            { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
+                            { direction: "/gestionDatos/users", text: "Usuarios" },
+                            { direction: "/gestionDatos/predios", text: "Predios" },
+                            { direction: "/gestionDatos/lotes", text: "Lotes" },
+                            { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos" },
+                        ]}
+                    />
+                    <NavItem
+                        direction="/gestionRegistros"
+                        text="Gestión de registros"
+                        subItems={[
+                            { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                            { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                            { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
+                        ]}
+                    />
+                    <NavItem
+                        direction="/facturacion"
+                        text="Facturación"
+                        subItems={[
+                            { direction: "/facturacion/historial", text: "Historial" },
+                            { direction: "/facturacion/reportes", text: "Reportes" },
+                        ]}
+                    />
+                    <NavItem
+                        direction="/historialConsumo"
+                        text="Historial de consumo"
+                        subItems={[
+                            { direction: "/mispredios/historial-consumoList/:document", text: "Mis predios" },
+                            { direction: "/historial-consumo/distrito", text: "Historial del distrito" },
+                            { direction: "/historial-consumo/predio", text: "Historial del predio" },
+                            {
+                                direction: "/historialConsumo/mensual",
+                                text: "Consumo Mensual",
+                            },
+                        ]}
+                    />
+                    <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
+                    <NavItem direction="/permisos" text="Permisos" />
+                </ul>
 
         <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
           <Menu size={28} />
@@ -349,79 +333,55 @@ function NavBar() {
             <NavItem direction="/permisos" text="Permisos" />
           </div>
 
-          {/* Contenedor de enlaces, SOLO ESTE será desplazable */}
-          <div className="flex flex-col space-y-4 font-medium overflow-y-auto h-[calc(100vh-230px)]">
-            <NavItem direction="/perfil" text="Perfil" />
-            <NavItem
-              direction="/control-IoT"
-              text="Control IoT"
-              subItems={[
-                { direction: "/control-IoT/sensores", text: "Sensores" },
-              ]}
-            />
-            <NavItem
-              direction="/gestionDatos"
-              text="Gestión de datos"
-              subItems={[
-                {
-                  direction: "/gestionDatos/pre-registros",
-                  text: "Pre Registros",
-                },
-                { direction: "/gestionDatos/users", text: "Usuarios" },
-                { direction: "/gestionDatos/predios", text: "Predios" },
-                { direction: "/gestionDatos/lotes", text: "Lotes" },
-                {
-                  direction: "/gestionDatos/dispositivosIoT",
-                  text: "Dispositvos IoT",
-                },
-              ]}
-            />
-            <NavItem
-              direction="/gestionRegistros"
-              text="Gestión de registros"
-              subItems={[
-                {
-                  direction: "/gestionRegistros/predios",
-                  text: "Registro de Predios",
-                },
-                {
-                  direction: "/gestionRegistros/lotes",
-                  text: "Registro de Lotes",
-                },
-                {
-                  direction: "/gestionRegistros/dispositivosIoT",
-                  text: "Registro Dispositivos",
-                },
-              ]}
-            />
-            <NavItem
-              direction="/facturacion"
-              text="Facturación"
-              subItems={[
-                { direction: "/facturacion/historial", text: "Historial" },
-                { direction: "/facturacion/reportes", text: "Reportes" },
-              ]}
-            />
-            <NavItem
-              direction="/historialConsumo"
-              text="Historial de consumo"
-              subItems={[
-                {
-                  direction: "/historialConsumo/diario",
-                  text: "Consumo Diario",
-                },
-                {
-                  direction: "/historialConsumo/mensual",
-                  text: "Consumo Mensual",
-                },
-              ]}
-            />
-            <NavItem
-              direction="/seguridad/actualizar-contrasena"
-              text="Seguridad"
-            />
-            <NavItem direction="/permisos" text="Permisos" />
-          </div>
+                    {/* Contenedor de enlaces, SOLO ESTE será desplazable */}
+                    <div className="flex flex-col space-y-4 font-medium overflow-y-auto h-[calc(100vh-230px)]">
+                        <NavItem direction="/perfil" text="Perfil" />
+                        <NavItem
+                            direction="/control-IoT"
+                            text="Control IoT"
+                            subItems={[
+                                { direction: "/control-IoT/sensores", text: "Sensores" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/gestionDatos"
+                            text="Gestión de datos"
+                            subItems={[
+                                { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
+                                { direction: "/gestionDatos/users", text: "Usuarios" },
+                                { direction: "/gestionDatos/predios", text: "Predios" },
+                                { direction: "/gestionDatos/lotes", text: "Lotes" },
+                                { direction: "/gestionDatos/dispositivosIoT", text: "Dispositvos IoT" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/gestionRegistros"
+                            text="Gestión de registros"
+                            subItems={[
+                                { direction: "/gestionRegistros/predios", text: "Registro de Predios" },
+                                { direction: "/gestionRegistros/lotes", text: "Registro de Lotes" },
+                                { direction: "/gestionRegistros/dispositivosIoT", text: "Registro Dispositivos" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/facturacion"
+                            text="Facturación"
+                            subItems={[
+                                { direction: "/facturacion/historial", text: "Historial" },
+                                { direction: "/facturacion/reportes", text: "Reportes" },
+                            ]}
+                        />
+                        <NavItem
+                            direction="/historialConsumo"
+                            text="Historial de consumo"
+                            subItems={[
+                                { direction: "/historialConsumo/diario", text: "Consumo Diario" },
+                                { direction: "/historial-consumo/predio", text: "Historial del predio" },
+                            ]}
+                        />
+                        <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
+                        <NavItem direction="/permisos" text="Permisos" />
+                    </div>
 
           {/* Botones Fijos */}
           <div className="flex  flex-col  gap-3 absolute bottom-5 w-full px-5 pt-5 bg-[#DCF2F1]">

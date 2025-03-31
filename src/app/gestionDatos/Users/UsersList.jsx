@@ -1,4 +1,4 @@
-
+"use client"
 import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@ const UserList = () => {
   const [currentUserDocument, setCurrentUserDocument] = useState(null);
   const [showDeleteSelfModal, setShowDeleteSelfModal] = useState(false);
   const [filters, setFilters] = useState({
-  
+
     id: "",
     personType: "",
     startDate: "",
@@ -42,17 +42,17 @@ const UserList = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) return;
-        
+
         const response = await axios.get(`${API_URL}/users/profile`, {
           headers: { Authorization: `Token ${token}` },
         });
-        
+
         setCurrentUserDocument(response.data.document);
       } catch (error) {
         console.error("Error al obtener información del usuario actual:", error);
       }
     };
-  
+
     fetchCurrentUser();
   }, []);
 
@@ -117,45 +117,45 @@ const UserList = () => {
       }
 
 
-// Filtrado de usuarios
-const filtered = usuarios.filter((user) => {
-  const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
-  const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
+      // Filtrado de usuarios
+      const filtered = usuarios.filter((user) => {
+        const matchesId = filters.id.trim() === "" || user.document.includes(filters.id.trim());
+        const matchesPersonType = filters.personType === "" || user.person_type === Number(filters.personType);
 
-  const matchesStatus = 
-  filters.isActive === "" || 
-  user.is_active === (filters.isActive === "true");
+        const matchesStatus =
+          filters.isActive === "" ||
+          user.is_active === (filters.isActive === "true");
 
-  // Manejo de fechas - enfoque más explícito
-  let matchesDate = true; // Por defecto asumimos que coincide
-  
-  if (filters.startDate !== "" || filters.endDate !== "") {
-    // Solo verificamos fechas si hay algún filtro de fecha
-    
-    // Convertir fecha de usuario a formato YYYY-MM-DD
-    const userDate = new Date(user.date_joined);
-    const userDateStr = userDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
-    
-    // Verificar límite inferior
-    if (filters.startDate !== "") {
-      const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
-      if (userDateStr < startDateStr) {
-        matchesDate = false;
-      }
-    }
-    
-    // Verificar límite superior
-    if (matchesDate && filters.endDate !== "") {
-      const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
-      if (userDateStr > endDateStr) {
-        matchesDate = false;
-      }
-    }
-  }
+        // Manejo de fechas - enfoque más explícito
+        let matchesDate = true; // Por defecto asumimos que coincide
 
-  return matchesId && matchesPersonType && matchesStatus && matchesDate && user.is_registered;
-});
-      
+        if (filters.startDate !== "" || filters.endDate !== "") {
+          // Solo verificamos fechas si hay algún filtro de fecha
+
+          // Convertir fecha de usuario a formato YYYY-MM-DD
+          const userDate = new Date(user.date_joined);
+          const userDateStr = userDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
+
+          // Verificar límite inferior
+          if (filters.startDate !== "") {
+            const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
+            if (userDateStr < startDateStr) {
+              matchesDate = false;
+            }
+          }
+
+          // Verificar límite superior
+          if (matchesDate && filters.endDate !== "") {
+            const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
+            if (userDateStr > endDateStr) {
+              matchesDate = false;
+            }
+          }
+        }
+
+        return matchesId && matchesPersonType && matchesStatus && matchesDate && user.is_registered;
+      });
+
       if (filters.id.trim() !== "" && filtered.length === 0) {
         setModalMessage("El usuario filtrado no existe.");
         setShowModal(true);
@@ -191,7 +191,7 @@ const filtered = usuarios.filter((user) => {
   const handleDeleteSuccess = (documentId) => {
     // Actualizar la lista de usuarios
     setUsuarios(usuarios.filter(user => user.document !== documentId));
-    
+
     // Si hay usuarios filtrados, actualizar esa lista también
     if (filteredUsuarios.length > 0) {
       setFilteredUsuarios(filteredUsuarios.filter(user => user.document !== documentId));
@@ -203,24 +203,35 @@ const filtered = usuarios.filter((user) => {
     { key: "document", label: "Documento" },
     { key: "first_name", label: "Nombre" },
     { key: "last_name", label: "Apellidos", responsive: "hidden md:table-cell" },
-    { 
-      key: "is_active", 
-      label: "Estado", 
-      render: (user) => user.is_active ? "Activo" : "Inactivo" 
+    {
+      key: "is_active",
+      label: "Estado",
+      render: (user) => {
+        const statusText = user.is_active ? "Activo" : "Inactivo";
+        const statusClass = user.is_active
+          ? "bg-green-100 text-green-800 border border-green-200"
+          : "bg-red-100 text-red-800 border border-red-200";
+
+        return (
+          <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
+            {statusText}
+          </span>
+        );
+      }
     },
-    { 
-      key: "person_type", 
-      label: "Tipo", 
+    {
+      key: "person_type",
+      label: "Tipo",
       responsive: "hidden sm:table-cell",
       render: (user) => personTypeNames[user.person_type]?.substring(0, 3) || "Des"
     },
-    { 
-      key: "date_joined", 
-      label: "Registro", 
+    {
+      key: "date_joined",
+      label: "Registro",
       responsive: "hidden md:table-cell",
       render: (user) => new Date(user.date_joined).toLocaleDateString()
     },
-    
+
   ];
 
   // Manejadores de acciones para la tabla
@@ -240,7 +251,7 @@ const filtered = usuarios.filter((user) => {
           filters={filters}
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
-          usuarios={usuarios} 
+          usuarios={usuarios}
         />
 
         {/* Modal de error */}

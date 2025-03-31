@@ -32,56 +32,60 @@ const UserUpdateInformation = () => {
           setError("No hay sesión activa.");
           return;
         }
-
+  
         // Paso 1: Obtener perfil del usuario
-        const profileResponse = await axios
-          .get(`${API_URL}/users/profile`, {
-            headers: { Authorization: `Token ${token}` },
-          })
-          .catch((profileError) => {
-            console.error("Error al obtener perfil:", profileError);
-            throw profileError;
-          });
-
+        const profileResponse = await axios.get(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Token ${token}` },
+        }).catch(profileError => {
+          console.error("Error al obtener perfil:", profileError);
+          setError("Error al obtener perfil.");
+          throw profileError;
+        });
+  
         const userData = profileResponse.data;
-
+  
         // Paso 2: Obtener permisos del usuario
         let role = "Sin rol asignado";
         try {
-          const permissionsResponse = await axios.get(
-            `${API_URL}/users/${userData.id}/permissions`,
-            {
-              headers: { Authorization: `Token ${token}` },
+  
+          const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userData.document}/permissions`, {
+            headers: { Authorization: `Token ${token}` },
+          });
+  
+          if (permissionsResponse.data?.Permisos_Rol) {
+            const roles = Object.keys(permissionsResponse.data.Permisos_Rol);
+            if (roles.length > 0) {
+              role = roles.join(', ');
             }
-          );
-
-          role = permissionsResponse.data?.role || "Sin rol asignado";
+          } else {
+            console.warn("No se encontraron roles en la respuesta de permisos.");
+          }
         } catch (permissionsError) {
           console.warn(
             "No se pudieron obtener los permisos:",
             permissionsError
           );
         }
-
-        // Combinar datos de usuario con rol
+  
         const userWithRole = { ...userData, role };
         setUser(userWithRole);
-
-        // Establecer datos del formulario
+  
         setFormData({
           email: userData.email || "",
           phone: userData.phone || "",
         });
+  
       } catch (err) {
         console.error("Error al cargar datos:", err);
         setShowErrorModal2(true);
       }
     };
-
+  
     if (API_URL) {
       fetchProfile();
     }
   }, [API_URL]);
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -207,7 +211,7 @@ const UserUpdateInformation = () => {
                   onChange={handleChange}
                   error={errors.phone}
                   placeholder="Ej: 3201234567"
-                  maxLength={13}
+                  maxLength={10}
                   required
                 />
               </div>

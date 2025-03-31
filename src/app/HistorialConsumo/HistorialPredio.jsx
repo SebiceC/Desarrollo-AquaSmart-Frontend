@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import NavBar from "../../../components/NavBar";
+import NavBar from "../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InputFilter from "../../../components/InputFilterPredio";
-import Modal from "../../../components/Modal";
-import DataTable from "../../../components/DataTable";
+import InputFilter from "../../components/InputFilterPredio";
+import Modal from "../../components/Modal";
+import DataTable from "../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import DeletePlots from "./DeletePlots";
 
-const PrediosList = () => {
+const HistorialPredio = () => {
   const navigate = useNavigate();
   const [predios, setPredios] = useState([]);
   const [filteredPredios, setFilteredPredios] = useState(null); // Cambiado a null para controlar si se han aplicado filtros
@@ -195,22 +194,7 @@ const PrediosList = () => {
     { key: "id_plot", label: "ID Predio" },
     { key: "plot_name", label: "Nombre" },
     { key: "owner", label: "Propietario" },
-    {
-      key: "is_activate",
-      label: "Estado",
-      render: (predio) => {
-        const statusText = predio.is_activate ? "Activo" : "Inactivo";
-        const statusClass = predio.is_activate
-          ? "bg-green-100 text-green-800 border border-green-200"
-          : "bg-red-100 text-red-800 border border-red-200";
-
-        return (
-          <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
-            {statusText}
-          </span>
-        );
-      }
-    },
+    { key: "is_activate", label: "Estado", render: (predio) => predio.is_activate ? "Activo" : "Inactivo" },
     {
       key: "plot_extension",
       label: "Extensión M2",
@@ -226,12 +210,16 @@ const PrediosList = () => {
   ];
 
   // Manejadores para las acciones
-  const handleView = (predio) => {
-    navigate(`/gestionDatos/predios/${predio.id_plot}`);
-  };
+  // const handleView = (predio) => {
+  //   navigate(`/gestionDatos/predios/${predio.id_plot}`);
+  // };
 
-  const handleEdit = (predio) => {
-    navigate(`/gestionDatos/predios/update/${predio.id_plot}`);
+  // const handleEdit = (predio) => {
+  //   navigate(`/gestionDatos/predios/update/${predio.id_plot}`);
+  // };
+
+  const handleConsult = (predio) => {
+    navigate(`/historial-consumo/predio/${predio.id_plot}`);
   };
 
   return (
@@ -239,8 +227,12 @@ const PrediosList = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Lista de Predios del distrito
+          Historial de consumo de predios
         </h1>
+
+        <div className="container text-gray-600">
+          Complete al menos 1 de las opciones del filtro
+        </div>
 
         <InputFilter
           filters={filters}
@@ -266,26 +258,16 @@ const PrediosList = () => {
           </Modal>
         )}
 
-        {showDeleteModal && plotToDelete && (
-          <DeletePlots
-            plot={plotToDelete}
-            showModal={showDeleteModal}
-            setShowModal={setShowDeleteModal}
-            onDeleteSuccess={handleDeleteSuccess}
-            setModalMessage={setModalMessage}
-            setShowErrorModal={setShowModal}
-          />
-        )}
-
         {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
         {filteredPredios !== null && (
           <DataTable
             columns={columns}
             data={filteredPredios}
             emptyMessage="No se encontraron predios con los filtros aplicados."
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+            // onView={handleView}
+            // onEdit={handleEdit}
+            // onDelete={handleDelete}
+            onConsult={handleConsult}
           />
         )}
         
@@ -299,4 +281,4 @@ const PrediosList = () => {
   );
 };
 
-export default PrediosList;
+export default HistorialPredio;
