@@ -32,6 +32,7 @@ const PreRegister = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
   const [showEmailErrorModal, setShowEmailErrorModal] = useState(false);
+  const [showPreRegistroActivoModal, setShowPreRegistroActivoModal] = useState(false);
   const [showPreRegistroCompletadoModal, setShowPreRegistroCompletadoModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -226,6 +227,9 @@ const handleSubmit = async (e) => {
         } else if (parsedError.document && parsedError.document.includes("El usuario ya pasó el pre-registro.")) {
           // Caso específico: Usuario ya pasó el pre-registro
           setShowPreRegistroCompletadoModal(true);
+        } else if (parsedError.document && parsedError.document.includes("Ya tienes un pre-registro activo.")) {
+          // Caso específico: Usuario ya pasó el pre-registro
+          setShowPreRegistroActivoModal(true);
         } 
       } else {
         // Otros errores (no 400)
@@ -558,6 +562,14 @@ const handleSubmit = async (e) => {
         btnMessage="Aceptar"
       >
         <p>EL usuario ya completó el proceso de pre-registro. Por favor inicie sesión.</p>
+      </Modal>
+      <Modal
+        showModal={showPreRegistroActivoModal}
+        onClose={() => setShowPreRegistroActivoModal(false)}
+        title="Error de Pre Registro"
+        btnMessage="Aceptar"
+      >
+        <p>Ya tienes un pre-registro activo.Espera ser validado por el administrador.</p>
       </Modal>
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs">

@@ -96,8 +96,19 @@ const UserUpdateInformation = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Crear un objeto con solo los campos modificados
+    const changedFields = {};
+    
+    if (formData.email !== user.email) {
+      changedFields.email = formData.email;
+    }
+    
+    if (formData.phone !== user.phone) {
+      changedFields.phone = formData.phone;
+    }
+
     // Validar si no hay cambios
-    if (formData.email === user.email && formData.phone === user.phone) {
+    if (Object.keys(changedFields).length === 0) {
       setShowNoChangesModal(true);
       return;
     }
@@ -109,11 +120,18 @@ const UserUpdateInformation = () => {
         return;
       }
 
-      await axios.patch(
+      // Enviar solo los campos que cambiaron
+      const response = await axios.patch(
         `${API_URL}/users/profile/update`,
-        { email: formData.email, phone: formData.phone },
+        changedFields,
         { headers: { Authorization: `Token ${token}` } }
       );
+
+      // Actualizar el objeto de usuario con los nuevos valores
+      setUser(prev => ({
+        ...prev,
+        ...changedFields
+      }));
 
       setShowSuccessModal(true);
     } catch (error) {
