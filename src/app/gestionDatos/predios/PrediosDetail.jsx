@@ -177,57 +177,54 @@ const PrediosDetail = () => {
   return (
     <div>
       <NavBar />
-      <div className="flex-1 container mx-auto px-6 pb-6 max-w-7xl shadow-xl rounded-lg bg-white mt-30">
+      <div className="flex-1 container mx-auto px-6 pb-6 max-w-7xl bg-white mt-30">
         <div className="pt-4">
           <div className="mb-5 text-center">
             <h1 className="text-2xl font-semibold text-[#365486] mb-1">Información del Predio</h1>
-            <p className="text-sm text-gray-600">Detalles del predio y sus lotes asociados</p>
-            <div className="w-16 h-1 bg-[#365486] mx-auto mt-2 rounded-full"></div>
           </div>
 
           <div className="flex flex-col md:flex-row gap-5">
             {/* Tarjeta de información del predio */}
-            <div className="bg-gray-50 rounded-lg p-5 md:w-1/3 shadow-md border border-gray-100">
-              <h3 className="text-md font-medium text-[#365486] mb-3">Datos del predio</h3>
+            <div className="bg-gray-100 rounded-4xl p-10 md:w-1/3">
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">ID: </span>
                     <span className="text-gray-600 font-medium">{predio.id_plot}</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">Nombre: </span>
                     <span className="text-gray-600 font-medium">{predio.plot_name || "No disponible"}</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">Dueño del predio: </span>
                     <span className="text-gray-600 font-medium">{predio.owner || "No disponible"}</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">Extensión de tierra (m²): </span>
                     <span className="text-gray-600 font-medium">{predio.plot_extension || "No disponible"}</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">Latitud: </span>
                     <span className="text-gray-600 font-medium">{predio.latitud || "No disponible"}</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">Longitud: </span>
                     <span className="text-gray-600 font-medium">{predio.longitud || "No disponible"}</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm">
+                  <p className="text-md">
                     <span className="font-medium text-black">Fecha de creación: </span>
                     <span className="text-gray-600 font-medium">{formatDate(predio.registration_date)}</span>
                   </p>
@@ -237,7 +234,6 @@ const PrediosDetail = () => {
 
             {/* Tabla de lotes (cultivos) usando el componente DataTable */}
             <div className="md:w-2/3">
-              <h3 className="text-md font-medium text-[#365486] mb-3">Lotes asociados</h3>
               <div className="mt-0">
                 <DataTable
                   columns={lotesColumns}
