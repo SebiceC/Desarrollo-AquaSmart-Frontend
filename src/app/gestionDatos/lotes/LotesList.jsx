@@ -101,7 +101,7 @@ const LotesList = () => {
       // Validación de ID
       if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
         !/^\d+$/.test(filters.id.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
+        setModalMessage("El campo ID del predio contiene caracteres no válidos");
         setShowModal(true);
         setFilteredLotes([]);
         return;
@@ -110,7 +110,7 @@ const LotesList = () => {
       // Validación de formato del ID del lote
       if (filters.lotId.trim() !== "" && !/^LOTE-\d{7}$/.test(filters.lotId.trim()) &&
         !/^\d+$/.test(filters.lotId.trim())) {
-        setModalMessage("El campo ID del lote contiene caracteres no válidos o el lote no existe");
+        setModalMessage("El campo ID del lote contiene caracteres no válidos");
         setShowModal(true);
         setFilteredLotes([]);
         return;
@@ -118,7 +118,7 @@ const LotesList = () => {
 
       // Validación de formato del documento del propietario
       if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo ID del propietario contiene caracteres no válidos o el propietario no existe");
+        setModalMessage("El campo ID del propietario contiene caracteres no válidos");
         setShowModal(true);
         setFilteredLotes([]);
         return;

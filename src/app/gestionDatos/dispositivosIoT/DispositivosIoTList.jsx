@@ -112,7 +112,7 @@ const DispositivosIoTList = () => {
       // Validación de ID del dispositivo
       if (filters.iot_id.trim() !== "" && !/^\d{5}$/.test(filters.iot_id.trim()) &&
         !/^\d+$/.test(filters.iot_id.trim())) {
-        setModalMessage("El campo ID del dispositivo contiene caracteres no válidos o el dispositivo no existe");
+        setModalMessage("El campo ID del dispositivo contiene caracteres no válidos");
         setShowModal(true);
         setFilteredDispositivos([]);
         return;
@@ -133,7 +133,7 @@ const DispositivosIoTList = () => {
       // Validación de ID del predio
       if (filters.plotId.trim() !== "" && !/^PR-\d{7}$/.test(filters.plotId.trim()) &&
         !/^\d+$/.test(filters.plotId.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
+        setModalMessage("El campo ID del predio contiene caracteres no válidos");
         setShowModal(true);
         setFilteredDispositivos([]);
         return;

@@ -80,7 +80,7 @@ const PlotLotUsersList = () => {
       // Validación de ID
       if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
         !/^\d+$/.test(filters.id.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
+        setModalMessage("El campo ID del predio contiene caracteres no válidos");
         setShowModal(true);
         setFilteredPredios([]);
         return;
