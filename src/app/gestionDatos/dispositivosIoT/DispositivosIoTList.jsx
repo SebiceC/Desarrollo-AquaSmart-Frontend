@@ -109,14 +109,18 @@ const DispositivosIoTList = () => {
         filters.startDate !== "" ||
         filters.endDate !== "";
   
-      // Validación de ID del dispositivo
-      if (filters.iot_id.trim() !== "" && !/^\d{5}$/.test(filters.iot_id.trim()) &&
-        !/^\d+$/.test(filters.iot_id.trim())) {
-        setModalMessage("El campo ID del dispositivo contiene caracteres no válidos");
-        setShowModal(true);
-        setFilteredDispositivos([]);
-        return;
-      }
+// Validación de ID del dispositivo
+if (filters.iot_id.trim() !== "") {
+
+  const isValidDeviceFormat = /^(\d{1,3}|\d{1,3}-\d{0,4})$/.test(filters.iot_id.trim());
+  
+  if (!isValidDeviceFormat) {
+    setModalMessage("El campo ID del dispositivo contiene caracteres no válidos");
+    setShowModal(true);
+    setFilteredDispositivos([]);
+    return;
+  }
+}
   
       // Validación de nombre del dispositivo - Mejorada
       if (filters.name.trim() !== "") {
@@ -131,12 +135,20 @@ const DispositivosIoTList = () => {
       }
   
       // Validación de ID del predio
-      if (filters.plotId.trim() !== "" && !/^PR-\d{7}$/.test(filters.plotId.trim()) &&
-        !/^\d+$/.test(filters.plotId.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos");
-        setShowModal(true);
-        setFilteredDispositivos([]);
-        return;
+      if (filters.plotId.trim() !== "") {
+        // Verifica si es un prefijo válido del formato PR-NNNNNNN
+        const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.plotId.trim());
+        
+        // Verifica si son solo dígitos (cualquier cantidad)
+        const isOnlyDigits = /^\d+$/.test(filters.plotId.trim());
+  
+         // Si no cumple ninguna de las condiciones permitidas
+        if (!isPrefixValid && !isOnlyDigits) {
+          setModalMessage("El campo ID del predio contiene caracteres no válidos");
+          setShowModal(true);
+          setFilteredDispositivos([]);
+          return;
+        }
       }
   
       // Validación de fechas

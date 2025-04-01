@@ -98,22 +98,35 @@ const LotesList = () => {
         filters.isActive !== "";
       
 
+
       // Validación de ID
-      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
-        !/^\d+$/.test(filters.id.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
+      if (filters.id.trim() !== "") {
+        // Verifica si es un prefijo válido del formato PR-NNNNNNN
+        const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim());
+        
+        // Verifica si son solo dígitos (cualquier cantidad)
+        const isOnlyDigits = /^\d+$/.test(filters.id.trim());
+  
+         // Si no cumple ninguna de las condiciones permitidas
+        if (!isPrefixValid && !isOnlyDigits) {
+          setModalMessage("El campo ID del predio contiene caracteres no válidos");
+          setShowModal(true);
+          setFilteredPredios([]);
+          return;
+        }
       }
 
-      // Validación de formato del ID del lote
-      if (filters.lotId.trim() !== "" && !/^LOTE-\d{7}$/.test(filters.lotId.trim()) &&
-        !/^\d+$/.test(filters.lotId.trim())) {
-        setModalMessage("El campo ID del lote contiene caracteres no válidos");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
+      // Validación de formato del ID del  lote
+      if (filters.lotId.trim() !== "") {
+        // Validación de formato del ID del lote
+        const isValidLoteFormat = /^(\d{1,7}|\d{1,7}-\d{0,3})$/.test(filters.lotId.trim());
+        
+        if (!isValidLoteFormat) {
+          setModalMessage("El campo ID del lote contiene caracteres no válidos");
+          setShowModal(true);
+          setFilteredLotes([]);
+          return;
+        }
       }
 
       // Validación de formato del documento del propietario
