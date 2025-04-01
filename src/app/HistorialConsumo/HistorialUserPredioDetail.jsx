@@ -43,7 +43,7 @@ const HistorialUserPredioDetail = () => {
   const [showGraphErrorModal, setShowGraphErrorModal] = useState(false);
 
   // Use a fallback if import.meta is not available
-  const API_URL = typeof import.meta !== 'undefined' ? import.meta.env.VITE_APP_API_URL : 'https://api.example.com';
+  const API_URL = import.meta.env.VITE_APP_API_URL;
 
   // Calcular la diferencia en días entre las fechas seleccionadas
   const daysDifference = useMemo(() => {
@@ -635,31 +635,21 @@ const HistorialUserPredioDetail = () => {
           </div>
 
           <div className="mt-6 flex justify-center gap-4">
-            {!dateValidationError && data.length > 0 ? (
+            {chartRef && (
               <PDFDownloadButton 
                 data={data} 
                 startDate={startDate} 
                 endDate={endDate} 
                 chartRef={chartRef}
+                disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
               />
-            ) : (
-              <button className="flex items-center gap-2 bg-pink-200 text-red-700 px-4 py-2 rounded-full text-sm hover:bg-red-300 opacity-50 cursor-not-allowed">
-                <img src="/img/pdf.png" alt="PDF Icon" width="20" height="20" />
-                <span>Descargar historial</span>
-              </button>
             )}
-            {!dateValidationError && data.length > 0 ? (
-              <CSVDownloadButton 
-                data={data} 
-                startDate={startDate} 
-                endDate={endDate} 
-              />
-            ) : (
-              <button className="flex items-center gap-2 bg-green-200 text-green-700 px-4 py-2 rounded-full text-sm hover:bg-green-300 opacity-50 cursor-not-allowed">
-                <img src="/img/csv.png" alt="CSV Icon" width="20" height="20" />
-                <span>Descargar historial</span>
-              </button>
-            )}
+            <CSVDownloadButton 
+              data={data} 
+              startDate={startDate} 
+              endDate={endDate} 
+              disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
+            />
           </div>
 
           {/* Nuevo bloque para lotes asociados */}

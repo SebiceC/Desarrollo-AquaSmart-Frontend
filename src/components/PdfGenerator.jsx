@@ -1,10 +1,13 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Modal from '../components/Modal';
 
 // Componente para el botón de descarga con jsPDF
-const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
+const PDFDownloadButton = ({ data, startDate, endDate, chartRef, disabled }) => {
+  const [showModalErrorPDF, setShowModalErrorPDF] = useState(false);
+  const [modalMessage, setModalMessage] = useState("¡Error al descargar el historial! Intenta más tarde");
+
   // Formatear las fechas para mostrar
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -79,6 +82,8 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
     // Verificar si la referencia al gráfico existe
     if (!chartRef.current) {
       console.error('No se pudo encontrar la referencia al gráfico');
+      setModalMessage("No se pudo encontrar la referencia al gráfico");
+      setShowModalErrorPDF(true);
       return;
     }
 
@@ -262,7 +267,8 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
       document.body.removeChild(loadingIndicator);
     } catch (error) {
       console.error('Error al generar el PDF:', error);
-      alert('Hubo un error al generar el PDF. Por favor, intenta de nuevo.');
+      setModalMessage(`¡Error al descargar el historial! Intenta más tarde`);
+      setShowModalErrorPDF(true);
       
       // Asegurarse de que se elimine el indicador de carga en caso de error
       const loadingIndicator = document.querySelector('div[style*="position: fixed"]');
@@ -273,13 +279,29 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
   };
 
   return (
-    <button
-      onClick={generatePDF}
-      className="flex items-center gap-2 bg-[#4c84de] text-white px-4 py-2 rounded-full text-md font-semibold hover:bg-[#689ce6]"
-    >
-      <img src="/img/pdf.png" alt="PDF Icon" width="25" height="25" />
-      <span>Descargar PDF</span>
-    </button>
+    <>
+      <button
+        onClick={disabled ? null : generatePDF}
+        className={`flex items-center gap-2 ${
+          disabled 
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+            : "bg-[#4c84de] text-white hover:bg-[#689ce6]"
+        } px-4 py-2 rounded-full text-md font-semibold`}
+        disabled={disabled}
+      >
+        <img src="/img/pdf.png" alt="PDF Icon" width="25" height="25" />
+        <span>Descargar PDF</span>
+      </button>
+      
+      <Modal
+        showModal={showModalErrorPDF}
+        onClose={() => setShowModalErrorPDF(false)}
+        title="Error al generar el PDF"
+        btnMessage="Aceptar"
+      >
+        <p>{modalMessage}</p>
+      </Modal>
+    </>
   );
 };
 
