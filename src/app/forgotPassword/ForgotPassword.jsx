@@ -17,6 +17,7 @@ const ForgotPassword = () => {
     const [error, setError] = useState("");
     const [timeLeft, setTimeLeft] = useState(0);
     const [isDisabled, setIsDisabled] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -47,6 +48,7 @@ const ForgotPassword = () => {
             setError("El teléfono debe tener 10 caracteres.");
             return;
         }
+        setIsLoading(true);
 
         try {
             const response = await axios.post(`${API_URL}/users/generate-otp`, {
@@ -80,6 +82,8 @@ const ForgotPassword = () => {
             } else {
                 setError("Error desconocido. Intenta de nuevo.");
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -156,6 +160,8 @@ const ForgotPassword = () => {
             return;
         }
 
+        setIsLoading(true);
+
         try {
             const response = await axios.post(
                 `${API_URL}/users/validate-otp`,
@@ -175,6 +181,8 @@ const ForgotPassword = () => {
             } else {
                 setOtpError("Error de conexión con el servidor");
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -277,9 +285,9 @@ const ForgotPassword = () => {
                         />
                         <button
                             type="submit"
-                            className="w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out"
+                            className={`w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out ${isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#344663] hover:scale-105"}`}
                         >
-                            SOLICITAR TOKEN
+                            {isLoading ? "SOLICITANDO TOKEN..." : "SOLICITAR TOKEN" }
                         </button>
                     </form>
                 </div>
@@ -329,9 +337,9 @@ const ForgotPassword = () => {
                         </button>
                         <button
                             onClick={handleTokenSubmit}
-                            className="bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663]"
+                            className={`bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663] ${isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#344663]"}` }
                         >
-                            ENVIAR
+                            {isLoading ? "ENVIANDO TOKEN..." : "ENVIAR TOKEN"}
                         </button>
                     </div>
                 </div>
