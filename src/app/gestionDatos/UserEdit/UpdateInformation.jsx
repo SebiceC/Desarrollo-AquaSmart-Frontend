@@ -550,7 +550,7 @@ const UpdateInformation = () => {
                     }));
                     setErrors((prev) => ({ ...prev, is_active: "" }));
                   }}
-                  disabled={formData.is_active === true}
+                  disabled={originalData.is_active === true}  // Solo deshabilitado si originalmente venía activo
                 >
 
 

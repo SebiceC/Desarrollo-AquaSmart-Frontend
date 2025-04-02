@@ -9,6 +9,7 @@ import BackButton from "../../../components/BackButton"
 import ErrorDisplay from "../../../components/error-display"
 import { useNavigate, useParams } from "react-router-dom"
 import axios from "axios"
+import { ChevronDown } from "lucide-react"
 
 const ActualizacionPredios = () => {
   const { id_plot } = useParams()
@@ -23,6 +24,7 @@ const ActualizacionPredios = () => {
     latitud: "",
     longitud: "",
     plot_name: "",
+    is_activate: ""
   })
   const [originalData, setOriginalData] = useState({})
 
@@ -77,6 +79,7 @@ const ActualizacionPredios = () => {
           latitud: predioData.latitud,
           longitud: predioData.longitud,
           plot_name: predioData.plot_name || "",
+          is_activate: predioData.is_activate === true || predioData.is_activate === "true", // Asegurarse que is_activate es un booleano
         }
 
         setFormData(formattedData)
@@ -167,7 +170,8 @@ const ActualizacionPredios = () => {
       formData.extension === originalData.extension &&
       formData.latitud === originalData.latitud &&
       formData.longitud === originalData.longitud &&
-      formData.plot_name === originalData.plot_name
+      formData.plot_name === originalData.plot_name &&
+      formData.is_activate === originalData.is_activate  // Add this line
 
     if (isUnchanged) {
       setShowNoChangeErrorModal(true)
@@ -183,14 +187,23 @@ const ActualizacionPredios = () => {
 
     // Validar que todos los campos requeridos estén completos
     Object.entries(formData).forEach(([key, value]) => {
-      // Excluir campos de solo lectura
-      if (key !== "predio" && key !== "fechaRegistro") {
-        if (!value.trim()) {
+      // Excluir campos de solo lectura y el campo is_activate
+      if (key !== "predio" && key !== "fechaRegistro" && key !== "is_activate") {
+        if (typeof value === 'string' && !value.trim()) {
+          errors[key] = "Este campo es obligatorio"
+          isValid = false
+        } else if (value === undefined || value === null) {
           errors[key] = "Este campo es obligatorio"
           isValid = false
         }
       }
     })
+
+    // Validar is_activate por separado
+    if (formData.is_activate === undefined || formData.is_activate === "") {
+      errors.is_activate = "El estado del predio es obligatorio"
+      isValid = false
+    }
 
     // Validaciones específicas para cada campo
     if (formData.dueno && !/^\d+$/.test(formData.dueno)) {
@@ -392,6 +405,7 @@ const ActualizacionPredios = () => {
         latitud: formData.latitud ? Number.parseFloat(formData.latitud) : null,
         longitud: formData.longitud ? Number.parseFloat(formData.longitud) : null,
         plot_name: formData.plot_name,
+        is_activate: formData.is_activate,  // Incluir el estado en la solicitud
       }
 
       // Enviar solicitud
@@ -559,6 +573,33 @@ const ActualizacionPredios = () => {
                 error={validationErrors.longitud}
               />
             </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado del predio</label>
+              <div className="relative">
+                <select
+                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${validationErrors.is_activate ? "border-red-300" : ""} ${originalData.is_activate === true ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+                  name="is_activate"
+                  value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
+                  onChange={(e) => {
+                    const value = e.target.value === "true";
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_activate: value,
+                    }));
+                    setValidationErrors((prev) => ({ ...prev, is_activate: "" }));
+                  }}
+                  disabled={originalData.is_activate === true}  // Solo deshabilitado si originalmente venía activo
+                >
+                  <option value="">SELECCIÓN DE ESTADO</option>
+                  <option value="true">Activo</option>
+                  <option value="false">Inactivo</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+
+              </div>
+              {validationErrors.is_activate && <p className="text-red-500 text-sm mt-1">{validationErrors.is_activate}</p>}
+            </div>
+
 
             <div className="col-span-1 md:col-span-2 flex flex-col items-start">
               {/* Mensajes de error */}
