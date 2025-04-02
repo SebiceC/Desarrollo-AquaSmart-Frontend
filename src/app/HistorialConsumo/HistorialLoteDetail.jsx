@@ -29,6 +29,7 @@ const HistorialLoteDetail = () => {
     // Estado para los modales
     const [showDateErrorModal, setShowDateErrorModal] = useState(false);
     const [showGraphErrorModal, setShowGraphErrorModal] = useState(false);
+    const [showNoDataModal, setShowNoDataModal] = useState(false);
 
     const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -47,65 +48,72 @@ const HistorialLoteDetail = () => {
         return start > end;
     }, [startDate, endDate]);
 
-    // Determinar las opciones de agrupación disponibles según el rango de fechas
-    useEffect(() => {
-        if (dateValidationError) {
-            return; // No continuar si hay error de validación
-        }
-
-        let options = [];
-
-        if (daysDifference <= 1) {
-            // Si es un solo día, solo permitir ver por horas
-            options = ['hour'];
-            if (groupByOption !== 'hour') {
-                setGroupByOption('hour');
-            }
-        } else if (daysDifference <= 30) {
-            // Si es entre 1 día y 1 mes, permitir diario
-            options = ['day'];
-            if (groupByOption !== 'day') {
-                setGroupByOption('day');
-            }
-        } else if (daysDifference <= 60) {
-            // Si es entre 1 y 2 meses, permitir diario o semanal
-            options = ['day', 'week'];
-            if (!['day', 'week'].includes(groupByOption)) {
-                setGroupByOption('day');
-            }
-        } else {
-            // Si es más de 2 meses, permitir todas las opciones
-            options = ['day', 'week', 'month'];
-            if (!['day', 'week', 'month'].includes(groupByOption)) {
-                setGroupByOption('week');
-            }
-        }
-
-        setAvailableGroupOptions(options);
-    }, [daysDifference, groupByOption]);
-
-    // Texto descriptivo para opciones de agrupación
-    const groupByOptions = {
-        hour: 'Horas',
-        day: 'Días',
-        week: 'Semanas',
-        month: 'Meses'
-    };
-
-    // Formatear la descripción del rango de tiempo seleccionado
-    const getTimeRangeDescription = () => {
-        if (daysDifference === 0) {
-            return "Hoy";
-        } else if (daysDifference === 1) {
-            return "1 día";
-        } else if (daysDifference <= 30) {
-            return `${daysDifference} días`;
-        } else if (daysDifference <= 60) {
-            return `${Math.floor(daysDifference / 30)} mes y ${daysDifference % 30} días`;
-        } else {
-            return `${Math.floor(daysDifference / 30)} meses`;
-        }
-    };
+// Determinar las opciones de agrupación disponibles según el rango de fechas
+useEffect(() => {
+    if (dateValidationError) {
+      return; // No continuar si hay error de validación
+    }
+    
+    let options = [];
+    
+    if (daysDifference <= 1) {
+      // Si es un solo día, solo permitir ver por horas
+      options = ['hour'];
+      if (groupByOption !== 'hour') {
+        setGroupByOption('hour');
+      }
+    } else if (daysDifference <= 30) {
+      // Si es menos de un mes, permitir diario
+      options = ['day'];
+      if (groupByOption !== 'day') {
+        setGroupByOption('day');
+      }
+    } else if (daysDifference <= 90) {
+      // Si es entre 1 y 3 meses, permitir semanal o mensual
+      options = ['week', 'month'];
+      if (!['week', 'month'].includes(groupByOption)) {
+        setGroupByOption('week');
+      }
+    } else {
+      // Si es más de 3 meses, solo permitir mensual
+      options = ['month'];
+      if (groupByOption !== 'month') {
+        setGroupByOption('month');
+      }
+    }
+    
+    setAvailableGroupOptions(options);
+  }, [daysDifference, groupByOption, dateValidationError]);
+  
+  // Texto descriptivo para opciones de agrupación
+  const groupByOptions = {
+    hour: 'Horas',
+    day: 'Días',
+    week: 'Semanas',
+    month: 'Meses'
+  };
+  
+  // Formatear la descripción del rango de tiempo seleccionado
+  const getTimeRangeDescription = () => {
+    if (daysDifference === 0) {
+      return "Hoy";
+    } else if (daysDifference === 1) {
+      return "1 día";
+    } else if (daysDifference < 30) {
+      return `${daysDifference} días`;
+    } else if (daysDifference < 60) {
+      return `${Math.floor(daysDifference / 30)} mes y ${daysDifference % 30} días`;
+    } else {
+      const meses = Math.floor(daysDifference / 30);
+      const dias = daysDifference % 30;
+      
+      if (dias === 0) {
+        return `${meses} meses`;
+      } else {
+        return `${meses} meses y ${dias} días`;
+      }
+    }
+  };
 
     console.log(id_lot)
     useEffect(() => {
@@ -129,15 +137,17 @@ const HistorialLoteDetail = () => {
                 console.log('Datos recibidos de la API:', rawData);
                 // ... continúa con el procesamiento
 
-
                 if (!Array.isArray(rawData) || rawData.length === 0) {
-                    throw new Error('No se recibieron datos válidos');
-                }
+                    setShowNoDataModal(true);
+                    throw new Error('No existe consumo del lote');
+                  }
+
 
                 const filteredData = processDataByTimeRange(rawData, groupByOption);
                 console.log('Datos procesados para la gráfica:', filteredData);
 
                 if (filteredData.length === 0) {
+                    setShowNoDataModal(true);
                     setError('No hay datos disponibles para el rango seleccionado');
                 } else {
                     setData(filteredData);
@@ -350,6 +360,17 @@ const HistorialLoteDetail = () => {
                     ¡Ocurrió un error al momento de generar la gráfica! Vuelve a intentarlo más tarde o ponte en contacto con soporte.
                 </p>
             </Modal>
+            {/* Modal de ausencia de datos */}
+            <Modal
+        showModal={showNoDataModal}
+        onClose={() => setShowNoDataModal(false)}
+        title="Sin datos de consumo"
+        btnMessage="Entendido"
+      >
+        <p>
+          Error al cargar los datos, no existe consumo del lote.
+        </p>
+      </Modal>
 
             <div className="flex-1 py-20">
                 <div className="flex flex-col bg-white rounded-lg shadow-md p-6 md:p-10 w-full max-w-4xl mx-auto">
@@ -482,31 +503,21 @@ const HistorialLoteDetail = () => {
                     </div>
 
                     <div className="mt-6 flex justify-center gap-4">
-                        {!dateValidationError && data.length > 0 ? (
-                            <PDFDownloadButton
-                                data={data}
-                                startDate={startDate}
-                                endDate={endDate}
-                                chartRef={chartRef}  // Pasar la referencia
+                        {chartRef && (
+                            <PDFDownloadButton 
+                                data={data} 
+                                startDate={startDate} 
+                                endDate={endDate} 
+                                chartRef={chartRef}
+                                disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
                             />
-                        ) : (
-                            <button className="flex items-center gap-2 bg-pink-200 text-red-700 px-4 py-2 rounded-full text-sm hover:bg-red-300 opacity-50 cursor-not-allowed">
-                                <img src="/img/pdf.png" alt="PDF Icon" width="20" height="20" />
-                                <span>Descargar historial</span>
-                            </button>
                         )}
-                        {!dateValidationError && data.length > 0 ? (
-                            <CSVDownloadButton
-                                data={data}
-                                startDate={startDate}
-                                endDate={endDate}
-                            />
-                        ) : (
-                            <button className="flex items-center gap-2 bg-green-200 text-green-700 px-4 py-2 rounded-full text-sm hover:bg-green-300 opacity-50 cursor-not-allowed">
-                                <img src="/img/csv.png" alt="CSV Icon" width="20" height="20" />
-                                <span>Descargar historial</span>
-                            </button>
-                        )}
+                        <CSVDownloadButton 
+                            data={data} 
+                            startDate={startDate} 
+                            endDate={endDate} 
+                            disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
+                        />
                     </div>
                 </div>
             </div>

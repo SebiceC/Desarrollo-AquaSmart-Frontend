@@ -43,66 +43,71 @@ const HistorialDistrito = () => {
   }, [startDate, endDate]);
   
   // Determinar las opciones de agrupación disponibles según el rango de fechas
-  useEffect(() => {
-    if (dateValidationError) {
-      return; // No continuar si hay error de validación
-    }
-    
-    let options = [];
-    
-    if (daysDifference <= 1) {
-      // Si es un solo día, solo permitir ver por horas
-      options = ['hour'];
-      if (groupByOption !== 'hour') {
-        setGroupByOption('hour');
-      }
-    } else if (daysDifference <= 30) {
-      // Si es entre 1 día y 1 mes, permitir diario
-      options = ['day'];
-      if (groupByOption !== 'day') {
-        setGroupByOption('day');
-      }
-    } else if (daysDifference <= 60) {
-      // Si es entre 1 y 2 meses, permitir diario o semanal
-      options = ['day', 'week'];
-      if (!['day', 'week'].includes(groupByOption)) {
-        setGroupByOption('day');
-      }
-    } else {
-      // Si es más de 2 meses, permitir todas las opciones
-      options = ['day', 'week', 'month'];
-      if (!['day', 'week', 'month'].includes(groupByOption)) {
-        setGroupByOption('week');
-      }
-    }
-    
-    setAvailableGroupOptions(options);
-  }, [daysDifference, groupByOption]);
+useEffect(() => {
+  if (dateValidationError) {
+    return; // No continuar si hay error de validación
+  }
   
-  // Texto descriptivo para opciones de agrupación
-  const groupByOptions = {
-    hour: 'Horas',
-    day: 'Días',
-    week: 'Semanas',
-    month: 'Meses'
-  };
+  let options = [];
   
-  // Formatear la descripción del rango de tiempo seleccionado
-  const getTimeRangeDescription = () => {
+  if (daysDifference <= 1) {
+    // Si es un solo día, solo permitir ver por horas
+    options = ['hour'];
+    if (groupByOption !== 'hour') {
+      setGroupByOption('hour');
+    }
+  } else if (daysDifference <= 30) {
+    // Si es menos de un mes, permitir diario
+    options = ['day'];
+    if (groupByOption !== 'day') {
+      setGroupByOption('day');
+    }
+  } else if (daysDifference <= 90) {
+    // Si es entre 1 y 3 meses, permitir semanal o mensual
+    options = ['week', 'month'];
+    if (!['week', 'month'].includes(groupByOption)) {
+      setGroupByOption('week');
+    }
+  } else {
+    // Si es más de 3 meses, solo permitir mensual
+    options = ['month'];
+    if (groupByOption !== 'month') {
+      setGroupByOption('month');
+    }
+  }
+  
+  setAvailableGroupOptions(options);
+}, [daysDifference, groupByOption, dateValidationError]);
 
+// Texto descriptivo para opciones de agrupación
+const groupByOptions = {
+  hour: 'Horas',
+  day: 'Días',
+  week: 'Semanas',
+  month: 'Meses'
+};
+
+// Formatear la descripción del rango de tiempo seleccionado
+const getTimeRangeDescription = () => {
+  if (daysDifference === 0) {
+    return "Hoy";
+  } else if (daysDifference === 1) {
+    return "1 día";
+  } else if (daysDifference < 30) {
+    return `${daysDifference} días`;
+  } else if (daysDifference < 60) {
+    return `${Math.floor(daysDifference / 30)} mes y ${daysDifference % 30} días`;
+  } else {
+    const meses = Math.floor(daysDifference / 30);
+    const dias = daysDifference % 30;
     
-    if (daysDifference === 0) {
-      return "Hoy";
-    } else if (daysDifference === 1) {
-      return "1 día";
-    } else if (daysDifference <= 30) {
-      return `${daysDifference} días`;
-    } else if (daysDifference <= 60) {
-      return `${Math.floor(daysDifference / 30)} mes y ${daysDifference % 30} días`;
+    if (dias === 0) {
+      return `${meses} meses`;
     } else {
-      return `${Math.floor(daysDifference / 30)} meses`;
+      return `${meses} meses y ${dias} días`;
     }
-  };
+  }
+};
   
   useEffect(() => {
     // No realizar la petición si hay error de validación en las fechas
