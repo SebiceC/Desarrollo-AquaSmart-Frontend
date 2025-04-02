@@ -472,30 +472,24 @@ const HistorialDistrito = () => {
           </div>
           
           <div className="mt-6 flex justify-center gap-4">
-            {!dateValidationError && data.length > 0 ? (
-              <PDFDownloadButton 
-                data={data} 
-                startDate={startDate} 
-                endDate={endDate} 
-                chartRef={chartRef}  // Pasar la referencia
-              />
-            ) : (
-              <button className="flex items-center gap-2 bg-pink-200 text-red-700 px-4 py-2 rounded-full text-sm hover:bg-red-300 opacity-50 cursor-not-allowed">
-                <img src="/img/pdf.png" alt="PDF Icon" width="20" height="20" />
-                <span>Descargar historial</span>
-              </button>
-            )}
-            {!dateValidationError && data.length > 0 ? (
-              <CSVDownloadButton 
-                data={data} 
-                startDate={startDate} 
-                endDate={endDate} 
-              />
-            ) : (
-              <button className="flex items-center gap-2 bg-green-200 text-green-700 px-4 py-2 rounded-full text-sm hover:bg-green-300 opacity-50 cursor-not-allowed">
-                <img src="/img/csv.png" alt="CSV Icon" width="20" height="20" />
-                <span>Descargar historial</span>
-              </button>
+            {data && data.length > 0 && startDate && endDate && !dateValidationError && (
+              <>
+                {chartRef && (
+                  <PDFDownloadButton 
+                    data={data} 
+                    startDate={startDate} 
+                    endDate={endDate} 
+                    chartRef={chartRef}
+                    disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showGraphErrorModal}
+                  />
+                )}
+                <CSVDownloadButton 
+                  data={data} 
+                  startDate={startDate} 
+                  endDate={endDate} 
+                  disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showGraphErrorModal}
+                />
+             </>
             )}
           </div>
         </div>
