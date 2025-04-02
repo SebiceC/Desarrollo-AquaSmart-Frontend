@@ -16,3 +16,4 @@
 // Import commands.js using ES2015 syntax:
 import "./commands.js";
 import "cypress-mochawesome-reporter/register";
+import "cypress-downloadfile/lib/downloadFileCommand";
