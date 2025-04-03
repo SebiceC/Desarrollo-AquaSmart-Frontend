@@ -147,51 +147,18 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef, disabled }) => 
       
       // Agregar subtítulo
       doc.setFontSize(16);
-      doc.text('Historial de consumo del distrito', pageWidth / 2, 50, { align: 'center' });
+      doc.text(document.querySelector('h1').textContent, pageWidth / 2, 50, { align: 'center' });
       
       // Agregar rango de fechas
       doc.setFontSize(12);
       doc.text(`${formatDate(startDate)} - ${formatDate(endDate)}`, pageWidth / 2, 60, { align: 'center' });
       
-      // Agregar los botones de período (visuales)
-      const periodY = 70;
-      const periodOptions = ['1D', '3D', '1M', '3M', '6M'];
-      const buttonWidth = 10;
-      const spacing = 5;
-      const totalWidth = (buttonWidth + spacing) * periodOptions.length - spacing;
-      let startX = (pageWidth - totalWidth) / 2;
-      
-      doc.setFillColor(240, 240, 240);
-      doc.setDrawColor(200, 200, 200);
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(8);
-      
-      periodOptions.forEach((option, index) => {
-        const isActive = option === '1M'; // Asumimos que 1M está activo como en la imagen
-        
-        if (isActive) {
-          doc.setFillColor(37, 99, 235); // Color azul
-          doc.setTextColor(255, 255, 255);
-        } else {
-          doc.setFillColor(240, 240, 240);
-          doc.setTextColor(100, 100, 100);
-        }
-        
-        doc.roundedRect(startX, periodY, buttonWidth, 5, 1, 1, 'F');
-        doc.text(option, startX + buttonWidth/2, periodY + 3.5, { align: 'center' });
-        
-        // Resetear colores para el siguiente botón
-        doc.setFillColor(240, 240, 240);
-        doc.setTextColor(100, 100, 100);
-        
-        startX += buttonWidth + spacing;
-      });
       
       // Agregar la imagen del gráfico
       const chartWidth = 170;
       const chartHeight = (canvas.height * chartWidth) / canvas.width;
       const chartX = (pageWidth - chartWidth) / 2;
-      const chartY = periodY + 10;
+      const chartY = 70 + 10;
       
       doc.addImage(chartImgData, 'PNG', chartX, chartY, chartWidth, chartHeight);
       
