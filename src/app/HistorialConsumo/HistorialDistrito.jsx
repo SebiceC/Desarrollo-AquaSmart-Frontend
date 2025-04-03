@@ -5,6 +5,7 @@ import NavBar from "../../components/NavBar";
 import Modal from "../../components/Modal";
 import { PDFDownloadButton } from "../../components/PdfGenerator"; 
 import { CSVDownloadButton } from "../../components/CsvGenerator";
+import axios from "axios";
 
 const HistorialDistrito = () => {
   const [data, setData] = useState([]);
@@ -24,6 +25,7 @@ const HistorialDistrito = () => {
   // Estado para los modales
   const [showDateErrorModal, setShowDateErrorModal] = useState(false);
   const [showGraphErrorModal, setShowGraphErrorModal] = useState(false);
+  const [showNoDataModal, setShowNoDataModal] = useState(false);
   
   const API_URL = import.meta.env.VITE_APP_API_URL;
   
@@ -109,49 +111,59 @@ const getTimeRangeDescription = () => {
   }
 };
   
-  useEffect(() => {
-    // No realizar la petición si hay error de validación en las fechas
-    if (dateValidationError) {
-      return;
-    }
-    
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_URL}/caudal/flow-measurements/bocatoma`);
-        
-        if (!response.ok) {
-          throw new Error('Error al cargar los datos');
+useEffect(() => {
+  // No realizar la petición si hay error de validación en las fechas
+  if (dateValidationError) {
+    return;
+  }
+  
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      
+      // Use Fetch API or Axios consistently
+      const response = await fetch(`${API_URL}/caudal/flow-measurements/bocatoma`, {
+        method: 'GET',
+        headers: { 
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json'
         }
-        
-        const rawData = await response.json();
-        console.log('Datos recibidos de la API:', rawData);
-        
-        if (!Array.isArray(rawData) || rawData.length === 0) {
-          throw new Error('No se recibieron datos válidos');
-        }
-        
-        const filteredData = processDataByTimeRange(rawData, groupByOption);
-        console.log('Datos procesados para la gráfica:', filteredData);
-        
-        if (filteredData.length === 0) {
-          setError('No hay datos disponibles para el rango seleccionado');
-        } else {
-          setData(filteredData);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('Error en la carga de datos:', err);
-        setError('Error al cargar los datos: ' + err.message);
-        setData(generateMockData(groupByOption));
-        setShowGraphErrorModal(true);
-      } finally {
-        setLoading(false);
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al cargar los datos');
       }
-    };
-    
-    fetchData();
-  }, [groupByOption, startDate, endDate, dateValidationError]);
+      
+      const rawData = await response.json();
+      console.log('Datos recibidos de la API:', rawData);
+      
+      if (!Array.isArray(rawData) || rawData.length === 0) {
+        setShowNoDataModal(true);
+        throw new Error('No se recibieron datos válidos');
+      }
+      
+      const filteredData = processDataByTimeRange(rawData, groupByOption);
+      console.log('Datos procesados para la gráfica:', filteredData);
+      
+      if (filteredData.length === 0) {
+        setError('No hay datos disponibles para el rango seleccionado');
+      } else {
+        setData(filteredData);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error en la carga de datos:', err);
+      setError('Error al cargar los datos: ' + err.message);
+      setData(generateMockData(groupByOption));
+      setShowGraphErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchData();
+}, [groupByOption, startDate, endDate, dateValidationError]);
   
   // Process data based on selected time range
   const processDataByTimeRange = (rawData, groupOption) => {
@@ -343,6 +355,17 @@ const getTimeRangeDescription = () => {
           ¡Ocurrió un error al momento de generar la gráfica! Vuelve a intentarlo más tarde o ponte en contacto con soporte.
         </p>
       </Modal>
+            {/* Modal de ausencia de datos */}
+            <Modal
+        showModal={showNoDataModal}
+        onClose={() => setShowNoDataModal(false)}
+        title="Sin datos de consumo"
+        btnMessage="Entendido"
+      >
+        <p>
+          Error al cargar los datos, no existe consumo del distrito.
+        </p>
+      </Modal>
       
       {/* Contenedor principal con margen superior para separarlo del navbar */}
       <div className="flex-1 py-20">
@@ -477,25 +500,21 @@ const getTimeRangeDescription = () => {
           </div>
           
           <div className="mt-6 flex justify-center gap-4">
-            {data && data.length > 0 && startDate && endDate && !dateValidationError && (
-              <>
-                {chartRef && (
-                  <PDFDownloadButton 
-                    data={data} 
-                    startDate={startDate} 
-                    endDate={endDate} 
-                    chartRef={chartRef}
-                    disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showGraphErrorModal}
-                  />
-                )}
-                <CSVDownloadButton 
-                  data={data} 
-                  startDate={startDate} 
-                  endDate={endDate} 
-                  disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showGraphErrorModal}
-                />
-             </>
+            {chartRef && (
+              <PDFDownloadButton 
+                data={data} 
+                startDate={startDate} 
+                endDate={endDate} 
+                chartRef={chartRef}
+                disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
+              />
             )}
+            <CSVDownloadButton 
+              data={data} 
+              startDate={startDate} 
+              endDate={endDate} 
+              disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
+            />
           </div>
         </div>
       </div>
