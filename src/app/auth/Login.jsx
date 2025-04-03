@@ -99,6 +99,40 @@ const Login = () => {
     return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
+
+  const handleRequestNewToken = async () => {
+    if (!document.trim() || !password.trim()) {
+        setOtpError("¡Campos vacíos, por favor completarlos!");
+        return;
+    }
+    startTimer();
+
+    try {
+        const response = await axios.post(`${API_URL}/users/generate-otp-login`, {
+            document,
+            password,
+        });
+
+        if (response.data.error) {
+            throw new Error(response.data.error);
+        }
+    } catch (err) {
+        openModal(
+            "ERROR",
+            "Error al generar token, intente mas tarde!.",
+            "ACEPTAR",
+            handleConfirm
+        );
+        if (err.response) {
+            setOtpError(err.response.data.error || "Error en el servidor");
+        } else if (err.request) {
+            setOtpError("No hay respuesta del servidor. Verifica tu conexión.");
+        } else {
+            setOtpError("Error desconocido. Intenta de nuevo.");
+        }
+    }
+};
+
   const handleTokenSubmit = async () => {
     const otpValue = otp.join("").trim();
     if (!otpValue || !document.trim()) {
@@ -296,7 +330,7 @@ const Login = () => {
 
           <div className="flex justify-center gap-4 mt-4">
             <button
-              onClick={startTimer}
+              onClick={handleRequestNewToken}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${isDisabled
                 ? "bg-gray-400 cursor-not-allowed"
