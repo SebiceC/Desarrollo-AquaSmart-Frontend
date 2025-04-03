@@ -12,7 +12,7 @@ const ControlBocatoma = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('Por favor, complete correctamente todos los campos obligatorios.');
-  const [caudalActual, setCaudalActual] = useState('0 L/min');
+  const [caudalActual, setCaudalActual] = useState('0 L/s');
   const [dispositivo, setDispositivo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
