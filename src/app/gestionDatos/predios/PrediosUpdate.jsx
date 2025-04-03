@@ -133,9 +133,17 @@ const ActualizacionPredios = () => {
           [name]: value,
         }))
       }
-    } else if (name === "dueno" || name === "plot_name") {
-      // Validar longitud máxima: 20 caracteres
-      if (value.length <= 20) {
+    } else if (name === "dueno") {
+      // Validar ID del dueño: solo números y máximo 12 caracteres
+      if (/^\d*$/.test(value) && value.length <= 12) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }))
+      }
+    } else if (name === "plot_name") {
+      // Validar nombre del predio: solo letras y máximo 20 caracteres
+      if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value) && value.length <= 20) {
         setFormData((prev) => ({
           ...prev,
           [name]: value,
@@ -206,19 +214,27 @@ const ActualizacionPredios = () => {
     }
 
     // Validaciones específicas para cada campo
-    if (formData.dueno && !/^\d+$/.test(formData.dueno)) {
-      errors.dueno = "El ID del dueño debe contener solo números"
-      isValid = false
+    if (formData.dueno) {
+      if (!/^\d+$/.test(formData.dueno)) {
+        errors.dueno = "El ID del dueño debe contener solo números"
+        isValid = false
+      } else if (formData.dueno.length < 6) {
+        errors.dueno = "El ID del dueño debe tener al menos 6 caracteres"
+        isValid = false
+      } else if (formData.dueno.length > 12) {
+        errors.dueno = "El ID del dueño no debe exceder los 12 caracteres"
+        isValid = false
+      }
     }
 
-    if (formData.dueno && formData.dueno.length > 20) {
-      errors.dueno = "El ID del dueño no debe exceder los 20 caracteres"
-      isValid = false
-    }
-
-    if (formData.plot_name && formData.plot_name.length > 20) {
-      errors.plot_name = "El nombre del predio no debe exceder los 20 caracteres"
-      isValid = false
+    if (formData.plot_name) {
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.plot_name)) {
+        errors.plot_name = "El nombre del predio solo puede contener letras"
+        isValid = false
+      } else if (formData.plot_name.length > 20) {
+        errors.plot_name = "El nombre del predio no debe exceder los 20 caracteres"
+        isValid = false
+      }
     }
 
     if (formData.extension && !/^\d{1,6}(\.\d{1,2})?$/.test(formData.extension)) {
@@ -572,32 +588,32 @@ const ActualizacionPredios = () => {
                 placeholder="Ej: -75.293823"
                 error={validationErrors.longitud}
               />
-            </div>
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estado del predio</label>
               <div className="relative">
-                <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${validationErrors.is_activate ? "border-red-300" : ""} ${originalData.is_activate === true ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
-                  name="is_activate"
-                  value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
-                  onChange={(e) => {
-                    const value = e.target.value === "true";
-                    setFormData((prev) => ({
-                      ...prev,
-                      is_activate: value,
-                    }));
-                    setValidationErrors((prev) => ({ ...prev, is_activate: "" }));
-                  }}
-                  disabled={originalData.is_activate === true}  // Solo deshabilitado si originalmente venía activo
-                >
-                  <option value="">SELECCIÓN DE ESTADO</option>
-                  <option value="true">Activo</option>
-                  <option value="false">Inactivo</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado del predio</label>
+                <div className="relative">
+                  <select
+                    className={`w-[85%] border border-gray-300 rounded px-3 py-2 appearance-none ${validationErrors.is_activate ? "border-red-300" : ""} ${originalData.is_activate === true ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+                    name="is_activate"
+                    value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value === "true";
+                      setFormData((prev) => ({
+                        ...prev,
+                        is_activate: value,
+                      }));
+                      setValidationErrors((prev) => ({ ...prev, is_activate: "" }));
+                    }}
+                    disabled={originalData.is_activate === true}  // Solo deshabilitado si originalmente venía activo
+                  >
+                    <option value="">SELECCIÓN DE ESTADO</option>
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
+                  <ChevronDown className="absolute right-15 top-1/2 transform -translate-y-1/2 text-gray-400" />
 
+                </div>
+                {validationErrors.is_activate && <p className="text-red-500 text-sm mt-1">{validationErrors.is_activate}</p>}
               </div>
-              {validationErrors.is_activate && <p className="text-red-500 text-sm mt-1">{validationErrors.is_activate}</p>}
             </div>
 
 
@@ -608,7 +624,7 @@ const ActualizacionPredios = () => {
               {errorMessage && <p className="text-[#F90000] text-sm mb-2">{errorMessage}</p>}
 
               {/* Botones de acción - Invertidos como solicitado */}
-              <div className="flex justify-between w-full mt-2">
+              <div className="flex flex-col lg:flex-row justify-between w-[70%] lg:w-full mt-2 gap-3 mx-auto ">
                 <BackButton to="/gestionDatos/predios" text="Regresar a la lista" />
                 <Button
                   text={submitting ? "Actualizando..." : "Actualizar"}
@@ -660,4 +676,3 @@ const ActualizacionPredios = () => {
 }
 
 export default ActualizacionPredios
-
