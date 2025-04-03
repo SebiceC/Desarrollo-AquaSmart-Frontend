@@ -5,7 +5,7 @@ import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import BackButton from "../../../components/BackButton"
 import { useNavigate, useParams } from "react-router-dom"
-import { ChevronDown, AlertCircle, Info, Search, X } from "lucide-react"
+import { ChevronDown, Info, Search, X } from "lucide-react"
 import axios from "axios"
 
 // Componente SearchableSelect completamente replicado
@@ -154,6 +154,16 @@ const DispositivoEdit = () => {
     is_active: "true",
     characteristics: "",
   })
+  
+  // Estado para almacenar los datos originales del dispositivo
+  const [originalData, setOriginalData] = useState({
+    name: "",
+    id_plot: "",
+    device_type: "",
+    id_lot: "",
+    is_active: "true",
+    characteristics: "",
+  })
 
   const [originalDeviceType, setOriginalDeviceType] = useState("")
   // Estados para listas de selección
@@ -210,16 +220,21 @@ const DispositivoEdit = () => {
           headers: { Authorization: `Token ${token}` },
         })
         const dispositivo = dispositivoResponse.data
-
+        
         // Preparar datos iniciales del formulario
-        setFormData({
+        const initialData = {
           name: dispositivo.name,
           device_type: dispositivo.device_type,
           is_active: dispositivo.is_active ? "true" : "false",
           characteristics: dispositivo.characteristics,
           id_plot: dispositivo.id_plot || "",
           id_lot: dispositivo.id_lot || "",
-        })
+          device_type_name: dispositivo.device_type_name,
+        }
+        
+        setFormData(initialData)
+        // Guardar los datos originales para comparar más tarde
+        setOriginalData(initialData)
 
         setOriginalDeviceType(dispositivo.device_type)
         setLoadingTipos(false)
@@ -392,10 +407,29 @@ const DispositivoEdit = () => {
     }
   }
 
+  // Función para verificar si se han hecho cambios en el formulario
+  const hasFormChanged = () => {
+    // Comparar todos los campos para ver si algo ha cambiado
+    return (
+      formData.name !== originalData.name ||
+      formData.device_type !== originalData.device_type ||
+      formData.is_active !== originalData.is_active ||
+      formData.characteristics !== originalData.characteristics ||
+      formData.id_plot !== originalData.id_plot ||
+      formData.id_lot !== originalData.id_lot
+    )
+  }
+
   // Validación del formulario
   const validateForm = () => {
     const newErrors = {}
-    let isValid = true
+    let isValid = true;
+
+    // Verificar si se ha modificado al menos un campo
+    if (!hasFormChanged()) {
+      setErrorMessage("Para actualizar debes editar al menos un campo del formulario")
+      return false
+    }
 
     // Validar campos obligatorios
     if (!formData.name.trim()) {
@@ -501,7 +535,7 @@ const DispositivoEdit = () => {
       // Preparar datos para enviar
       const requestData = {
         name: formData.name,
-        // device_type: formData.device_type,
+        device_type: formData.device_type,
         is_active: isActive,
         characteristics: formData.characteristics,
       }
@@ -595,8 +629,9 @@ const DispositivoEdit = () => {
   // Función para renderizar mensajes de error específicos de campo
   const renderFieldError = (message) => (
     <div className="flex items-center mt-1 text-red-600 text-xs">
-      <AlertCircle className="h-3 w-3 mr-1" />
-      <p>{message}</p>
+      {/* <AlertCircle className="h-3 w-3 mr-1" /> */}
+      {/* <p>{message}</p> */}
+      <p className="text-[#F90000] text-sm mb-1 w-full">{message}</p>
     </div>
   )
 
@@ -607,10 +642,10 @@ const DispositivoEdit = () => {
   const showPlotFields = !isValvula48
 
   // Preparar opciones para los selects
-  const tiposDispositivoOptions = tiposDispositivo.map((tipo) => ({
-    value: tipo.device_id,
-    label: tipo.name,
-  }))
+  // const tiposDispositivoOptions = tiposDispositivo.map((tipo) => ({
+  //   value: tipo.device_id,
+  //   label: tipo.name,
+  // }))
 
   const prediosOptions = predios.map((predio) => ({
     value: predio.id_plot,
@@ -656,14 +691,6 @@ return (
           Modifique los datos del dispositivo seleccionado
         </p>
         <div className="w-16 h-1 bg-[#365486] mx-auto mb-4 sm:mb-6 rounded-full"></div>
-
-        {/* Mensaje de error general en la parte superior */}
-        {errorMessage && (
-          <div className="w-full border border-red-100 bg-red-50 rounded px-4 py-3 text-red-600 text-sm mb-4 sm:mb-6 flex items-start">
-            <AlertCircle className="h-4 w-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
-            <p>{errorMessage}</p>
-          </div>
-        )}
       </div>
 
       <div className="bg-white p-4 sm:p-6 w-full max-w-3xl">
@@ -697,18 +724,33 @@ return (
             <div className="flex flex-col w-full">
               <label htmlFor="device_type" className="block text-sm font-medium mb-1">
                 Tipo de Dispositivo <span className="text-red-500">*</span>
+                <span className="ml-1 text-xs text-gray-500">(No editable)</span>
               </label>
-              <SearchableSelect
+              {/* Campo visible que muestra el nombre del tipo de dispositivo */}
+              <input 
+                id="device_type_display"
+                type="text" 
+                value={originalData.device_type_name}  // Mostramos el nombre
+                className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-2 text-gray-500 cursor-not-allowed"
+                disabled
+                readOnly
+                aria-label="Tipo de dispositivo (no editable)"
+              />
+
+              {/* Campo oculto que contiene el valor real que se enviará */}
+              <input 
                 id="device_type"
+                type="hidden" 
                 name="device_type"
-                value={formData.device_type}
+                value={formData.device_type}  // Este es el valor que se enviará
+              />
+              {/* <SearchableSelect
                 onChange={handleChange}
                 options={tiposDispositivoOptions}
                 placeholder="SELECCIONE TIPO DE DISPOSITIVO"
                 hasError={errors.device_type}
                 required={true}
-                className="w-full"
-              />
+              /> */}
             </div>
 
             {/* Mensaje informativo cuando se selecciona Válvula 48 */}
@@ -823,6 +865,20 @@ return (
               </div>
               {errors.characteristics && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
               {fieldErrors.characteristics && renderFieldError(fieldErrors.characteristics)}
+            </div>
+
+            {/* Mensaje de error general en la parte superior */}
+            {/* {errorMessage && (
+              <div className="w-full border border-red-100 bg-red-50 rounded px-4 py-3 text-red-600 text-sm mb-4 sm:mb-6 flex items-start">
+                <AlertCircle className="h-4 w-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                <p>{errorMessage}</p>
+              </div>
+            )} */}
+
+            {/* Contenedor para mensajes de error y botones */}
+            <div className="col-span-1 md:col-span-2 flex flex-col items-start mt-1">
+              {/* Mensajes de error */}
+              {errorMessage && <p className="text-[#F90000] text-sm mb-1 w-full">{errorMessage}</p>}
             </div>
 
             {/* Botones en columna en móvil y fila en escritorio */}
