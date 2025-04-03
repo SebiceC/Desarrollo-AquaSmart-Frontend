@@ -45,6 +45,10 @@ import HistorialUserPredioDetail from "../app/HistorialConsumo/HistorialUserPred
 import HistorialUserLoteDetail from "../app/HistorialConsumo/HistorialUserLoteDetail";
 import ControlBocatoma from "../app/controloT/ControlBocatoma";
 
+import ValvesList from "../app/valvulas/ValvesList"
+import ValveDetail from "../app/valvulas/ValveDetail"
+import ValveFlowUpdate from "../app/valvulas/ValveFlowUpdate"
+
 
 const AppRouter = () => {
     return (
@@ -99,6 +103,9 @@ const AppRouter = () => {
             <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
             <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
             <Route path="/control-IoT/bocatoma" element={<ProtectedRoute element={<ControlBocatoma />} />} />
+            <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
+            <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
+            <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
         </Routes>
     );
 };
