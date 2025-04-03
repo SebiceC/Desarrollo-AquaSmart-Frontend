@@ -229,6 +229,12 @@ const PrediosDetail = () => {
                     <span className="text-gray-600 font-medium">{formatDate(predio.registration_date)}</span>
                   </p>
                 </div>
+                <div>
+                  <p className="text-md">
+                    <span className="font-medium text-black">Estado: </span>
+                    <span className="text-gray-600 font-medium">{predio.is_activate === true ? "Activo" : predio.is_activate === false ? "Inactivo" : "No disponible"}</span>
+                  </p>
+                </div>
               </div>
             </div>
 
