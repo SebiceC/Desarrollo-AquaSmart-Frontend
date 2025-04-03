@@ -43,6 +43,7 @@ import HistorialLoteDetail from "../app/HistorialConsumo/HistorialLoteDetail";
 import HistorialUserPredio from "../app/HistorialConsumo/HistorialUserPredioList";
 import HistorialUserPredioDetail from "../app/HistorialConsumo/HistorialUserPredioDetail";
 import HistorialUserLoteDetail from "../app/HistorialConsumo/HistorialUserLoteDetail";
+import ControlBocatoma from "../app/controloT/ControlBocatoma";
 
 
 const AppRouter = () => {
@@ -97,6 +98,7 @@ const AppRouter = () => {
             <Route path="/mispredios/historial-consumoList/:document" element={<ProtectedRoute element={<HistorialUserPredio />} />} />
             <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
             <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
+            <Route path="/control-IoT/bocatoma" element={<ProtectedRoute element={<ControlBocatoma />} />} />
         </Routes>
     );
 };

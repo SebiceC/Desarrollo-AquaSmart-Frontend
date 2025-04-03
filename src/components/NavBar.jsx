@@ -77,6 +77,7 @@ function NavBar() {
                         text="Control IoT"
                         subItems={[
                             { direction: "/control-IoT/sensores", text: "Sensores" },
+                            { direction: "/control-IoT/bocatoma", text: "Bocatoma" },
                         ]}
                     />
                     <NavItem
@@ -149,6 +150,7 @@ function NavBar() {
                             text="Control IoT"
                             subItems={[
                                 { direction: "/control-IoT/sensores", text: "Sensores" },
+                                { direction: "/control-IoT/bocatoma", text: "Bocatoma" },
                             ]}
                         />
                         <NavItem
