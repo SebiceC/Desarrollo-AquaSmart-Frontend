@@ -32,7 +32,8 @@ const RegistroPredios = () => {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else if (name === "owner_id" || name === "farm_name") {
-            if (value.length <= 20) {
+            const isValidFarmName = /^[a-zA-Z0-9 ]*$/.test(value);
+            if (value.length <= 20 && (name !== "farm_name" || isValidFarmName)) {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else {
