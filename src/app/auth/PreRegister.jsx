@@ -66,12 +66,12 @@ const PreRegister = () => {
     if (formData.person_type === "1") {
       // Si es "Natural", excluir el tipo de documento 4 (NIT)
       setFilteredDocumentTypes(
-        documentTypes.filter((type) => type.documentTypeId !== 5)
+        documentTypes.filter((type) => type.documentTypeId !== 2)
       );
     } else if (formData.person_type === "2") {
       // Si es "Jurídica", solo permitir el tipo de documento 4 (NIT)
       setFilteredDocumentTypes(
-        documentTypes.filter((type) => type.documentTypeId === 5)
+        documentTypes.filter((type) => type.documentTypeId === 2)
       );
     } else {
       // Si no se ha seleccionado un tipo de persona, mostrar todos los tipos de documento
@@ -237,6 +237,7 @@ const handleSubmit = async (e) => {
       }
     }
 };
+console.log(documentTypes);
 
   return (
     <div className="w-full h-full min-h-screen bg-white">
