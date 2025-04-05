@@ -9,6 +9,7 @@ import BackButton from "../../../components/BackButton"
 import ErrorDisplay from "../../../components/error-display"
 import { useNavigate, useParams } from "react-router-dom"
 import axios from "axios"
+import { ChevronDown } from "lucide-react"
 
 const ActualizacionPredios = () => {
   const { id_plot } = useParams()
@@ -23,6 +24,7 @@ const ActualizacionPredios = () => {
     latitud: "",
     longitud: "",
     plot_name: "",
+    is_activate: ""
   })
   const [originalData, setOriginalData] = useState({})
 
@@ -77,6 +79,7 @@ const ActualizacionPredios = () => {
           latitud: predioData.latitud,
           longitud: predioData.longitud,
           plot_name: predioData.plot_name || "",
+          is_activate: predioData.is_activate === true || predioData.is_activate === "true", // Asegurarse que is_activate es un booleano
         }
 
         setFormData(formattedData)
@@ -130,9 +133,17 @@ const ActualizacionPredios = () => {
           [name]: value,
         }))
       }
-    } else if (name === "dueno" || name === "plot_name") {
-      // Validar longitud máxima: 20 caracteres
-      if (value.length <= 20) {
+    } else if (name === "dueno") {
+      // Validar ID del dueño: solo números y máximo 12 caracteres
+      if (/^\d*$/.test(value) && value.length <= 12) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }))
+      }
+    } else if (name === "plot_name") {
+      // Validar nombre del predio: solo letras y máximo 20 caracteres
+      if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value) && value.length <= 20) {
         setFormData((prev) => ({
           ...prev,
           [name]: value,
@@ -167,7 +178,8 @@ const ActualizacionPredios = () => {
       formData.extension === originalData.extension &&
       formData.latitud === originalData.latitud &&
       formData.longitud === originalData.longitud &&
-      formData.plot_name === originalData.plot_name
+      formData.plot_name === originalData.plot_name &&
+      formData.is_activate === originalData.is_activate  // Add this line
 
     if (isUnchanged) {
       setShowNoChangeErrorModal(true)
@@ -183,29 +195,46 @@ const ActualizacionPredios = () => {
 
     // Validar que todos los campos requeridos estén completos
     Object.entries(formData).forEach(([key, value]) => {
-      // Excluir campos de solo lectura
-      if (key !== "predio" && key !== "fechaRegistro") {
-        if (!value.trim()) {
+      // Excluir campos de solo lectura y el campo is_activate
+      if (key !== "predio" && key !== "fechaRegistro" && key !== "is_activate") {
+        if (typeof value === 'string' && !value.trim()) {
+          errors[key] = "Este campo es obligatorio"
+          isValid = false
+        } else if (value === undefined || value === null) {
           errors[key] = "Este campo es obligatorio"
           isValid = false
         }
       }
     })
 
+    // Validar is_activate por separado
+    if (formData.is_activate === undefined || formData.is_activate === "") {
+      errors.is_activate = "El estado del predio es obligatorio"
+      isValid = false
+    }
+
     // Validaciones específicas para cada campo
-    if (formData.dueno && !/^\d+$/.test(formData.dueno)) {
-      errors.dueno = "El ID del dueño debe contener solo números"
-      isValid = false
+    if (formData.dueno) {
+      if (!/^\d+$/.test(formData.dueno)) {
+        errors.dueno = "El ID del dueño debe contener solo números"
+        isValid = false
+      } else if (formData.dueno.length < 6) {
+        errors.dueno = "El ID del dueño debe tener al menos 6 caracteres"
+        isValid = false
+      } else if (formData.dueno.length > 12) {
+        errors.dueno = "El ID del dueño no debe exceder los 12 caracteres"
+        isValid = false
+      }
     }
 
-    if (formData.dueno && formData.dueno.length > 20) {
-      errors.dueno = "El ID del dueño no debe exceder los 20 caracteres"
-      isValid = false
-    }
-
-    if (formData.plot_name && formData.plot_name.length > 20) {
-      errors.plot_name = "El nombre del predio no debe exceder los 20 caracteres"
-      isValid = false
+    if (formData.plot_name) {
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.plot_name)) {
+        errors.plot_name = "El nombre del predio solo puede contener letras"
+        isValid = false
+      } else if (formData.plot_name.length > 20) {
+        errors.plot_name = "El nombre del predio no debe exceder los 20 caracteres"
+        isValid = false
+      }
     }
 
     if (formData.extension && !/^\d{1,6}(\.\d{1,2})?$/.test(formData.extension)) {
@@ -392,6 +421,7 @@ const ActualizacionPredios = () => {
         latitud: formData.latitud ? Number.parseFloat(formData.latitud) : null,
         longitud: formData.longitud ? Number.parseFloat(formData.longitud) : null,
         plot_name: formData.plot_name,
+        is_activate: formData.is_activate,  // Incluir el estado en la solicitud
       }
 
       // Enviar solicitud
@@ -476,10 +506,8 @@ const ActualizacionPredios = () => {
       <div className="w-full min-h-screen flex flex-col items-center pt-24 bg-white p-6">
         <div className="w-full max-w-3xl">
           <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">Actualización de Predios</h2>
-          <p className="text-sm text-gray-600 text-center mb-6">Modifique los datos del predio y guarde los cambios</p>
-          <div className="w-16 h-1 bg-[#365486] mx-auto mb-6 rounded-full"></div>
         </div>
-        <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+        <div className="bg-white p-6 w-full max-w-3xl">
           <form onSubmit={handleConfirmSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               {/* Campo Predio (solo lectura) */}
@@ -560,7 +588,34 @@ const ActualizacionPredios = () => {
                 placeholder="Ej: -75.293823"
                 error={validationErrors.longitud}
               />
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado del predio</label>
+                <div className="relative">
+                  <select
+                    className={`w-[85%] border border-gray-300 rounded px-3 py-2 appearance-none ${validationErrors.is_activate ? "border-red-300" : ""} ${originalData.is_activate === true ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+                    name="is_activate"
+                    value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value === "true";
+                      setFormData((prev) => ({
+                        ...prev,
+                        is_activate: value,
+                      }));
+                      setValidationErrors((prev) => ({ ...prev, is_activate: "" }));
+                    }}
+                    disabled={originalData.is_activate === true}  // Solo deshabilitado si originalmente venía activo
+                  >
+                    <option value="">SELECCIÓN DE ESTADO</option>
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
+                  <ChevronDown className="absolute right-15 top-1/2 transform -translate-y-1/2 text-gray-400" />
+
+                </div>
+                {validationErrors.is_activate && <p className="text-red-500 text-sm mt-1">{validationErrors.is_activate}</p>}
+              </div>
             </div>
+
 
             <div className="col-span-1 md:col-span-2 flex flex-col items-start">
               {/* Mensajes de error */}
@@ -569,7 +624,7 @@ const ActualizacionPredios = () => {
               {errorMessage && <p className="text-[#F90000] text-sm mb-2">{errorMessage}</p>}
 
               {/* Botones de acción - Invertidos como solicitado */}
-              <div className="flex justify-between w-full mt-2">
+              <div className="flex flex-col lg:flex-row justify-between w-[70%] lg:w-full mt-2 gap-3 mx-auto ">
                 <BackButton to="/gestionDatos/predios" text="Regresar a la lista" />
                 <Button
                   text={submitting ? "Actualizando..." : "Actualizar"}
@@ -621,4 +676,3 @@ const ActualizacionPredios = () => {
 }
 
 export default ActualizacionPredios
-

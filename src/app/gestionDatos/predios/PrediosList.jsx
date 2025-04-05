@@ -73,17 +73,25 @@ const PrediosList = () => {
       
 
       // Validación de ID
-      if (filters.id.trim() !== "" && !/^PR-\d{7}$/.test(filters.id.trim()) &&
-        !/^\d+$/.test(filters.id.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
-        setShowModal(true);
-        setFilteredPredios([]);
-        return;
+        if (filters.id.trim() !== "") {
+        // Verifica si es un prefijo válido del formato PR-NNNNNNN
+        const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim());
+        
+        // Verifica si son solo dígitos (cualquier cantidad)
+        const isOnlyDigits = /^\d+$/.test(filters.id.trim());
+  
+         // Si no cumple ninguna de las condiciones permitidas
+        if (!isPrefixValid && !isOnlyDigits) {
+          setModalMessage("El campo ID del predio contiene caracteres no válidos");
+          setShowModal(true);
+          setFilteredPredios([]);
+          return;
+        }
       }
 
       // Validación de formato del documento del propietario
       if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo ID del propietario contiene caracteres no válidos o el propietario no existe");
+        setModalMessage("El campo ID del propietario contiene caracteres no válidos");
         setShowModal(true);
         setFilteredPredios([]);
         return;

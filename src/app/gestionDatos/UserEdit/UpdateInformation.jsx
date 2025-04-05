@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import axios from "axios"
@@ -151,7 +149,7 @@ const UpdateInformation = () => {
     const changedFields = {}
 
     // Excluir campo document ya que no debe modificarse
-    const fieldsToCheck = Object.keys(formData).filter((key) => key !== "document")
+    const fieldsToCheck = Object.keys(formData).filter((key) => key !== "document" && key !== "role")
 
     fieldsToCheck.forEach((key) => {
       // Manejo especial para attachments
@@ -164,20 +162,8 @@ const UpdateInformation = () => {
       }
       // Manejo especial para person_type_name
       else if (key === "person_type_name") {
-        // Obtener el nombre del tipo de persona del dato original
-        let originalPersonTypeName = ""
-
-        if (originalData.person_type) {
-          if (typeof originalData.person_type === "number") {
-            const personType = personTypes.find((type) => type.personTypeId === originalData.person_type)
-            originalPersonTypeName = personType ? personType.typeName : ""
-          } else if (originalData.person_type.typeName) {
-            originalPersonTypeName = originalData.person_type.typeName
-          }
-        }
-
-        // Comparar con los datos del formulario
-        if (formData[key] !== originalPersonTypeName) {
+        // Comparar directamente con el valor original
+        if (formData[key] !== originalData[key]) {
           changedFields[key] = formData[key]
         }
       }
@@ -197,6 +183,7 @@ const UpdateInformation = () => {
       }
     })
 
+    console.log("Campos modificados:", changedFields)
     return changedFields
   }
 
@@ -307,6 +294,8 @@ const UpdateInformation = () => {
   // Validación de datos sin cambios
   const validateChanges = () => {
     const changedFields = getChangedFields(formData, originalData)
+    console.log("Validando cambios:", formData, originalData)
+    console.log("Campos detectados como modificados:", changedFields)
 
     if (Object.keys(changedFields).length === 0) {
       setShowNoChangesModal(true)
@@ -327,7 +316,11 @@ const UpdateInformation = () => {
     setErrorMessage("")
 
     // Validaciones
-    if (!validateChanges() || !validateForm()) {
+    if (!validateChanges()) {
+      return
+    }
+    
+    if (!validateForm()) {
       return
     }
 
@@ -473,14 +466,12 @@ const UpdateInformation = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de persona</label>
               <div className="relative">
                 <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                    errors.person_type_name ? "border-red-300" : ""
-                  }`}
+                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.person_type_name ? "border-red-300" : ""
+                    }`}
                   name="person_type_name"
                   value={formData.person_type_name || ""}
                   onChange={handleChange}
                 >
-                  <option value="">SELECCIÓN DE TIPO DE PERSONA</option>
                   {personTypes.map((type, index) => (
                     <option key={index} value={type.typeName}>
                       {type.typeName}
@@ -501,8 +492,9 @@ const UpdateInformation = () => {
               onChange={handleChange}
               placeholder="Ingrese el nombre"
               error={errors.first_name}
+              maxLength={20}
             />
-
+            
             <InputItem
               id="last_name"
               name="last_name"
@@ -511,6 +503,7 @@ const UpdateInformation = () => {
               onChange={handleChange}
               placeholder="Ingrese los apellidos"
               error={errors.last_name}
+              maxLength={20}
             />
 
             {/* Tercera fila: Correo electrónico | Teléfono */}
@@ -522,8 +515,9 @@ const UpdateInformation = () => {
               onChange={handleChange}
               placeholder="ejemplo@correo.com"
               error={errors.email}
+              maxLength={50}
             />
-
+            
             <InputItem
               id="phone"
               name="phone"
@@ -532,26 +526,27 @@ const UpdateInformation = () => {
               onChange={handleChange}
               placeholder="Ej: 3201234567"
               error={errors.phone}
+              maxLength={10}
             />
-
+            
             {/* Cuarta fila: Estado del usuario */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado del usuario</label>
               <div className="relative">
                 <select
-                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                    errors.is_active ? "border-red-300" : ""
-                  }`}
+                  className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${errors.is_active ? "border-red-300" : ""
+                    } ${formData.is_active === true ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
                   name="is_active"
                   value={formData.is_active === undefined ? "" : formData.is_active.toString()}
                   onChange={(e) => {
-                    const value = e.target.value === "true"
+                    const value = e.target.value === "true";
                     setFormData((prev) => ({
                       ...prev,
                       is_active: value,
-                    }))
-                    setErrors((prev) => ({ ...prev, is_active: "" }))
+                    }));
+                    setErrors((prev) => ({ ...prev, is_active: "" }));
                   }}
+                  disabled={originalData.is_active === true}  // Solo deshabilitado si originalmente venía activo
                 >
                   <option value="">SELECCIÓN DE ESTADO</option>
                   {userStates.map((state, index) => (
@@ -619,9 +614,8 @@ const UpdateInformation = () => {
               <BackButton to="/gestionDatos/users" text="Regresar al listado de usuarios" />
               <button
                 type="submit"
-                className={`bg-[#365486] hover:bg-[#2f4275] text-white px-5 py-2 rounded-lg transition-colors ${
-                  submitting ? "opacity-70 cursor-not-allowed" : ""
-                }`}
+                className={`bg-[#365486] hover:bg-[#2f4275] text-white px-5 py-2 rounded-lg transition-colors ${submitting ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
                 disabled={submitting}
               >
                 {submitting ? "Actualizando..." : "Actualizar"}
@@ -636,7 +630,7 @@ const UpdateInformation = () => {
         showModal={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false)
-          navigate("/gestionDatos/users")
+          window.location.reload();
         }}
         title="Actualización Exitosa"
         btnMessage="Aceptar"
@@ -669,11 +663,10 @@ const UpdateInformation = () => {
         title="Sin Cambios"
         btnMessage="Cerrar"
       >
-        <p>No se han detectado cambios en los datos del usuario. Modifique al menos un campo antes de actualizar.</p>
+        <p>No se han detectado cambios en los datos del usuario.</p>
       </Modal>
     </div>
   )
 }
 
 export default UpdateInformation
-

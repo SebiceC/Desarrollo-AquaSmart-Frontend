@@ -109,14 +109,18 @@ const DispositivosIoTList = () => {
         filters.startDate !== "" ||
         filters.endDate !== "";
   
-      // Validación de ID del dispositivo
-      if (filters.iot_id.trim() !== "" && !/^\d{5}$/.test(filters.iot_id.trim()) &&
-        !/^\d+$/.test(filters.iot_id.trim())) {
-        setModalMessage("El campo ID del dispositivo contiene caracteres no válidos o el dispositivo no existe");
-        setShowModal(true);
-        setFilteredDispositivos([]);
-        return;
-      }
+// Validación de ID del dispositivo
+if (filters.iot_id.trim() !== "") {
+
+  const isValidDeviceFormat = /^(\d{1,3}|\d{1,3}-\d{0,4})$/.test(filters.iot_id.trim());
+  
+  if (!isValidDeviceFormat) {
+    setModalMessage("El campo ID del dispositivo contiene caracteres no válidos");
+    setShowModal(true);
+    setFilteredDispositivos([]);
+    return;
+  }
+}
   
       // Validación de nombre del dispositivo - Mejorada
       if (filters.name.trim() !== "") {
@@ -131,13 +135,23 @@ const DispositivosIoTList = () => {
       }
   
       // Validación de ID del predio
-      if (filters.plotId.trim() !== "" && !/^PR-\d{7}$/.test(filters.plotId.trim()) &&
-        !/^\d+$/.test(filters.plotId.trim())) {
-        setModalMessage("El campo ID del predio contiene caracteres no válidos o el predio no existe");
-        setShowModal(true);
-        setFilteredDispositivos([]);
-        return;
+      if (filters.plotId.trim() !== "") {
+        // Verifica si es un prefijo válido del formato PR-NNNNNNN
+        const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.plotId.trim());
+        
+        // Verifica si son solo dígitos (cualquier cantidad)
+        const isOnlyDigits = /^\d+$/.test(filters.plotId.trim());
+  
+         // Si no cumple ninguna de las condiciones permitidas
+        if (!isPrefixValid && !isOnlyDigits) {
+          setModalMessage("El campo ID del predio contiene caracteres no válidos");
+          setShowModal(true);
+          setFilteredDispositivos([]);
+          return;
+        }
       }
+
+      
   
       // Validación de fechas
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
@@ -221,13 +235,79 @@ const DispositivosIoTList = () => {
         return;
       }
   
-      if (filters.plotId.trim() !== "" && filtered.length === 0) {
-        setModalMessage("No hay dispositivos asociados al predio especificado.");
-        setShowModal(true);
-        setFilteredDispositivos([]);
-        return;
-      }
+// Validación de formato del ID del predio
+if (filters.plotId.trim() !== "") {
+  // Verifica si es un prefijo válido del formato PR-NNNNNNN o solo dígitos
+  const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.plotId.trim());
+  const isOnlyDigits = /^\d+$/.test(filters.plotId.trim());
   
+  if (!isPrefixValid && !isOnlyDigits) {
+    setModalMessage("El campo ID del predio contiene caracteres no válidos");
+    setShowModal(true);
+    setFilteredDispositivos([]);
+    return;
+  }
+
+  // VALIDACIÓN #1: Verificar si el predio realmente existe en la lista de predios
+  const plotIdToFind = filters.plotId.trim();
+  const predioExiste = predios.some(predio => {
+    // Opción 1: Buscar por ID exacto
+    if (predio.id_plot === plotIdToFind) {
+      return true;
+    }
+    
+    // Opción 2: Buscar por coincidencia parcial (para prefijos)
+    if (predio.id_plot.toLowerCase().includes(plotIdToFind.toLowerCase())) {
+      return true;
+    }
+    
+    // Opción 3: Si se ingresó solo el número, buscar esa parte en el ID
+    if (isOnlyDigits) {
+      // Extraer la parte numérica de id_plot (asumiendo formato PR-NNNNNNN)
+      const numericPart = predio.id_plot.split('-')[1];
+      return numericPart === plotIdToFind;
+    }
+    
+    return false;
+  });
+  
+  if (!predioExiste) {
+    setModalMessage("El predio filtrado no existe.");
+    setShowModal(true);
+    setFilteredDispositivos([]);
+    return;
+  }
+  
+  // VALIDACIÓN #2: Verificar si hay dispositivos asociados a este predio
+  const dispositivosAsociados = dispositivos.some(dispositivo => {
+    if (!dispositivo.id_plot) return false;
+    
+    // Coincidencia exacta
+    if (dispositivo.id_plot === plotIdToFind) {
+      return true;
+    }
+    
+    // Coincidencia parcial
+    if (dispositivo.id_plot.toLowerCase().includes(plotIdToFind.toLowerCase())) {
+      return true;
+    }
+    
+    // Si es solo dígitos, verificar parte numérica
+    if (isOnlyDigits) {
+      const numericPart = dispositivo.id_plot.split('-')[1];
+      return numericPart === plotIdToFind;
+    }
+    
+    return false;
+  });
+  
+  if (!dispositivosAsociados) {
+    setModalMessage("No hay dispositivos asociados al predio especificado.");
+    setShowModal(true);
+    setFilteredDispositivos([]);
+    return;
+  }
+}
       // Validación para rango de fechas sin resultados
       if ((filters.startDate !== "" || filters.endDate !== "") && filtered.length === 0) {
         setModalMessage("No hay dispositivos registrados en el rango de fechas especificado.");
@@ -322,7 +402,7 @@ const DispositivosIoTList = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Lista de Dispositivos IoT del distrito
+          Lista de Dispositivos del distrito
         </h1>
 
         <InputFilterIoT

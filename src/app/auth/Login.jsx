@@ -19,6 +19,7 @@ const Login = () => {
   const [showTokenForm, setShowTokenForm] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
@@ -42,7 +43,7 @@ const Login = () => {
 
     if (!document.trim() || !password.trim())
       return setError("¡Campos vacíos, por favor completarlos!");
-
+    setIsLoading(true);
     try {
       await axios.post(`${API_URL}/users/login`, { document, password });
 
@@ -73,6 +74,8 @@ const Login = () => {
             : "Error desconocido al procesar la solicitud.")
       );
       console.log(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -104,12 +107,46 @@ const Login = () => {
     return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
+  const handleRequestNewToken = async () => {
+    if (!document.trim() || !password.trim()) {
+      setOtpError("¡Campos vacíos, por favor completarlos!");
+      return;
+    }
+    startTimer();
+
+    try {
+      const response = await axios.post(`${API_URL}/users/generate-otp-login`, {
+        document,
+        password,
+      });
+
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+    } catch (err) {
+      openModal(
+        "ERROR",
+        "Error al generar token, intente mas tarde!.",
+        "ACEPTAR",
+        handleConfirm
+      );
+      if (err.response) {
+        setOtpError(err.response.data.error || "Error en el servidor");
+      } else if (err.request) {
+        setOtpError("No hay respuesta del servidor. Verifica tu conexión.");
+      } else {
+        setOtpError("Error desconocido. Intenta de nuevo.");
+      }
+    }
+  };
+
   const handleTokenSubmit = async () => {
     const otpValue = otp.join("").trim();
     if (!otpValue || !document.trim()) {
       setOtpError("¡Token no ingresado!");
       return;
     }
+    setIsLoading(true);
     try {
       const response = await axios.post(
         `${API_URL}/users/validate-otp`,
@@ -135,6 +172,8 @@ const Login = () => {
       } else {
         setOtpError("Error de conexión con el servidor");
       }
+    } finally {
+      setIsLoading(false); // Desactivar estado de carga
     }
   };
 
@@ -207,7 +246,7 @@ const Login = () => {
                   setDocument(value);
                 }
               }}
-              maxLength={11}
+              maxLength={12}
             />
             <div className="relative w-full flex justify-center">
               <InputItem
@@ -255,9 +294,14 @@ const Login = () => {
             </div>
             <button
               type="submit"
-              className="w-[50%] mt-4 bg-[#365486] text-white py-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300"
+              disabled={isLoading}
+              className={`w-[50%] mt-4 bg-[#365486] text-white py-2 rounded-lg transition-all duration-300 ${
+                isLoading
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:bg-[#344663] hover:scale-105"
+              }`}
             >
-              INICIAR SESIÓN
+              {isLoading ? "INICIANDO SESIÓN..." : "INICIAR SESIÓN"}
             </button>
           </form>
         </div>
@@ -298,7 +342,7 @@ const Login = () => {
 
           <div className="flex justify-center gap-4 mt-4">
             <button
-              onClick={startTimer}
+              onClick={handleRequestNewToken}
               disabled={isDisabled}
               className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${
                 isDisabled
@@ -310,9 +354,14 @@ const Login = () => {
             </button>
             <button
               onClick={handleTokenSubmit}
-              className="bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663]"
+              disabled={isLoading}
+              className={`bg-[#365486] text-white px-4 py-2 rounded-lg transition-all duration-300 ${
+                isLoading
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:bg-[#344663]"
+              }`}
             >
-              ENVIAR
+              {isLoading ? "ENVIANDO..." : "ENVIAR"}
             </button>
           </div>
         </div>

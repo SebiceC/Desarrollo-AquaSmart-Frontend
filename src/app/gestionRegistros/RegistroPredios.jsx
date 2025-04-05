@@ -32,7 +32,8 @@ const RegistroPredios = () => {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else if (name === "owner_id" || name === "farm_name") {
-            if (value.length <= 20) {
+            const isValidFarmName = /^[a-zA-Z0-9 ]*$/.test(value);
+            if (value.length <= 20 && (name !== "farm_name" || isValidFarmName)) {
                 setFormData((prevData) => ({ ...prevData, [name]: value }));
             }
         } else {
@@ -143,7 +144,7 @@ const RegistroPredios = () => {
                             label="Latitud"
                             type="number"
                             name="latitude"
-                            placeholder="Ej: 2.879568089022734"
+                            placeholder="Ej: 2.879568"
                             value={formData.latitude}
                             onChange={handleChange}
                             error={errors.latitude}
@@ -152,7 +153,7 @@ const RegistroPredios = () => {
                             label="Longitud"
                             type="number"
                             name="longitude"
-                            placeholder="Ej: -75.29382390388328"
+                            placeholder="Ej: -75.293823"
                             value={formData.longitude}
                             onChange={handleChange}
                             error={errors.longitude}

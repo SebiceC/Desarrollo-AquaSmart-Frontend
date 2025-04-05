@@ -17,6 +17,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -33,21 +34,22 @@ const ForgotPassword = () => {
     setShowModal(true);
   };
 
-    const handleReset = async (e) => {
-        e.preventDefault();
-        if (!document.trim() || !phone.trim()) {
-            setError("Todos los campos son obligatorios.");
-            return;
-        }
-        if (document.length < 6) {
-            setError("El documento debe tener al menos 6 caracteres.");
-            return;
-        }
-    
-        if (phone.length < 10) {
-            setError("El teléfono debe tener 10 caracteres.");
-            return;
-        }
+  const handleReset = async (e) => {
+    e.preventDefault();
+    if (!document.trim() || !phone.trim()) {
+      setError("Todos los campos son obligatorios.");
+      return;
+    }
+    if (document.length < 6) {
+      setError("El documento debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    if (phone.length < 10) {
+      setError("El teléfono debe tener 10 caracteres.");
+      return;
+    }
+    setIsLoading(true);
 
     try {
       const response = await axios.post(`${API_URL}/users/generate-otp`, {
@@ -80,6 +82,8 @@ const ForgotPassword = () => {
       } else {
         setError("Error desconocido. Intenta de nuevo.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -155,6 +159,8 @@ const ForgotPassword = () => {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const response = await axios.post(
         `${API_URL}/users/validate-otp`,
@@ -175,6 +181,8 @@ const ForgotPassword = () => {
       } else {
         setOtpError("Error de conexión con el servidor");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -209,86 +217,90 @@ const ForgotPassword = () => {
         <img src="/img/logo.png" alt="Logo" className="w-[60%] lg:w-[50%]" />
       </div>
 
-            {!showTokenForm ? (
-                <div className="w-[83%] sm:w-[70%] lg:w-[30%] bg-white p-6 border-1 border-[#003F88] rounded-lg mx-auto flex flex-col justify-center items-center">
-                    <h1 className="text-4xl font-bold pb-8 text-center">
-                        RECUPERACIÓN DE CONTRASEÑA
-                    </h1>
-                    <p className="text-justify w-[85%] pb-5">
-                        Introduce tu cédula de ciudadanía y teléfono, para solicitar un
-                        token y recuperar tu contraseña.
-                    </p>
-                    <form
-                        onSubmit={handleReset}
-                        className="flex flex-col items-center w-full"
-                    >
-                        {error && (
-                            <span className="w-[83%] text-sm text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
-                                <IoIosWarning size={26} className="flex-shrink-0" />
-                                {error}
-                                <IoIosWarning size={26} className="flex-shrink-0" />
-                            </span>
-                        )}
-                        <InputItem
-                            id="document"
-                            labelName={
-                                <>
-                                    Cédula de Ciudadanía{" "}
-                                    <PiAsteriskSimpleBold
-                                        size={12}
-                                        className="inline text-red-500"
-                                    />
-                                </>
-                            }
-                            placeholder="Ingresa tu Cédula de Ciudadanía"
-                            type="string"
-                            value={document}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                // Permitir solo números y limitar el tamaño
-                                if (/^\d*$/.test(value)) {
-                                    setDocument(value);
-                                }
-                            }}
-                            maxLength={12}
-                        />
-                        <InputItem
-                            id="phone"
-                            labelName={
-                                <>
-                                    Teléfono{" "}
-                                    <PiAsteriskSimpleBold
-                                        size={12}
-                                        className="inline text-red-500"
-                                    />
-                                </>
-                            }
-                            placeholder="Ingresa tu teléfono"
-                            type="string"
-                            value={phone}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                // Permitir solo números y limitar el tamaño
-                                if (/^\d*$/.test(value)) {
-                                    setPhone(value);
-                                }
-                            }}
-                            maxLength={10}
-                        />
-                        <button
-                            type="submit"
-                            className="w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out"
-                        >
-                            SOLICITAR TOKEN
-                        </button>
-                    </form>
-                </div>
-            ) : (
-                <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[40%] lg:w-[28%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
-                    <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
-                    <p className="text-center mt-2">
-                        Introduce el token que fue enviado a tu correo electrónico.
-                    </p>
+      {!showTokenForm ? (
+        <div className="w-[83%] sm:w-[70%] lg:w-[30%] bg-white p-6 border-1 border-[#003F88] rounded-lg mx-auto flex flex-col justify-center items-center">
+          <h1 className="text-4xl font-bold pb-8 text-center">
+            RECUPERACIÓN DE CONTRASEÑA
+          </h1>
+          <p className="text-justify w-[85%] pb-5">
+            Introduce tu cédula de ciudadanía y teléfono, para solicitar un
+            token y recuperar tu contraseña.
+          </p>
+          <form
+            onSubmit={handleReset}
+            className="flex flex-col items-center w-full"
+          >
+            {error && (
+              <span className="w-[83%] text-sm text-center py-1 mb-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
+                <IoIosWarning size={26} className="flex-shrink-0" />
+                {error}
+                <IoIosWarning size={26} className="flex-shrink-0" />
+              </span>
+            )}
+            <InputItem
+              id="document"
+              labelName={
+                <>
+                  Cédula de Ciudadanía{" "}
+                  <PiAsteriskSimpleBold
+                    size={12}
+                    className="inline text-red-500"
+                  />
+                </>
+              }
+              placeholder="Ingresa tu Cédula de Ciudadanía"
+              type="string"
+              value={document}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Permitir solo números y limitar el tamaño
+                if (/^\d*$/.test(value)) {
+                  setDocument(value);
+                }
+              }}
+              maxLength={12}
+            />
+            <InputItem
+              id="phone"
+              labelName={
+                <>
+                  Teléfono{" "}
+                  <PiAsteriskSimpleBold
+                    size={12}
+                    className="inline text-red-500"
+                  />
+                </>
+              }
+              placeholder="Ingresa tu teléfono"
+              type="string"
+              value={phone}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Permitir solo números y limitar el tamaño
+                if (/^\d*$/.test(value)) {
+                  setPhone(value);
+                }
+              }}
+              maxLength={10}
+            />
+            <button
+              type="submit"
+              className={`w-[50%] sm:w-[45%] mt-4 bg-[#365486] text-white font-semibold py-2 px-2 rounded-lg hover:bg-[#344663] hover:scale-105 transition-all duration-300 ease-in-out ${
+                isLoading
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:bg-[#344663] hover:scale-105"
+              }`}
+            >
+              {isLoading ? "SOLICITANDO TOKEN..." : "SOLICITAR TOKEN"}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[40%] lg:w-[28%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
+          <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
+          <p className="text-center mt-2">
+            Introduce el token que fue enviado a tu correo electrónico.
+          </p>
 
           {otpError && (
             <span className="w-full text-sm text-center py-1 my-2 bg-[#FFA7A9] rounded-lg text-gray-600 flex gap-5 items-center justify-center mx-auto px-5 whitespace-pre-line">
@@ -332,9 +344,13 @@ const ForgotPassword = () => {
             </button>
             <button
               onClick={handleTokenSubmit}
-              className="bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663]"
+              className={`bg-[#365486] text-white px-4 py-2 rounded-lg hover:bg-[#344663] ${
+                isLoading
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:bg-[#344663]"
+              }`}
             >
-              ENVIAR
+              {isLoading ? "ENVIANDO TOKEN..." : "ENVIAR TOKEN"}
             </button>
           </div>
         </div>

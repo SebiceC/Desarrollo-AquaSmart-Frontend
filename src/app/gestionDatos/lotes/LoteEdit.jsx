@@ -38,6 +38,10 @@ const LoteEdit = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const navigate = useNavigate()
+  const [initialIsActive, setInitialIsActive] = useState(false)
+
+  
+  
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -75,8 +79,9 @@ const LoteEdit = () => {
           predio_asignado: response.data.plot || "",
           tipo_suelo: response.data.soil_type || "",
           variedad_cultivo: response.data.crop_variety || "",
-          is_activate: response.data.is_activate === true || response.data.is_activate === "true", // Asegurar que is_activate sea siempre booleano
+          is_activate: response.data.is_activate === true || response.data.is_activate === "true",
         })
+        setInitialIsActive(response.data.is_activate === true || response.data.is_activate === "true")        
       } catch (error) {
         setErrorMessage("No se pudo cargar la información del lote.")
         setShowSuccessModal(true)
@@ -297,7 +302,7 @@ const LoteEdit = () => {
               <label className="block text-sm font-medium text-gray-1000 mb-1">Estado del lote</label>
               <div className="relative">
                 <select
-                  className={`w-[85%] border border-gray-300 rounded px-3 py-2 appearance-none ${errors.is_activate ? "bg-red-100" : "bg-white"}`}
+                  className={`w-[85%] border border-gray-300 rounded px-3 py-2 appearance-none ${errors.is_activate ? "bg-red-100" : formData.is_activate ? "bg-gray-200 cursor-not-allowed" : "bg-white"}`}
                   name="is_activate"
                   value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
                   onChange={(e) => {
@@ -306,9 +311,9 @@ const LoteEdit = () => {
                       ...prev,
                       is_activate: value,
                     }))
-
                     setErrors((prev) => ({ ...prev, is_activate: "" }))
                   }}
+                  disabled={initialIsActive}
                 >
                   <option value="">SELECCIÓN DE ESTADO</option>
                   {lotsStates.map((state, index) => (
@@ -322,6 +327,7 @@ const LoteEdit = () => {
               </div>
               {errors.is_activate && <p className="text-red-500 text-sm mt-1">{errors.is_activate}</p>}
             </div>
+
 
             {/* Contenedor para mensajes de error y botones */}
             <div className="col-span-1 md:col-span-2 flex flex-col items-start mt-4">

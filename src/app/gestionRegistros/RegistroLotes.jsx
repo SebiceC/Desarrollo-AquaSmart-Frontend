@@ -193,7 +193,7 @@ const RegistroLotes = () => {
                         Formulario de Registro de Lotes
                     </h2>
                 </div>
-                <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+                <div className="bg-white p-6  w-full max-w-3xl">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputItem
                             label={

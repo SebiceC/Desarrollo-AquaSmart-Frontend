@@ -33,11 +33,13 @@ const PreRegister = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDuplicateIdModal, setShowDuplicateIdModal] = useState(false);
   const [showEmailErrorModal, setShowEmailErrorModal] = useState(false);
-  const [showPreRegistroCompletadoModal, setShowPreRegistroCompletadoModal] = useState(false);
+  const [showPreRegistroActivoModal, setShowPreRegistroActivoModal] =
+    useState(false);
+  const [showPreRegistroCompletadoModal, setShowPreRegistroCompletadoModal] =
+    useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); 
-
+  const [isLoading, setIsLoading] = useState(false);
 
   // Obtener los tipos de documento y persona desde el backend
   useEffect(() => {
@@ -66,12 +68,12 @@ const PreRegister = () => {
     if (formData.person_type === "1") {
       // Si es "Natural", excluir el tipo de documento 4 (NIT)
       setFilteredDocumentTypes(
-        documentTypes.filter((type) => type.documentTypeId !== 5)
+        documentTypes.filter((type) => type.documentTypeId !== 2)
       );
     } else if (formData.person_type === "2") {
       // Si es "Jurídica", solo permitir el tipo de documento 4 (NIT)
       setFilteredDocumentTypes(
-        documentTypes.filter((type) => type.documentTypeId === 5)
+        documentTypes.filter((type) => type.documentTypeId === 2)
       );
     } else {
       // Si no se ha seleccionado un tipo de persona, mostrar todos los tipos de documento
@@ -165,74 +167,85 @@ const PreRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Manejar el envío del formulario con Axios
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setIsLoading(true);
 
-
-// Manejar el envío del formulario con Axios
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-  setIsLoading(true);
-
-  const formDataToSend = new FormData();
-  // Excluir confirmPassword ya que no existe en el backend
-  Object.keys(formData).forEach((key) => {
-    if (key !== "attachments" && key !== "confirmPassword") {
-      formDataToSend.append(key, formData[key]);
-    }
-  });
-
-  formData.attachments.forEach((file) => {
-    formDataToSend.append("attachments", file);
-  });
-
-  try {
-    const response = await axios.post(
-      `${API_URL}/users/pre-register`,
-      formDataToSend,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    const formDataToSend = new FormData();
+    // Excluir confirmPassword ya que no existe en el backend
+    Object.keys(formData).forEach((key) => {
+      if (key !== "attachments" && key !== "confirmPassword") {
+        formDataToSend.append(key, formData[key]);
       }
-    );
-    setIsLoading(false);
-    if (response.status === 201) {
-      // Limpiamos el formulario
-      setShowSuccessModal(true);
-    } else {
-      throw new Error("Error al enviar el formulario");
-    }
+    });
+
+    formData.attachments.forEach((file) => {
+      formDataToSend.append("attachments", file);
+    });
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/users/pre-register`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      setIsLoading(false);
+      if (response.status === 201) {
+        // Limpiamos el formulario
+        setShowSuccessModal(true);
+      } else {
+        throw new Error("Error al enviar el formulario");
+      }
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
       setIsLoading(false);
       if (error.response && error.response.status === 400) {
         // Para errores 400 de Axios
         const errorData = error.response.data;
-        
+
         // Si el error viene como string JSON, intentamos parsearlo
         let parsedError = errorData;
-        if (typeof errorData === 'string') {
+        if (typeof errorData === "string") {
           try {
             parsedError = JSON.parse(errorData);
           } catch (e) {
             // Si no se puede parsear, mantenemos el error original
           }
         }
-        
+
         // Verificar los casos específicos
-        if (parsedError.email && parsedError.email.includes("Este correo ya está registrado.")) {
+        if (
+          parsedError.email &&
+          parsedError.email.includes("Este correo ya está registrado.")
+        ) {
           // Caso específico: Correo ya registrado
           setShowEmailErrorModal(true);
-        } else if (parsedError.document && parsedError.document.includes("El usuario ya pasó el pre-registro.")) {
+        } else if (
+          parsedError.document &&
+          parsedError.document.includes("El usuario ya pasó el pre-registro.")
+        ) {
           // Caso específico: Usuario ya pasó el pre-registro
           setShowPreRegistroCompletadoModal(true);
-        } 
+        } else if (
+          parsedError.document &&
+          parsedError.document.includes("Ya tienes un pre-registro activo.")
+        ) {
+          // Caso específico: Usuario ya pasó el pre-registro
+          setShowPreRegistroActivoModal(true);
+        }
       } else {
         // Otros errores (no 400)
         setShowErrorModal(true);
       }
     }
-};
+  };
+  console.log(documentTypes);
 
   return (
     <div className="w-full h-full min-h-screen bg-white">
@@ -297,7 +310,7 @@ const handleSubmit = async (e) => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Telefono"
-                  maxLength={13}
+                  maxLength={10}
                   error={errors.phone}
                 />
 
@@ -351,12 +364,16 @@ const handleSubmit = async (e) => {
                   <div className="relative">
                     <select
                       className={`w-full border border-gray-300 rounded px-3 py-2 appearance-none ${
-                        errors.document_type ? "bg-red-100" : "bg-white"
+                        errors.document_type
+                          ? "bg-red-100"
+                          : formData.person_type
+                          ? "bg-white"
+                          : "bg-gray-100 text-gray-400"
                       }`}
                       name="document_type"
                       value={formData.document_type}
                       onChange={handleChange}
-                      disabled={!formData.person_type} // Deshabilitar si no se ha seleccionado un tipo de persona
+                      disabled={!formData.person_type}
                     >
                       <option value="">TIPO DE DOCUMENTO</option>
                       {filteredDocumentTypes.map((type, index) => (
@@ -365,7 +382,13 @@ const handleSubmit = async (e) => {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <ChevronDown
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                        !formData.person_type
+                          ? "text-gray-400"
+                          : "text-gray-500"
+                      }`}
+                    />
                   </div>
                   {errors.document_type && (
                     <p className="text-[#F90000]">{errors.document_type}</p>
@@ -519,7 +542,6 @@ const handleSubmit = async (e) => {
         showModal={showErrorModal}
         onClose={() => {
           setShowErrorModal(false);
-           
         }}
         title="ERROR"
         btnMessage="Aceptar"
@@ -531,7 +553,6 @@ const handleSubmit = async (e) => {
         showModal={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-           
         }}
         title="ÉXITO"
         btnMessage="Aceptar"
@@ -543,12 +564,14 @@ const handleSubmit = async (e) => {
         showModal={showDuplicateIdModal}
         onClose={() => {
           setShowDuplicateIdModal(false);
-           
         }}
         title="Error de Pre Registro"
         btnMessage="Aceptar"
       >
-        <p>Error en el envío del formulario, ya que el número de identificación ya esta registrado o cuenta con un pre-registro.</p>
+        <p>
+          Error en el envío del formulario, ya que el número de identificación
+          ya esta registrado o cuenta con un pre-registro.
+        </p>
       </Modal>
 
       <Modal
@@ -566,7 +589,21 @@ const handleSubmit = async (e) => {
         title="Error de Pre Registro"
         btnMessage="Aceptar"
       >
-        <p>EL usuario ya completó el proceso de pre-registro. Por favor inicie sesión.</p>
+        <p>
+          EL usuario ya completó el proceso de pre-registro. Por favor inicie
+          sesión.
+        </p>
+      </Modal>
+      <Modal
+        showModal={showPreRegistroActivoModal}
+        onClose={() => setShowPreRegistroActivoModal(false)}
+        title="Error de Pre Registro"
+        btnMessage="Aceptar"
+      >
+        <p>
+          Ya tienes un pre-registro activo.Espera ser validado por el
+          administrador.
+        </p>
       </Modal>
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs">
