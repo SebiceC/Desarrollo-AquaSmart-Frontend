@@ -1,10 +1,13 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import Modal from '../components/Modal';
 
 // Componente para el botón de descarga con jsPDF
-const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
+const PDFDownloadButton = ({ data, startDate, endDate, chartRef, disabled }) => {
+  const [showModalErrorPDF, setShowModalErrorPDF] = useState(false);
+  const [modalMessage, setModalMessage] = useState("¡Error al descargar el historial! Intenta más tarde");
+
   // Formatear las fechas para mostrar
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -79,6 +82,8 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
     // Verificar si la referencia al gráfico existe
     if (!chartRef.current) {
       console.error('No se pudo encontrar la referencia al gráfico');
+      setModalMessage("No se pudo encontrar la referencia al gráfico");
+      setShowModalErrorPDF(true);
       return;
     }
 
@@ -142,51 +147,18 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
       
       // Agregar subtítulo
       doc.setFontSize(16);
-      doc.text('Historial de consumo del distrito', pageWidth / 2, 50, { align: 'center' });
+      doc.text(document.querySelector('h1').textContent, pageWidth / 2, 50, { align: 'center' });
       
       // Agregar rango de fechas
       doc.setFontSize(12);
       doc.text(`${formatDate(startDate)} - ${formatDate(endDate)}`, pageWidth / 2, 60, { align: 'center' });
       
-      // Agregar los botones de período (visuales)
-      const periodY = 70;
-      const periodOptions = ['1D', '3D', '1M', '3M', '6M'];
-      const buttonWidth = 10;
-      const spacing = 5;
-      const totalWidth = (buttonWidth + spacing) * periodOptions.length - spacing;
-      let startX = (pageWidth - totalWidth) / 2;
-      
-      doc.setFillColor(240, 240, 240);
-      doc.setDrawColor(200, 200, 200);
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(8);
-      
-      periodOptions.forEach((option, index) => {
-        const isActive = option === '1M'; // Asumimos que 1M está activo como en la imagen
-        
-        if (isActive) {
-          doc.setFillColor(37, 99, 235); // Color azul
-          doc.setTextColor(255, 255, 255);
-        } else {
-          doc.setFillColor(240, 240, 240);
-          doc.setTextColor(100, 100, 100);
-        }
-        
-        doc.roundedRect(startX, periodY, buttonWidth, 5, 1, 1, 'F');
-        doc.text(option, startX + buttonWidth/2, periodY + 3.5, { align: 'center' });
-        
-        // Resetear colores para el siguiente botón
-        doc.setFillColor(240, 240, 240);
-        doc.setTextColor(100, 100, 100);
-        
-        startX += buttonWidth + spacing;
-      });
       
       // Agregar la imagen del gráfico
       const chartWidth = 170;
       const chartHeight = (canvas.height * chartWidth) / canvas.width;
       const chartX = (pageWidth - chartWidth) / 2;
-      const chartY = periodY + 10;
+      const chartY = 70 + 10;
       
       doc.addImage(chartImgData, 'PNG', chartX, chartY, chartWidth, chartHeight);
       
@@ -262,7 +234,8 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
       document.body.removeChild(loadingIndicator);
     } catch (error) {
       console.error('Error al generar el PDF:', error);
-      alert('Hubo un error al generar el PDF. Por favor, intenta de nuevo.');
+      setModalMessage(`¡Error al descargar el historial! Intenta más tarde`);
+      setShowModalErrorPDF(true);
       
       // Asegurarse de que se elimine el indicador de carga en caso de error
       const loadingIndicator = document.querySelector('div[style*="position: fixed"]');
@@ -273,13 +246,29 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef }) => {
   };
 
   return (
-    <button
-      onClick={generatePDF}
-      className="flex items-center gap-2 bg-[#4c84de] text-white px-4 py-2 rounded-full text-md font-semibold hover:bg-[#689ce6]"
-    >
-      <img src="/img/pdf.png" alt="PDF Icon" width="25" height="25" />
-      <span>Descargar PDF</span>
-    </button>
+    <>
+      <button
+        onClick={disabled ? null : generatePDF}
+        className={`flex items-center gap-2 ${
+          disabled 
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+            : "bg-[#4c84de] text-white hover:bg-[#689ce6]"
+        } px-4 py-2 rounded-full text-md font-semibold`}
+        disabled={disabled}
+      >
+        <img src="/img/pdf.png" alt="PDF Icon" width="25" height="25" />
+        <span>Descargar PDF</span>
+      </button>
+      
+      <Modal
+        showModal={showModalErrorPDF}
+        onClose={() => setShowModalErrorPDF(false)}
+        title="Error al generar el PDF"
+        btnMessage="Aceptar"
+      >
+        <p>{modalMessage}</p>
+      </Modal>
+    </>
   );
 };
 

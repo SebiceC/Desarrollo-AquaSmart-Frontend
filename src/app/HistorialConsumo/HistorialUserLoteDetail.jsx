@@ -2,19 +2,22 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import NavBar from '../../components/NavBar'
 import Modal from "../../components/Modal";
 import { Calendar, ChevronDown, List } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import { PDFDownloadButton } from '../../components/PdfGenerator';
 import { CSVDownloadButton } from '../../components/CsvGenerator';
+import BackButton from '../../components/BackButton';
 
-const HistorialLoteDetail = () => {
-
-    const { id_lot } = useParams();
+const HistorialUserLoteDetail = () => {
+    const { id_plot, id_lot } = useParams();
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const chartRef = useRef(null);
+    const [showUnauthorizedModal, setShowUnauthorizedModal] = useState(false);
+    const [isAuthorized, setIsAuthorized] = useState(true);
+    const navigate = useNavigate();
 
 
     // Estado para las fechas seleccionadas
@@ -47,6 +50,48 @@ const HistorialLoteDetail = () => {
         const end = new Date(endDate);
         return start > end;
     }, [startDate, endDate]);
+
+
+    useEffect(() => {
+        const validateLoteOwnership = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    throw new Error("Token no disponible");
+                }
+
+                // Obtener datos del usuario
+                const userRes = await axios.get(`${API_URL}/users/profile`, {
+                    headers: { Authorization: `Token ${token}` },
+                });
+
+                // Obtener datos del predio
+                const predioRes = await axios.get(`${API_URL}/plot-lot/plots/${id_plot}`, {
+                    headers: { Authorization: `Token ${token}` },
+                });
+
+                const loteEncontrado = predioRes.data.lotes.find((l) => l.id_lot === id_lot);
+
+                const predioEsDelUsuario = predioRes.data.owner === userRes.data.document;
+
+                if (!loteEncontrado || !predioEsDelUsuario) {
+                    setShowUnauthorizedModal(true);
+                    setIsAuthorized(false);
+                    setTimeout(() => {
+                        navigate(`/mispredios/historial-consumoList/${userRes.data.document}`);
+                    }, 3000);
+                } else {
+                    setIsAuthorized(true);
+                }
+            } catch (err) {
+                console.error("Error en validación de lote y predio:", err);
+                setShowUnauthorizedModal(true);
+                setIsAuthorized(false);
+            }
+        };
+
+        validateLoteOwnership();
+    }, [id_plot, id_lot, navigate]);
 
 // Determinar las opciones de agrupación disponibles según el rango de fechas
 useEffect(() => {
@@ -141,7 +186,6 @@ useEffect(() => {
                     setShowNoDataModal(true);
                     throw new Error('No existe consumo del lote');
                   }
-
 
                 const filteredData = processDataByTimeRange(rawData, groupByOption);
                 console.log('Datos procesados para la gráfica:', filteredData);
@@ -329,8 +373,23 @@ useEffect(() => {
         return value;
     };
 
-
-
+    if (!isAuthorized && showUnauthorizedModal) {
+        return (
+            <div className="flex flex-col min-h-screen">
+                <NavBar />
+                <Modal
+                    showModal={showUnauthorizedModal}
+                    onClose={() => navigate(`/mispredios/historial-consumoList/${id_plot}`)}
+                    title="Acceso no autorizado"
+                    btnMessage="Volver"
+                >
+                    <p>
+                        No tienes autorización para acceder a este lote. Serás redirigido automáticamente.
+                    </p>
+                </Modal>
+            </div>
+        );
+    }
 
 
 
@@ -360,17 +419,18 @@ useEffect(() => {
                     ¡Ocurrió un error al momento de generar la gráfica! Vuelve a intentarlo más tarde o ponte en contacto con soporte.
                 </p>
             </Modal>
+
             {/* Modal de ausencia de datos */}
             <Modal
-        showModal={showNoDataModal}
-        onClose={() => setShowNoDataModal(false)}
-        title="Sin datos de consumo"
-        btnMessage="Entendido"
-      >
-        <p>
-          Error al cargar los datos, no existe consumo del lote.
-        </p>
-      </Modal>
+                showModal={showNoDataModal}
+                onClose={() => setShowNoDataModal(false)}
+                title="Sin datos de consumo"
+                btnMessage="Entendido"
+            >
+                <p>
+                    Error al cargar los datos, no existe consumo del lote.
+                </p>
+            </Modal>
 
             <div className="flex-1 py-20">
                 <div className="flex flex-col bg-white rounded-lg shadow-md p-6 md:p-10 w-full max-w-4xl mx-auto">
@@ -519,6 +579,13 @@ useEffect(() => {
                             disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
                         />
                     </div>
+                    <div className="flex justify-start mt-5">
+                        <BackButton
+                            to={`/mispredios/historial-consumoPredio/${id_plot}`}
+                            text="Regresar a mi predio"
+                            className="hover:bg-blue-50"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -526,5 +593,4 @@ useEffect(() => {
         </div>
     )
 }
-
-export default HistorialLoteDetail
+export default HistorialUserLoteDetail;

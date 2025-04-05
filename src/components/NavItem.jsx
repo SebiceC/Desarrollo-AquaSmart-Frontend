@@ -79,14 +79,13 @@ const NavItem = ({ direction, text, subItems = [] }) => {
                         </div>
                     ) : (
                         <div
-                            className={`absolute left-0 w-full  bg-[#DCF2F1]  py-2 transition-all duration-300 ease-in-out 
-                                        ${menuOpen ? "block" : "hidden"}`}
+                            className={`absolute left-0 w-full  bg-[#DCF2F1]  py-2 transition-all duration-300 ease-in-out ${menuOpen ? "block" : "hidden"}`}
                         >
                             {subItems.map((subItem, index) => (
                                 <Link
                                     key={index}
                                     to={subItem.direction}
-                                    className="block whitespace-nowrap px-4 py-2 text-black hover:bg-[#002D62] hover:text-white transition"
+                                    className="block px-4 py-2 text-black hover:bg-[#002D62] hover:text-white transition break-words"
                                     onClick={() => setTimeout(() => setMenuOpen(false), 150)}
                                 >
                                     {subItem.text}

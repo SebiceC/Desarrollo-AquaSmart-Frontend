@@ -60,15 +60,15 @@ function NavBar() {
     return (
         <header className="w-full fixed top-0 bg-[#DCF2F1] z-50">
             <nav className="px-5 py-2 flex justify-between items-center">
-            <div className="flex items-center gap-1">
-                <div className="relative flex items-center ml-auto mr-4">
-                    <NotificationBell />
-                </div>
+                <div className="flex items-center gap-1">
+                    <div className="relative flex items-center ml-auto mr-4">
+                        <NotificationBell />
+                    </div>
 
-                <Link to="/home">
-                    <img src="/img/logo.png" alt="Logo" className="w-[250px]" />
-                </Link>
-            </div>
+                    <Link to="/home">
+                        <img src="/img/logo.png" alt="Logo" className="w-[250px]" />
+                    </Link>
+                </div>
 
                 <ul className="hidden lg:flex space-x-1 font-semibold">
                     <NavItem direction="/perfil" text="Perfil" />
@@ -77,6 +77,8 @@ function NavBar() {
                         text="Control IoT"
                         subItems={[
                             { direction: "/control-IoT/sensores", text: "Sensores" },
+                            { direction: "/control-IoT/bocatoma", text: "Bocatoma" },
+                            { direction: "/control-IoT/valvulas", text: "Valvulas" },
                         ]}
                     />
                     <NavItem
@@ -111,13 +113,9 @@ function NavBar() {
                         direction="/historialConsumo"
                         text="Historial de consumo"
                         subItems={[
-                            { direction: "/mispredios/historial-consumoList/:document", text: "Mis predios" },
+                            { direction: "/mispredios/historial-consumoList/:document", text: "Historial de mis predios y lotes" },
                             { direction: "/historial-consumo/distrito", text: "Historial del distrito" },
                             { direction: "/historial-consumo/predio", text: "Historial del predio" },
-                            {
-                                direction: "/historialConsumo/mensual",
-                                text: "Consumo Mensual",
-                            },
                         ]}
                     />
                     <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
@@ -153,13 +151,15 @@ function NavBar() {
                             text="Control IoT"
                             subItems={[
                                 { direction: "/control-IoT/sensores", text: "Sensores" },
+                                { direction: "/control-IoT/bocatoma", text: "Bocatoma" },
+                                { direction: "/control-IoT/valvulas", text: "Valvulas" }
                             ]}
                         />
                         <NavItem
                             direction="/gestionDatos"
                             text="Gestión de datos"
                             subItems={[
-                                { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
+                                { direction: "/gestionDatos/pre-registros", text: "Pre Registros" },
                                 { direction: "/gestionDatos/users", text: "Usuarios" },
                                 { direction: "/gestionDatos/predios", text: "Predios" },
                                 { direction: "/gestionDatos/lotes", text: "Lotes" },
@@ -187,7 +187,8 @@ function NavBar() {
                             direction="/historialConsumo"
                             text="Historial de consumo"
                             subItems={[
-                                { direction: "/historialConsumo/diario", text: "Consumo Diario" },
+                                { direction: "/mispredios/historial-consumoList/:document", text: "Historial de mis predios y lotes" },
+                                { direction: "/historial-consumo/distrito", text: "Historial del distrito" },
                                 { direction: "/historial-consumo/predio", text: "Historial del predio" },
                             ]}
                         />

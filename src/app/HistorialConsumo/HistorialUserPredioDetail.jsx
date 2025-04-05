@@ -43,7 +43,7 @@ const HistorialUserPredioDetail = () => {
   const [showGraphErrorModal, setShowGraphErrorModal] = useState(false);
 
   // Use a fallback if import.meta is not available
-  const API_URL = typeof import.meta !== 'undefined' ? import.meta.env.VITE_APP_API_URL : 'https://api.example.com';
+  const API_URL = import.meta.env.VITE_APP_API_URL;
 
   // Calcular la diferencia en días entre las fechas seleccionadas
   const daysDifference = useMemo(() => {
@@ -143,66 +143,72 @@ const HistorialUserPredioDetail = () => {
     validateOwnership();
   }, [id_plot, navigate, API_URL]);
 
-  // Determinar las opciones de agrupación disponibles según el rango de fechas
-  useEffect(() => {
-    if (dateValidationError) {
-      return; // No continuar si hay error de validación
+ // Determinar las opciones de agrupación disponibles según el rango de fechas
+useEffect(() => {
+  if (dateValidationError) {
+    return; // No continuar si hay error de validación
+  }
+  
+  let options = [];
+  
+  if (daysDifference <= 1) {
+    // Si es un solo día, solo permitir ver por horas
+    options = ['hour'];
+    if (groupByOption !== 'hour') {
+      setGroupByOption('hour');
     }
+  } else if (daysDifference <= 30) {
+    // Si es menos de un mes, permitir diario
+    options = ['day'];
+    if (groupByOption !== 'day') {
+      setGroupByOption('day');
+    }
+  } else if (daysDifference <= 90) {
+    // Si es entre 1 y 3 meses, permitir semanal o mensual
+    options = ['week', 'month'];
+    if (!['week', 'month'].includes(groupByOption)) {
+      setGroupByOption('week');
+    }
+  } else {
+    // Si es más de 3 meses, solo permitir mensual
+    options = ['month'];
+    if (groupByOption !== 'month') {
+      setGroupByOption('month');
+    }
+  }
+  
+  setAvailableGroupOptions(options);
+}, [daysDifference, groupByOption, dateValidationError]);
 
-    let options = [];
+// Texto descriptivo para opciones de agrupación
+const groupByOptions = {
+  hour: 'Horas',
+  day: 'Días',
+  week: 'Semanas',
+  month: 'Meses'
+};
 
-    if (daysDifference <= 1) {
-      // Si es un solo día, solo permitir ver por horas
-      options = ['hour'];
-      if (groupByOption !== 'hour') {
-        setGroupByOption('hour');
-      }
-    } else if (daysDifference <= 30) {
-      // Si es entre 1 día y 1 mes, permitir diario
-      options = ['day'];
-      if (groupByOption !== 'day') {
-        setGroupByOption('day');
-      }
-    } else if (daysDifference <= 60) {
-      // Si es entre 1 y 2 meses, permitir diario o semanal
-      options = ['day', 'week'];
-      if (!['day', 'week'].includes(groupByOption)) {
-        setGroupByOption('day');
-      }
+// Formatear la descripción del rango de tiempo seleccionado
+const getTimeRangeDescription = () => {
+  if (daysDifference === 0) {
+    return "Hoy";
+  } else if (daysDifference === 1) {
+    return "1 día";
+  } else if (daysDifference < 30) {
+    return `${daysDifference} días`;
+  } else if (daysDifference < 60) {
+    return `${Math.floor(daysDifference / 30)} mes y ${daysDifference % 30} días`;
+  } else {
+    const meses = Math.floor(daysDifference / 30);
+    const dias = daysDifference % 30;
+    
+    if (dias === 0) {
+      return `${meses} meses`;
     } else {
-      // Si es más de 2 meses, permitir todas las opciones
-      options = ['day', 'week', 'month'];
-      if (!['day', 'week', 'month'].includes(groupByOption)) {
-        setGroupByOption('week');
-      }
+      return `${meses} meses y ${dias} días`;
     }
-
-    setAvailableGroupOptions(options);
-  }, [daysDifference, groupByOption, dateValidationError]);
-
-  // Texto descriptivo para opciones de agrupación
-  const groupByOptions = {
-    hour: 'Horas',
-    day: 'Días',
-    week: 'Semanas',
-    month: 'Meses'
-  };
-
-  // Formatear la descripción del rango de tiempo seleccionado
-  const getTimeRangeDescription = () => {
-    if (daysDifference === 0) {
-      return "Hoy";
-    } else if (daysDifference === 1) {
-      return "1 día";
-    } else if (daysDifference <= 30) {
-      return `${daysDifference} días`;
-    } else if (daysDifference <= 60) {
-      return `${Math.floor(daysDifference / 30)} mes y ${daysDifference % 30} días`;
-    } else {
-      return `${Math.floor(daysDifference / 30)} meses`;
-    }
-  };
-
+  }
+};
   useEffect(() => {
     // No realizar la petición si hay error de validación en las fechas
     if (dateValidationError || !id_plot) {
@@ -439,7 +445,7 @@ const HistorialUserPredioDetail = () => {
   };
 
   const handleLoteClick = (loteId) => {
-    navigate(``);
+    navigate(`/mispredios/historial-consumoPredio/${id_plot}/milote/${loteId}`);
   };
 
   // Si el usuario no es propietario, mostrar solo el mensaje modal y esperar la redirección
@@ -635,31 +641,21 @@ const HistorialUserPredioDetail = () => {
           </div>
 
           <div className="mt-6 flex justify-center gap-4">
-            {!dateValidationError && data.length > 0 ? (
+            {chartRef && (
               <PDFDownloadButton 
                 data={data} 
                 startDate={startDate} 
                 endDate={endDate} 
                 chartRef={chartRef}
+                disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
               />
-            ) : (
-              <button className="flex items-center gap-2 bg-pink-200 text-red-700 px-4 py-2 rounded-full text-sm hover:bg-red-300 opacity-50 cursor-not-allowed">
-                <img src="/img/pdf.png" alt="PDF Icon" width="20" height="20" />
-                <span>Descargar historial</span>
-              </button>
             )}
-            {!dateValidationError && data.length > 0 ? (
-              <CSVDownloadButton 
-                data={data} 
-                startDate={startDate} 
-                endDate={endDate} 
-              />
-            ) : (
-              <button className="flex items-center gap-2 bg-green-200 text-green-700 px-4 py-2 rounded-full text-sm hover:bg-green-300 opacity-50 cursor-not-allowed">
-                <img src="/img/csv.png" alt="CSV Icon" width="20" height="20" />
-                <span>Descargar historial</span>
-              </button>
-            )}
+            <CSVDownloadButton 
+              data={data} 
+              startDate={startDate} 
+              endDate={endDate} 
+              disabled={!data || data.length === 0 || !startDate || !endDate || dateValidationError || error || loading || showNoDataModal || showGraphErrorModal}
+            />
           </div>
 
           {/* Nuevo bloque para lotes asociados */}
