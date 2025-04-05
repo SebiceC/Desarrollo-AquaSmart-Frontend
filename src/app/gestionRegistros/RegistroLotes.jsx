@@ -12,6 +12,7 @@ const API_URL = import.meta.env.VITE_APP_API_URL;
 
 const RegistroLotes = () => {
     const [formData, setFormData] = useState({
+        nombre_cultivo: "",
         tipo_cultivo: "",
         predio_asignado: "",
         tipo_suelo: "",
@@ -20,7 +21,7 @@ const RegistroLotes = () => {
 
     // Objeto para rastrear errores por campo
     const [fieldErrors, setFieldErrors] = useState({
-        tipo_cultivo: false,
+        nombre_cultibvo: false,
         predio_asignado: false,
         variedad_cultivo: false
     });
@@ -29,6 +30,7 @@ const RegistroLotes = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false); // Track submission status
     const [soilTypes, setSoilTypes] = useState([])
+    const [cropTypes, setCropTypes] = useState([])
     const navigate = useNavigate();
 
 
@@ -48,6 +50,14 @@ const RegistroLotes = () => {
                     },
                 });
 
+                const cropTypesResponse = await axios.get(`${API_URL}/plot-lot/crop-types`, {
+                    headers: {
+                        Authorization: `Token ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                setCropTypes(cropTypesResponse.data);
                 setSoilTypes(soilTypesResponse.data);
             } catch (error) {
                 console.error("Error al obtener las opciones:", error);
@@ -58,7 +68,7 @@ const RegistroLotes = () => {
     }, []);
 
     const validateField = (name, value) => {
-        if (name === "tipo_cultivo" || name === "variedad_cultivo") {
+        if (name === "nombre_cultivo" || name === "variedad_cultivo") {
             const regex = /^[A-Za-z0-9\s]*$/;
             return regex.test(value);
         } else if (name === "predio_asignado") {
@@ -77,7 +87,7 @@ const RegistroLotes = () => {
         setFormData((prevData) => ({ ...prevData, [name]: value }));
 
         // Validar campos específicos
-        if (name === "tipo_cultivo" || name === "variedad_cultivo" || name === "predio_asignado") {
+        if (name === "nombre_cultivo" || name === "variedad_cultivo" || name === "predio_asignado") {
             const isValid = validateField(name, value);
 
             // Actualizar errores de campo específicos
@@ -109,28 +119,28 @@ const RegistroLotes = () => {
     };
 
     const validateForm = () => {
-        const { tipo_cultivo, predio_asignado, tipo_suelo, variedad_cultivo } = formData;
+        const { nombre_cultivo, tipo_cultivo, predio_asignado, tipo_suelo, variedad_cultivo } = formData;
 
         // Verificar campos obligatorios
-        if (!tipo_cultivo.trim() || !predio_asignado.trim() || !tipo_suelo.trim()) {
+        if (!nombre_cultivo.trim() || !tipo_cultivo.trim() || !predio_asignado.trim() || !tipo_suelo.trim()) {
             setErrorMessage("Por favor, complete todos los campos obligatorios.");
             return false;
         }
 
         // Verificar validez de todos los campos
-        const hasInvalidTipoCultivo = !validateField("tipo_cultivo", tipo_cultivo);
+        const hasInvalidNombreCultivo = !validateField("nombre_cultivo", tipo_cultivo);
         const hasInvalidPredioAsignado = !validateField("predio_asignado", predio_asignado);
         const hasInvalidVariedadCultivo = variedad_cultivo.trim() !== "" && !validateField("variedad_cultivo", variedad_cultivo);
 
         // Actualizar los errores de campo
         setFieldErrors({
-            tipo_cultivo: hasInvalidTipoCultivo,
+            nombre_cultivo: hasInvalidNombreCultivo,
             predio_asignado: hasInvalidPredioAsignado,
             variedad_cultivo: hasInvalidVariedadCultivo
         });
 
         // Si alguno de los campos tiene datos inválidos, no permitir el envío
-        if (hasInvalidTipoCultivo || hasInvalidPredioAsignado || hasInvalidVariedadCultivo) {
+        if (hasInvalidNombreCultivo || hasInvalidPredioAsignado || hasInvalidVariedadCultivo) {
             if (hasInvalidPredioAsignado) {
                 setErrorMessage("ERROR, el predio solo puede contener letras, números y máximo un guión");
             } else {
@@ -158,6 +168,7 @@ const RegistroLotes = () => {
             const response = await axios.post(
                 `${API_URL}/plot-lot/lots/register`,
                 {
+                    nombre_cultivo: formData.nombre_cultivo,
                     crop_type: formData.tipo_cultivo,
                     plot: formData.predio_asignado,
                     soil_type: formData.tipo_suelo,
@@ -198,18 +209,39 @@ const RegistroLotes = () => {
                         <InputItem
                             label={
                                 <>
-                                    Tipo de cultivo <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                                    Nommbre del cultivo <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
                                 </>
                             }
                             type="text"
-                            name="tipo_cultivo"
+                            name="nombre_cultivo"
                             placeholder="Ej: Cacao"
-                            value={formData.tipo_cultivo}
+                            value={formData.nombre_cultivo}
                             onChange={handleChange}
                             maxLength={20}
-                            error={(!formData.tipo_cultivo.trim() && isSubmitted) || fieldErrors.tipo_cultivo}
-                            className={`${(!formData.tipo_cultivo.trim() && isSubmitted) || fieldErrors.tipo_cultivo ? "border-red-100" : "border-gray-300"}`}
+                            error={(!formData.nombre_cultivo.trim() && isSubmitted) || fieldErrors.nombre_cultivo}
+                            className={`${(!formData.nombre_cultivo.trim() && isSubmitted) || fieldErrors.nombre_cultivo ? "border-red-100" : "border-gray-300"}`}
+
                         />
+                        <div className="relative mt-2 flex flex-col">
+                            <label htmlFor="tipo_cultivo" className="text-sm font-medium text-gray-700">
+                                Tipo de Cultivo <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                            </label>
+                            <select
+                                id="tipo_cultivo"
+                                name="tipo_cultivo"
+                                value={formData.tipo_cultivo}
+                                onChange={handleChange}
+                                className="w-[85%] border border-gray-300 rounded px-3 py-2 pr-8 appearance-none"
+                            >
+                                <option value="">SELECCIÓN DE TIPO DE CULTIVO</option>
+                                {cropTypes.map((type, index) => (
+                                    <option key={index} value={type.id}>
+                                        {type.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-14 lg:right-16 top-1/2 transform lg:-translate-y-0 text-gray-500 w-4 h-4 pointer-events-none" />
+                        </div>
                         <InputItem
                             label={
                                 <>
