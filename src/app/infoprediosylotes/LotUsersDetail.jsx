@@ -7,6 +7,11 @@ import BackButton from "../../components/BackButton";
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
+const cropTypeMap = {
+    1: "Piscicultura",
+    2: "Agricultura"
+  };
+
 function LotUsersDetail() {
     const { id_lot } = useParams(); // Obtener el ID del lote seleccionado
     const [lot, setLot] = useState(null);
@@ -68,7 +73,7 @@ function LotUsersDetail() {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <strong>Tipo de Cultivo:</strong>
-                                <span>{lot.crop_type || "No disponible"}</span>
+                                <span>{cropTypeMap[lot.crop_type] || `Tipo ${lot.crop_type}`}</span>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <strong>Variedad del Cultivo:</strong>

@@ -11,6 +11,24 @@ import FlowRateChart from "../../components/FlowRateChart"; // Importamos el com
 
 
 const HistorialPredioDetail = () => {
+  const soilType = {
+    1: "Arcilla",
+    2: "Franco arcilloso",
+    3: "Franco",
+    4: "Franco arenoso",
+    5: "Arena",
+    6: "Arcilla arenosa",
+    7: "Franco arcilloarenoso",
+    8: "Limo",
+    9: "Arcilla limosa",
+    10: "Franco arcillolimoso",
+    11: "Franco limoso",
+  };
+  
+  const cropTypeMap = {
+    1: "Piscicultura",
+    2: "Agricultura"
+  };
   // Extract predio ID from URL
   const { id_plot } = useParams();
   const navigate = useNavigate();
@@ -199,9 +217,9 @@ const HistorialPredioDetail = () => {
                     className="cursor-pointer bg-gray-50 p-4 rounded-lg border hover:shadow-md transition-shadow"
                   >
                     <h3 className="font-semibold text-gray-800 mb-2">Lote {lote.id_lot}</h3>
-                    <p className="text-sm text-gray-600">Tipo de Cultivo: {lote.crop_type}</p>
+                    <p className="text-sm text-gray-600">Tipo de Cultivo: {cropTypeMap[lote.crop_type] || `Tipo ${lote.crop_type}`}</p>
                     <p className="text-sm text-gray-600">Variedad: {lote.crop_variety}</p>
-                    <p className="text-sm text-gray-600">Tipo de Suelo: {lote.soil_type}</p>
+                    <p className="text-sm text-gray-600">Tipo de Suelo: {soilType[lote.soil_type] || `Tipo ${lote.soil_type}`}</p>
                     <p className="text-sm text-gray-600">Estado: {lote.is_activate ? 'Activo' : 'Inactivo'}</p>
                     <p className="text-xs text-gray-500 mt-2">Fecha de Registro: {new Date(lote.registration_date).toLocaleDateString()}</p>
                   </div>
