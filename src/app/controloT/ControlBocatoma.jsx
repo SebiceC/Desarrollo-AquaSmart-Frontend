@@ -36,8 +36,8 @@ const ControlBocatoma = () => {
         headers: { Authorization: `Token ${token}` },
       });
 
-      // Filtrar el dispositivo con device_type = "03"
-      const dispositivoIoT = dispositivosResponse.data.find(device => device.device_type === "03");
+      // Filtrar el dispositivo con device_type = "05"
+      const dispositivoIoT = dispositivosResponse.data.find(device => device.device_type === "05");
       
       if (dispositivoIoT) {
         // Actualizar el estado con la información del dispositivo
