@@ -278,6 +278,7 @@ const HistorialFacturasLote = () => {
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
           showPersonTypeFilter={false}
+          showStatusFilter={false}
         />
 
         {/* Modal de mensajes */}
