@@ -1,0 +1,44 @@
+name: Automated Versioning and Release
+
+on:
+  push:
+    branches:
+      - main      # Rama de producción
+      - develop   # Rama de pruebas (opcional)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # Paso 1: Descargar el código del repositorio
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para leer el historial de commits
+
+      # Paso 2: Configurar Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Paso 3: Instalar dependencias (incluyendo standard-version)
+      - name: Install dependencies
+        run: npm ci
+
+      # Paso 4: Determinar el tipo de release (alpha para develop, normal para main)
+      - name: Create Semantic Version
+        run: |
+          if [ "$GITHUB_REF" == "refs/heads/develop" ]; then
+            npm run release:alpha
+          else
+            npm run release
+          fi
+
+      # Paso 5: Subir cambios (tags y CHANGELOG.md)
+      - name: Push changes to GitHub
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git push --follow-tags
