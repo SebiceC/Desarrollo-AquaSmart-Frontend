@@ -1,7 +1,7 @@
 import React from "react";
 import { Search } from "lucide-react";
 
-const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true }) => {
+const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true, showStatusFilter = true }) => {
   const handleIdChange = (e) => {
     onFilterChange("id", e.target.value);
   };
@@ -73,28 +73,30 @@ const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTy
 
 
             {/* Filtro por Estado (Activo/Inactivo) */}
-            <div className="relative w-full lg:w-[22%] xl:w-1/5">
-        <select
-          className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
-          value={filters.isActive}
-          onChange={handleStatusChange}
-        >
-          <option value="">  ESTADO</option>
-          <option value="true">Activo</option>
-          <option value="false">Inactivo</option>
-        </select>
-        <span className="absolute top-3 right-4 text-gray-400">
-          <svg
-            className="w-5 h-5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            {showStatusFilter && (
+        <div className="relative w-full lg:w-[22%] xl:w-1/5">
+          <select
+            className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+            value={filters.isActive}
+            onChange={handleStatusChange}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </span>
-      </div>
+            <option value="">ESTADO</option>
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+          <span className="absolute top-3 right-4 text-gray-400">
+            <svg
+              className="w-5 h-5"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </span>
+        </div>
+      )}
 
       {/* Filtro por Fecha de Registro */}
       <div className="w-full lg:w-[40%] xl:w-1/3">

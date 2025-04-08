@@ -107,6 +107,7 @@ function NavBar() {
                         subItems={[
                             { direction: "/facturacion/GestionFacturas", text: "Gestión de facturas" },
                             { direction: "/facturacion/reportes", text: "Reportes" },
+                            { direction: "/facturacion/historial-facturas-lote", text: "Historial de factura" },
                         ]}
                     />
                     <NavItem
@@ -118,6 +119,7 @@ function NavBar() {
                             { direction: "/historial-consumo/predio", text: "Historial del predio" },
                         ]}
                     />
+                    <NavItem direction="/mis-facturas" text="Mis Facturas" />
                     <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
                     <NavItem direction="/permisos" text="Permisos" />
                 </ul>
@@ -181,6 +183,7 @@ function NavBar() {
                             subItems={[
                                 { direction: "/facturacion/GestionFacturas", text: "Gestión de facturas" },
                                 { direction: "/facturacion/reportes", text: "Reportes" },
+                                { direction: "/facturacion/historial-facturas-lote", text: "Historial de factura" },
                             ]}
                         />
                         <NavItem
