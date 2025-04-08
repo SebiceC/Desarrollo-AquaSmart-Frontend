@@ -49,6 +49,8 @@ import ValvesList from "../app/valvulas/ValvesList"
 import ValveDetail from "../app/valvulas/ValveDetail"
 import ValveFlowUpdate from "../app/valvulas/ValveFlowUpdate"
 
+import GestionFacturas from "../app/facturacion/GestionFacturas"
+
 
 const AppRouter = () => {
     return (
@@ -106,6 +108,7 @@ const AppRouter = () => {
             <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
             <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
             <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
+            <Route path="/facturacion/GestionFacturas" element={<ProtectedRoute element={<GestionFacturas />} />} />
         </Routes>
     );
 };
