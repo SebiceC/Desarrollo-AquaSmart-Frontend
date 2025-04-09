@@ -22,12 +22,24 @@ const MiPlotLotDetail = () => {
   const [userData, setUserData] = useState(null);
 
   const soilType = {
-    1: "Arenoso",
-    2: "Arcilloso",
-    3: "Limoso",
-    4: "Humifero",
+    1: "Arcilla",
+    2: "Franco arcilloso",
+    3: "Franco",
+    4: "Franco arenoso",
+    5: "Arena",
+    6: "Arcilla arenosa",
+    7: "Franco arcilloarenoso",
+    8: "Limo",
+    9: "Arcilla limosa",
+    10: "Franco arcillolimoso",
+    11: "Franco limoso",
   };
-
+  
+  const cropTypeMap = {
+    1: "Piscicultura",
+    2: "Agricultura"
+  };
+  
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -164,7 +176,7 @@ const MiPlotLotDetail = () => {
     {
       key: "crop_type",
       label: "Tipo de cultivo",
-      render: (item) => item.crop_type || "No disponible"
+      render: (item) => cropTypeMap[item.crop_type] || `Tipo ${item.crop_type}`
     },
     {
       key: "crop_variety",

@@ -30,6 +30,10 @@ const LotesList = () => {
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
+  const cropTypeMap = {
+    1: "Piscicultura",
+    2: "Agricultura"
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -256,7 +260,7 @@ const LotesList = () => {
   // Configuración de columnas para DataTable
   const columns = [
     { key: "id_lot", label: "ID Lote" },
-    { key: "crop_type", label: "Tipo de Cultivo" },
+    { key: "crop_type", label: "Tipo de Cultivo", render: (lote) => cropTypeMap[lote.crop_type] || `Tipo ${lote.crop_type}` },
     { key: "plot", label: "ID Predio" },
     { key: "predioOwner", label: "Propietario del Predio" }, // Cambiado de owner a predioOwner
     {

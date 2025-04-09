@@ -20,6 +20,25 @@ const PrediosDetail = () => {
   const [modalMessage, setModalMessage] = useState("");
   const [modalTitle, setModalTitle] = useState("Información");
 
+  const soilType = {
+    1: "Arcilla",
+    2: "Franco arcilloso",
+    3: "Franco",
+    4: "Franco arenoso",
+    5: "Arena",
+    6: "Arcilla arenosa",
+    7: "Franco arcilloarenoso",
+    8: "Limo",
+    9: "Arcilla limosa",
+    10: "Franco arcillolimoso",
+    11: "Franco limoso",
+  };
+  
+  const cropTypeMap = {
+    1: "Piscicultura",
+    2: "Agricultura"
+  };
+
   useEffect(() => {
     const fetchPredioData = async () => {
       try {
@@ -101,7 +120,7 @@ const PrediosDetail = () => {
     {
       key: "crop_type",
       label: "Tipo de cultivo",
-      render: (item) => item.crop_type || "No disponible"
+      render: (item) => cropTypeMap[item.crop_type] || `Tipo ${item.crop_type}`
     },
     {
       key: "crop_variety",
@@ -111,7 +130,7 @@ const PrediosDetail = () => {
     {
       key: "soil_type",
       label: "Tipo de suelo",
-      render: (item) => item.soil_type || "No disponible"
+      render: (item) => soilType[item.soil_type] || `Tipo ${item.soil_type}`
     },
     {
       key: "registration_date",

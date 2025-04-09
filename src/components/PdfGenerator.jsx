@@ -41,7 +41,7 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef, disabled }) => 
     
     // Dibujar texto del encabezado
     doc.text('Fecha', tableX + colWidth[0]/2, currentY + rowHeight/2 + 2, { align: 'center' });
-    doc.text('Consumo m³', tableX + colWidth[0] + colWidth[1]/2, currentY + rowHeight/2 + 2, { align: 'center' });
+    doc.text('Consumo L', tableX + colWidth[0] + colWidth[1]/2, currentY + rowHeight/2 + 2, { align: 'center' });
     
     currentY += rowHeight;
     
@@ -58,7 +58,7 @@ const PDFDownloadButton = ({ data, startDate, endDate, chartRef, disabled }) => 
       
       const item = data[i];
       const date = item.timestamp ? formatDate(item.timestamp) : item.name;
-      const flowRate = `${item.flowRate.toFixed(2)} m³`;
+      const flowRate = `${item.flowRate.toFixed(2)} L`;
       
       // Dibujar texto de las celdas
       doc.text(date, tableX + colWidth[0]/2, currentY + rowHeight/2 + 2, { align: 'center' });

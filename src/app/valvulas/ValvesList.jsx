@@ -31,7 +31,7 @@ const ValvesList = () => {
   const API_URL = import.meta.env.VITE_APP_API_URL
 
   // ID específico para Válvula 4"
-  const VALVE_4_ID = "14"
+  const VALVE_4_ID = "06"
 
   const openErrorModal = (message, title = "Error") => {
     console.log(`${title}: ${message}`)

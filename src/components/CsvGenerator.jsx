@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 // Componente para el botón de descarga de CSV
 const CSVDownloadButton = ({ data, startDate, endDate, disabled }) => {
   const [showModalErrorCSV, setShowModalErrorCSV] = useState(false);
-  const [modalMessage, setModalMessage] = useState("Ha ocurrido un error al generar el CSV. Por favor, inténtelo de nuevo más tarde.");
+  const [modalMessage, setModalMessage] = useState("¡Error al descargar el historial! Intenta más tarde");
 
   // Formatear las fechas para mostrar
   const formatDate = (dateString) => {
@@ -52,7 +52,7 @@ const CSVDownloadButton = ({ data, startDate, endDate, disabled }) => {
       // Crear el encabezado del CSV con título
       let csvContent = "Historial de Consumo AquaSmart\n";
       csvContent += `Periodo: ${formatDate(startDate)} - ${formatDate(endDate)}\n\n`;
-      csvContent += "Fecha,Consumo (m³)\n"; // Encabezados de columnas
+      csvContent += "Fecha,Consumo (L)\n"; // Encabezados de columnas
       
       // Agregar los datos
       data.forEach(item => {
@@ -104,8 +104,6 @@ const CSVDownloadButton = ({ data, startDate, endDate, disabled }) => {
       // Eliminar el indicador de carga
       document.body.removeChild(loadingIndicator);
     } catch (error) {
-      console.error('Error al generar el CSV:', error);
-      setModalMessage(`Error al generar el CSV: ${error.message || "Error desconocido"}`);
       setShowModalErrorCSV(true);
       
       // Asegurarse de que se elimine el indicador de carga en caso de error
@@ -134,7 +132,7 @@ const CSVDownloadButton = ({ data, startDate, endDate, disabled }) => {
       <Modal
         showModal={showModalErrorCSV}
         onClose={() => setShowModalErrorCSV(false)}
-        title="¡Error al descargar el historial! Intenta más tarde"
+        title="Error al generar el CSV"
         btnMessage="Aceptar"
       >
         <p>{modalMessage}</p>
