@@ -121,8 +121,15 @@ function NavBar() {
             direction="/facturacion"
             text="Facturación"
             subItems={[
-              { direction: "/facturacion/historial", text: "Historial" },
+              {
+                direction: "/facturacion/GestionFacturas",
+                text: "Gestión de facturas",
+              },
               { direction: "/facturacion/reportes", text: "Reportes" },
+              {
+                direction: "/facturacion/historial-facturas-lote",
+                text: "Historial de factura",
+              },
             ]}
           />
           <NavItem
@@ -143,6 +150,7 @@ function NavBar() {
               },
             ]}
           />
+          <NavItem direction="/mis-facturas" text="Mis Facturas" />
           <NavItem
             direction="/seguridad/actualizar-contrasena"
             text="Seguridad"
@@ -409,8 +417,15 @@ function NavBar() {
               direction="/facturacion"
               text="Facturación"
               subItems={[
-                { direction: "/facturacion/historial", text: "Historial" },
+                {
+                  direction: "/facturacion/GestionFacturas",
+                  text: "Gestión de facturas",
+                },
                 { direction: "/facturacion/reportes", text: "Reportes" },
+                {
+                  direction: "/facturacion/historial-facturas-lote",
+                  text: "Historial de factura",
+                },
               ]}
             />
             <NavItem

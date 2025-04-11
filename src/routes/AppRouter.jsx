@@ -48,6 +48,10 @@ import ControlBocatoma from "../app/controloT/ControlBocatoma";
 import ValvesList from "../app/valvulas/ValvesList"
 import ValveDetail from "../app/valvulas/ValveDetail"
 import ValveFlowUpdate from "../app/valvulas/ValveFlowUpdate"
+import HistorialFacturasLote from "../app/facturacion/HistorialFacturasLote";
+import MisFacturas from "../app/misFacturas/MisFacturas";
+
+import GestionFacturas from "../app/facturacion/GestionFacturas"
 
 
 const AppRouter = () => {
@@ -106,6 +110,9 @@ const AppRouter = () => {
             <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
             <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
             <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
+            <Route path="/facturacion/GestionFacturas" element={<ProtectedRoute element={<GestionFacturas />} />} />
+            <Route path="/facturacion/historial-facturas-lote" element={<ProtectedRoute element={<HistorialFacturasLote />} />} />
+            <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
         </Routes>
     );
 };

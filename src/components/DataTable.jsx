@@ -10,6 +10,7 @@ const DataTable = ({
   onEdit,
   onDelete,
   onConsult,
+  onViewFactura,
   actions = true,
   showStatus = true,
 }) => {
@@ -101,6 +102,16 @@ const DataTable = ({
                         >
                           {/* <Pencil className="text-white" /> */}
                           <p className="font-bold text-white">Consulta</p>
+                        </button>
+                      )}
+                      {onViewFactura && (
+                        <button
+                          className="bg-[#365486] hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                          onClick={() => onViewFactura(item)}
+                          aria-label="VER FACTURA"
+                        >
+                          {/* <Pencil className="text-white" /> */}
+                          <p className="font-bold text-white">VER FACTURA</p>
                         </button>
                       )}
                     </div>
