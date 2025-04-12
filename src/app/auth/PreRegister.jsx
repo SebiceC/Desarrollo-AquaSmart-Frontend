@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Asterisk, ChevronDown, EyeIcon, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -37,6 +37,7 @@ const PreRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
 
   // Obtener los tipos de documento y persona desde el backend
@@ -126,6 +127,10 @@ const PreRegister = () => {
   const handleRemoveFile = (index) => {
     const updatedFiles = formData.attachments.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, attachments: updatedFiles }));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   // Manejar cambios en los campos del formulario
@@ -449,6 +454,7 @@ const PreRegister = () => {
                   <input
                     type="file"
                     className="hidden"
+                    ref={fileInputRef}
                     onChange={handleFileChange}
                     multiple
                     accept="application/pdf"
