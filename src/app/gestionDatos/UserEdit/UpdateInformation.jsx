@@ -319,7 +319,7 @@ const UpdateInformation = () => {
     if (!validateChanges()) {
       return
     }
-    
+
     if (!validateForm()) {
       return
     }
@@ -494,7 +494,7 @@ const UpdateInformation = () => {
               error={errors.first_name}
               maxLength={20}
             />
-            
+
             <InputItem
               id="last_name"
               name="last_name"
@@ -517,7 +517,7 @@ const UpdateInformation = () => {
               error={errors.email}
               maxLength={50}
             />
-            
+
             <InputItem
               id="phone"
               name="phone"
@@ -528,7 +528,7 @@ const UpdateInformation = () => {
               error={errors.phone}
               maxLength={10}
             />
-            
+
             {/* Cuarta fila: Estado del usuario */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">Estado del usuario</label>
@@ -561,53 +561,43 @@ const UpdateInformation = () => {
             </div>
 
             {/* Sección de archivos adjuntos */}
+            {/* Sección de documentos en Google Drive */}
             <div className="col-span-1 md:col-span-2 mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Archivos adjuntos</label>
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <label className="border border-gray-300 rounded px-3 py-2 bg-gray-50 text-sm cursor-pointer flex items-center self-start mb-2 sm:mb-0">
-                  <span>Seleccionar archivos</span>
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    multiple
-                    accept=".pdf"
-                  />
-                  <Upload className="ml-2 w-4 h-4" />
-                </label>
-                <span className="sm:ml-2 text-sm text-gray-500">
-                  {formData.attachments.length}/5 archivos seleccionados
-                </span>
+              <div className="bg-gray-50 rounded-lg p-6 border border-gray-100">
+                <h3 className="text-md font-medium text-[#365486] mb-3">Documentos adjuntos</h3>
+                {user?.drive_folder_id ? (
+                  <a
+                    href={`https://drive.google.com/drive/u/1/folders/${user.drive_folder_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Ver documentos en Google Drive
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No hay documentos disponibles para este usuario.</p>
+                )}
+                <p className="text-xs text-gray-500 mt-3">
+                  Los archivos de este usuario se gestionan directamente en Google Drive. Para actualizar los documentos, acceda a la carpeta del usuario a través del enlace.
+                </p>
               </div>
-
-              {errors.attachments && <p className="text-red-500 text-sm mt-1">{errors.attachments}</p>}
-
-              {formData.attachments.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium">Archivos seleccionados:</p>
-                  <ul className="mt-2 space-y-2 max-h-40 overflow-y-auto">
-                    {formData.attachments.map((file, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center justify-between text-sm border-b border-gray-100 pb-1"
-                      >
-                        <span className="truncate max-w-xs sm:max-w-md">
-                          {file.name || file} {file.size ? `- ${(file.size / 1024).toFixed(2)}KB` : ""}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(index)}
-                          className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
+
+
 
             {/* Botones de acción */}
             <div className="col-span-1 md:col-span-2 flex flex-col lg:flex-row gap-2 justify-between w-full mt-6">

@@ -687,10 +687,6 @@ return (
     <div className="w-full min-h-screen flex flex-col items-center pt-24 bg-white p-6">
         <div className="w-full max-w-3xl">
         <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">Editar Dispositivo</h2>
-        <p className="text-sm text-gray-600 text-center mb-6">
-          Modifique los datos del dispositivo seleccionado
-        </p>
-        <div className="w-16 h-1 bg-[#365486] mx-auto mb-4 sm:mb-6 rounded-full"></div>
       </div>
 
       <div className="bg-white p-4 sm:p-6 w-full max-w-3xl">
