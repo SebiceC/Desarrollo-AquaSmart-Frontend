@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut, HelpCircle, Minus, Bell } from "lucide-react";
 import NavItem from "./NavItem";
 import axios from "axios";
 import NotificationBell from "./NotificationBell";
+import { PermissionsContext } from "../app/context/PermissionsContext";
 
 function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,7 +12,7 @@ function NavBar() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_APP_API_URL;
-  //var API_URL = process.env.VITE_APP_API_URL || "http://localhost:5173"; // var de pruebas
+  const { hasPermission } = useContext(PermissionsContext);
 
   const fetchProfile = async () => {
     try {
@@ -47,7 +48,7 @@ function NavBar() {
 
       await axios.post(
         `${API_URL}/users/logout`,
-        {}, // <-- Enviar body vacío si la API lo requiere
+        {},
         { headers: { Authorization: `Token ${token}` } }
       );
 
@@ -77,46 +78,70 @@ function NavBar() {
             direction="/control-IoT"
             text="Control IoT"
             subItems={[
-              { direction: "/control-IoT/sensores", text: "Sensores" },
               { direction: "/control-IoT/bocatoma", text: "Bocatoma" },
               { direction: "/control-IoT/valvulas", text: "Valvulas" },
             ]}
           />
-          <NavItem
-            direction="/gestionDatos"
-            text="Gestión de datos"
-            subItems={[
-              {
-                direction: "/gestionDatos/pre-registros",
-                text: "Pre Registros",
-              },
-              { direction: "/gestionDatos/users", text: "Usuarios" },
-              { direction: "/gestionDatos/predios", text: "Predios" },
-              { direction: "/gestionDatos/lotes", text: "Lotes" },
-              {
-                direction: "/gestionDatos/dispositivosIoT",
-                text: "Dispositvos",
-              },
-            ]}
-          />
-          <NavItem
-            direction="/gestionRegistros"
-            text="Gestión de registros"
-            subItems={[
-              {
-                direction: "/gestionRegistros/predios",
-                text: "Registro de Predios",
-              },
-              {
-                direction: "/gestionRegistros/lotes",
-                text: "Registro de Lotes",
-              },
-              {
-                direction: "/gestionRegistros/dispositivosIoT",
-                text: "Registro Dispositivos",
-              },
-            ]}
-          />
+          {
+            <NavItem
+              direction="/gestionDatos"
+              text="Gestión de datos"
+              subItems={[
+                hasPermission("ver_pre_registros") &&
+                  hasPermission("aceptar_pre_registros") &&
+                  hasPermission("rechazar_pre_registros") && {
+                    direction: "/gestionDatos/pre-registros",
+                    text: "Pre Registros",
+                  },
+                hasPermission("visualizar_usuarios_distrito") &&
+                  hasPermission("ver_info_usuarios_distrito") &&
+                  hasPermission("actualizar_info_usuarios_distrito") &&
+                  hasPermission("agregar_info_usuarios_distrito") &&
+                  hasPermission("eliminar_info_usuarios_distrito") && {
+                    direction: "/gestionDatos/users",
+                    text: "Usuarios",
+                  },
+                hasPermission("ver_predios_distrito") &&
+                  hasPermission("actualizar_info_predios") &&
+                  hasPermission("eliminar_info_predios") && {
+                    direction: "/gestionDatos/predios",
+                    text: "Predios",
+                  },
+                hasPermission("view_lot") &&
+                  hasPermission("delete_lot") &&
+                  hasPermission("change_lot") && {
+                    direction: "/gestionDatos/lotes",
+                    text: "Lotes",
+                  },
+                hasPermission("view_iotdevice") &&
+                  hasPermission("change_iotdevice") &&
+                  hasPermission("delete_iotdevice") && {
+                    direction: "/gestionDatos/dispositivosIoT",
+                    text: "Dispositvos",
+                  },
+              ].filter(Boolean)}
+            />
+          }
+          {
+            <NavItem
+              direction="/gestionRegistros"
+              text="Gestión de registros"
+              subItems={[
+                hasPermission("registrar_info_predios") && {
+                  direction: "/gestionRegistros/predios",
+                  text: "Registro de Predios",
+                },
+                hasPermission("add_lot") && {
+                  direction: "/gestionRegistros/lotes",
+                  text: "Registro de Lotes",
+                },
+                hasPermission("add_iotdevice") && {
+                  direction: "/gestionRegistros/dispositivosIoT",
+                  text: "Registro Dispositivos",
+                },
+              ].filter(Boolean)}
+            />
+          }
           <NavItem
             direction="/facturacion"
             text="Facturación"
@@ -125,29 +150,37 @@ function NavBar() {
               { direction: "/facturacion/reportes", text: "Reportes" },
             ]}
           />
-          <NavItem
-            direction="/historialConsumo"
-            text="Historial de consumo"
-            subItems={[
-              {
-                direction: "/mispredios/historial-consumoList/:document",
-                text: "Historial de mis predios y lotes",
-              },
-              {
-                direction: "/historial-consumo/distrito",
-                text: "Historial del distrito",
-              },
-              {
-                direction: "/historial-consumo/predio",
-                text: "Historial del predio",
-              },
-            ]}
-          />
+          {
+            <NavItem
+              direction="/historialConsumo"
+              text="Historial de consumo"
+              subItems={[
+                hasPermission("ver_historial_consumo_predios_individuales") &&
+                  hasPermission("ver_historial_consumo_lotes_individuales") && {
+                    direction: "/mispredios/historial-consumoList/:document",
+                    text: "Historial de mis predios y lotes",
+                  },
+                hasPermission("ver_historial_consumo_predios") &&
+                  hasPermission("ver_historial_consumo_lotes") && {
+                    direction: "/historial-consumo/predio",
+                    text: "Historial del predio",
+                  },
+                hasPermission("ver_historial_consumo_general_distrito") && {
+                  direction: "/historial-consumo/distrito",
+                  text: "Historial del distrito",
+                },
+              ].filter(Boolean)}
+            />
+          }
           <NavItem
             direction="/seguridad/actualizar-contrasena"
             text="Seguridad"
           />
-          <NavItem direction="/permisos" text="Permisos" />
+          {hasPermission("asignar_permisos") &&
+            hasPermission("quitar_permisos_asignados") &&
+            hasPermission("ver_permisos_asignados") && (
+              <NavItem direction="/permisos" text="Permisos" />
+            )}
         </ul>
 
         <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
@@ -365,46 +398,70 @@ function NavBar() {
               direction="/control-IoT"
               text="Control IoT"
               subItems={[
-                { direction: "/control-IoT/sensores", text: "Sensores" },
                 { direction: "/control-IoT/bocatoma", text: "Bocatoma" },
                 { direction: "/control-IoT/valvulas", text: "Valvulas" },
               ]}
             />
-            <NavItem
-              direction="/gestionDatos"
-              text="Gestión de datos"
-              subItems={[
-                {
-                  direction: "/gestionDatos/pre-registros",
-                  text: "Pre Registros",
-                },
-                { direction: "/gestionDatos/users", text: "Usuarios" },
-                { direction: "/gestionDatos/predios", text: "Predios" },
-                { direction: "/gestionDatos/lotes", text: "Lotes" },
-                {
-                  direction: "/gestionDatos/dispositivosIoT",
-                  text: "Dispositvos IoT",
-                },
-              ]}
-            />
-            <NavItem
-              direction="/gestionRegistros"
-              text="Gestión de registros"
-              subItems={[
-                {
-                  direction: "/gestionRegistros/predios",
-                  text: "Registro de Predios",
-                },
-                {
-                  direction: "/gestionRegistros/lotes",
-                  text: "Registro de Lotes",
-                },
-                {
-                  direction: "/gestionRegistros/dispositivosIoT",
-                  text: "Registro Dispositivos",
-                },
-              ]}
-            />
+            {
+              <NavItem
+                direction="/gestionDatos"
+                text="Gestión de datos"
+                subItems={[
+                  hasPermission("ver_pre_registros") &&
+                    hasPermission("aceptar_pre_registros") &&
+                    hasPermission("rechazar_pre_registros") && {
+                      direction: "/gestionDatos/pre-registros",
+                      text: "Pre Registros",
+                    },
+                  hasPermission("visualizar_usuarios_distrito") &&
+                    hasPermission("ver_info_usuarios_distrito") &&
+                    hasPermission("actualizar_info_usuarios_distrito") &&
+                    hasPermission("agregar_info_usuarios_distrito") &&
+                    hasPermission("eliminar_info_usuarios_distrito") && {
+                      direction: "/gestionDatos/users",
+                      text: "Usuarios",
+                    },
+                  hasPermission("ver_predios_distrito") &&
+                    hasPermission("actualizar_info_predios") &&
+                    hasPermission("eliminar_info_predios") && {
+                      direction: "/gestionDatos/predios",
+                      text: "Predios",
+                    },
+                  hasPermission("view_lot") &&
+                    hasPermission("delete_lot") &&
+                    hasPermission("change_lot") && {
+                      direction: "/gestionDatos/lotes",
+                      text: "Lotes",
+                    },
+                  hasPermission("view_iotdevice") &&
+                    hasPermission("change_iotdevice") &&
+                    hasPermission("delete_iotdevice") && {
+                      direction: "/gestionDatos/dispositivosIoT",
+                      text: "Dispositvos",
+                    },
+                ].filter(Boolean)}
+              />
+            }
+            {
+              <NavItem
+                direction="/gestionRegistros"
+                text="Gestión de registros"
+                subItems={[
+                  hasPermission("registrar_info_predios") && {
+                    direction: "/gestionRegistros/predios",
+                    text: "Registro de Predios",
+                  },
+                  hasPermission("add_lot") && {
+                    direction: "/gestionRegistros/lotes",
+                    text: "Registro de Lotes",
+                  },
+                  hasPermission("add_iotdevice") && {
+                    direction: "/gestionRegistros/dispositivosIoT",
+                    text: "Registro Dispositivos",
+                  },
+                ].filter(Boolean)}
+              />
+            }
             <NavItem
               direction="/facturacion"
               text="Facturación"
@@ -413,29 +470,39 @@ function NavBar() {
                 { direction: "/facturacion/reportes", text: "Reportes" },
               ]}
             />
-            <NavItem
-              direction="/historialConsumo"
-              text="Historial de consumo"
-              subItems={[
-                {
-                  direction: "/mispredios/historial-consumoList/:document",
-                  text: "Historial de mis predios y lotes",
-                },
-                {
-                  direction: "/historial-consumo/distrito",
-                  text: "Historial del distrito",
-                },
-                {
-                  direction: "/historial-consumo/predio",
-                  text: "Historial del predio",
-                },
-              ]}
-            />
+            {
+              <NavItem
+                direction="/historialConsumo"
+                text="Historial de consumo"
+                subItems={[
+                  hasPermission("ver_historial_consumo_predios_individuales") &&
+                    hasPermission(
+                      "ver_historial_consumo_lotes_individuales"
+                    ) && {
+                      direction: "/mispredios/historial-consumoList/:document",
+                      text: "Historial de mis predios y lotes",
+                    },
+                  hasPermission("ver_historial_consumo_predios") &&
+                    hasPermission("ver_historial_consumo_lotes") && {
+                      direction: "/historial-consumo/predio",
+                      text: "Historial del predio",
+                    },
+                  hasPermission("ver_historial_consumo_general_distrito") && {
+                    direction: "/historial-consumo/distrito",
+                    text: "Historial del distrito",
+                  },
+                ].filter(Boolean)}
+              />
+            }
             <NavItem
               direction="/seguridad/actualizar-contrasena"
               text="Seguridad"
             />
-            <NavItem direction="/permisos" text="Permisos" />
+            {hasPermission("asignar_permisos") &&
+              hasPermission("quitar_permisos_asignados") &&
+              hasPermission("ver_permisos_asignados") && (
+                <NavItem direction="/permisos" text="Permisos" />
+              )}
           </div>
 
           {/* Botones Fijos */}
