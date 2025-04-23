@@ -2,33 +2,26 @@ import React, { useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InputFilter from "../../components/InputFilterLote";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
+import InputFilterFacturas from "../../components/InputFilterFacturas";
 
 const HistorialFacturasLote = () => {
   const navigate = useNavigate();
-  const [lotes, setLotes] = useState([]);
-  const [predios, setPredios] = useState([]);
-  const [filteredLotes, setFilteredLotes] = useState(null); // Cambiado a null para controlar si se han aplicado filtros
+  const [facturas, setFacturas] = useState([]);
+  const [filteredFacturas, setFilteredFacturas] = useState(null); // Null para controlar si se han aplicado filtros
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [filters, setFilters] = useState({
     id: "",
     ownerDocument: "",
-    plotId:"",
     lotId: "",
-    cropType: "",
     startDate: "",
     endDate: "",
     isActive: "",
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
-  const cropTypeMap = {
-    1: "Piscicultura",
-    2: "Agricultura"
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,35 +33,15 @@ const HistorialFacturasLote = () => {
           return;
         }
         
-        // Obtener la lista de predios
-        const prediosResponse = await axios.get(`${API_URL}/plot-lot/plots/list`, {
+        // Obtener la lista de facturas desde el endpoint
+        const facturasResponse = await axios.get(`${API_URL}/billing/bills`, {
           headers: { Authorization: `Token ${token}` },
         });
         
-        setPredios(prediosResponse.data);
-        console.log("Todos los predios:", prediosResponse.data);
-
-        // Obtener la lista de lotes
-        const lotesResponse = await axios.get(`${API_URL}/plot-lot/lots/list`, {
-          headers: { Authorization: `Token ${token}` },
-        });
-
-        // Combinar la información de lotes y predios
-        const lotesConPredios = lotesResponse.data.map(lote => {
-          // Buscar el predio correspondiente
-          const predio = prediosResponse.data.find(p => p.id_plot === lote.plot);
-          
-          return {
-            ...lote,
-            predioOwner: predio ? predio.owner : "No disponible"
-          };
-        });
-
-        // Store all plots, both active and inactive
-        setLotes(lotesConPredios);
-        console.log("Todos los lotes con propietarios:", lotesConPredios);
+        setFacturas(facturasResponse.data);
+        console.log("Todas las facturas:", facturasResponse.data);
       } catch (error) {
-        console.error("Error al obtener la lista de lotes o predios:", error);
+        console.error("Error al obtener la lista de facturas:", error);
         setModalMessage("Error al cargar. Por favor, intente de nuevo o contacte al soporte técnico");
         setShowModal(true);
       }
@@ -84,7 +57,6 @@ const HistorialFacturasLote = () => {
     });
   };
 
-  // Modified applyFilters function to show modal when owner ID doesn't exist
   const applyFilters = () => {
     try {
       // Verificamos si hay al menos un filtro aplicado
@@ -96,32 +68,22 @@ const HistorialFacturasLote = () => {
         filters.endDate !== "" || 
         filters.isActive !== "";
       
-      // Validación de ID
-      if (filters.id.trim() !== "") {
-        // Verifica si es un prefijo válido del formato PR-NNNNNNN
-        const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim());
-        
-        // Verifica si son solo dígitos (cualquier cantidad)
-        const isOnlyDigits = /^\d+$/.test(filters.id.trim());
-  
-         // Si no cumple ninguna de las condiciones permitidas
-        if (!isPrefixValid && !isOnlyDigits) {
-          setModalMessage("El campo ID del predio contiene caracteres no válidos");
-          setShowModal(true);
-          setFilteredPredios([]);
-          return;
-        }
+      // Validación de código de factura
+      if (filters.id.trim() !== "" && !/^[A-Za-z0-9]+$/.test(filters.id.trim())) {
+        setModalMessage("El campo ID de factura contiene caracteres no válidos");
+        setShowModal(true);
+        setFilteredFacturas([]);
+        return;
       }
 
-      // Validación de formato del ID del  lote
+      // Validación de formato del ID del lote
       if (filters.lotId.trim() !== "") {
-        // Validación de formato del ID del lote
         const isValidLoteFormat = /^(\d{1,7}|\d{1,7}-\d{0,3})$/.test(filters.lotId.trim());
         
         if (!isValidLoteFormat) {
           setModalMessage("El campo ID del lote contiene caracteres no válidos");
           setShowModal(true);
-          setFilteredLotes([]);
+          setFilteredFacturas([]);
           return;
         }
       }
@@ -130,7 +92,7 @@ const HistorialFacturasLote = () => {
       if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
         setModalMessage("El campo ID del propietario contiene caracteres no válidos");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredFacturas([]);
         return;
       }
 
@@ -138,135 +100,153 @@ const HistorialFacturasLote = () => {
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
         setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
         setShowModal(true);
-        setFilteredLotes([]);
+        setFilteredFacturas([]);
         return;
       }
 
-      // Filtrado de lotes
-      const filtered = lotes.filter((lots) => {
-        // Modificación para permitir búsqueda parcial por ID
+      // Filtrado de facturas
+      const filtered = facturas.filter((factura) => {
+        // Filtro por código de factura
         const matchesId = filters.id.trim() === "" ||
           (filters.id.trim().length > 0 &&
-            lots.plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
+            factura.code?.toLowerCase().includes(filters.id.trim().toLowerCase()));
       
-        // Modificación para permitir búsqueda parcial por ID del lote
-        const matchesIdlote = filters.lotId.trim() === "" ||
-        (filters.lotId.trim().length > 0 &&
-          (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
-           lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
-        // Ahora buscamos en el predioOwner en lugar de owner
+        // Filtro por ID del lote
+        const matchesIdLote = filters.lotId.trim() === "" ||
+          (filters.lotId.trim().length > 0 &&
+            (factura.lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
+             factura.lot_code?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
+        
+        // Filtro por documento del cliente/propietario
         const matchesOwner = filters.ownerDocument.trim() === "" ||
-          lots.predioOwner.includes(filters.ownerDocument.trim());
+          factura.client_document?.includes(filters.ownerDocument.trim());
 
-        // Modificado para incluir lotes tanto activos como inactivos
+        // Filtro por estado de pago
         const matchesStatus =
           filters.isActive === "" ||
-          lots.is_activate === (filters.isActive === "true");
+          (filters.isActive === "true" && factura.status?.toLowerCase() === "pagada") ||
+          (filters.isActive === "false" && factura.status?.toLowerCase() === "pendiente");
 
+        // Manejo de fechas para periodo de facturación (usando creation_date)
+  let matchesDate = true;
 
-        // Manejo de fechas - enfoque idéntico al que funciona en UserList
-        let matchesDate = true; // Por defecto asumimos que coincide
+  if (filters.startDate || filters.endDate) {
+    try {
+      // Obtener la fecha de creación de la factura como un objeto Date
+      const facturaDate = new Date(factura.creation_date);
+      // Convertimos la fecha de la factura a formato local y eliminamos la hora para la comparación
+      const facturaDateOnly = new Date(facturaDate.getFullYear(), facturaDate.getMonth(), facturaDate.getDate());
+
+      // Si hay fecha de inicio, verificar que la factura no sea anterior a la fecha de inicio
+      if (filters.startDate) {
+        const startDate = new Date(filters.startDate);
+        // Convertimos la fecha de inicio a la misma zona horaria y eliminamos la hora
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         
-        if (filters.startDate !== "" || filters.endDate !== "") {
-          // Solo verificamos fechas si hay algún filtro de fecha
-          
-          // Convertir fecha de predio a formato YYYY-MM-DD
-          const loteDate = new Date(lots.registration_date);
-          const loteDateStr = loteDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
-          
-          // Verificar límite inferior
-          if (filters.startDate !== "") {
-            const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
-            if (loteDateStr < startDateStr) {
-              matchesDate = false;
-            }
-          }
-          
-          // Verificar límite superior
-          if (matchesDate && filters.endDate !== "") {
-            const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
-            if (loteDateStr > endDateStr) {
-              matchesDate = false;
-            }
-          }
+        // Comprobamos si la fecha de la factura es antes de la fecha de inicio
+        if (facturaDateOnly < startDateOnly) {
+          matchesDate = false;
         }
-
-        return matchesId && matchesIdlote && matchesOwner && matchesDate && matchesStatus;
-      });
-
-      // Validación adicional para ID del predio no existente
-      if (filters.id.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El predio filtrado no existe.");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
       }
 
-      // Validación adicional para ID del lote no existente
-      if (filters.lotId.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El lote filtrado no existe.");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
+      // Si hay fecha de fin, verificar que la factura no sea posterior a la fecha de fin
+      if (matchesDate && filters.endDate) {
+        const endDate = new Date(filters.endDate);
+        // Convertimos la fecha de fin a la misma zona horaria y eliminamos la hora
+        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
+        // Comprobamos si la fecha de la factura es después de la fecha de fin
+        if (facturaDateOnly > endDateOnly) {
+          matchesDate = false;
+        }
       }
-
-      // Validación adicional para documento del propietario no existente
-      if (filters.ownerDocument.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El ID del propietario no se encuentra asociado a ningún registro");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
-      }
-
-      // Validación para rango de fechas sin resultados
-      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
-        setModalMessage("No hay lotes registrados en el rango de fechas especificado.");
-        setShowModal(true);
-        setFilteredLotes([]);
-        return;
-      }
-
-      setFilteredLotes(filtered); // Actualiza filteredLotes solo cuando se aplican filtros
     } catch (error) {
-      setModalMessage("¡El lote filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
+      console.error("Error al procesar fechas:", error, "para factura:", factura.code);
+      matchesDate = false;
+    }
+  }
+
+  return matchesId && matchesIdLote && matchesOwner && matchesDate && matchesStatus;
+});
+      // Validaciones adicionales para mostrar mensajes específicos
+      if (filters.id.trim() !== "" && filtered.length === 0) {
+        setModalMessage("La factura filtrada no existe.");
+        setShowModal(true);
+        setFilteredFacturas([]);
+        return;
+      }
+
+      if (filters.lotId.trim() !== "" && filtered.length === 0) {
+        setModalMessage("No hay facturas asociadas al lote filtrado.");
+        setShowModal(true);
+        setFilteredFacturas([]);
+        return;
+      }
+
+      if (filters.ownerDocument.trim() !== "" && filtered.length === 0) {
+        setModalMessage("El documento del propietario no se encuentra asociado a ninguna factura");
+        setShowModal(true);
+        setFilteredFacturas([]);
+        return;
+      }
+
+      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
+        setModalMessage("No hay facturas en el periodo especificado.");
+        setShowModal(true);
+        setFilteredFacturas([]);
+        return;
+      }
+
+      setFilteredFacturas(filtered);
+    } catch (error) {
+      setModalMessage("¡Las facturas filtradas no se pudieron mostrar correctamente! Vuelve a intentarlo más tarde…");
       setShowModal(true);
-      setFilteredLotes([]);
+      setFilteredFacturas([]);
     }
   };
 
   // Configuración de columnas para DataTable
   const columns = [
-    { key: "id_lot", label: "ID Lote" },
-    { key: "crop_type", label: "Tipo de Cultivo", render: (lote) => cropTypeMap[lote.crop_type] || `Tipo ${lote.crop_type}` },
-    { key: "plot", label: "ID Predio" },
-    { key: "predioOwner", label: "Propietario del Predio" }, // Cambiado de owner a predioOwner
+    { key: "code", label: "Código Factura" },
+    { key: "lot_code", label: "Código Lote" },
+    { key: "client_name", label: "Nombre Cliente" },
+    { key: "client_document", label: "Documento Cliente" },
+    { key: "total_amount", label: "Monto Total", render: (factura) => 
+      `$${parseFloat(factura.total_amount).toLocaleString('es-CO')}` 
+    },
     {
-      key: "is_activate",
+      key: "status",
       label: "Estado",
-      render: (lote) => {
-        const statusText = lote.is_activate ? "Activo" : "Inactivo";
-        const statusClass = lote.is_activate
+      render: (factura) => {
+        const isPaid = factura.status?.toLowerCase() === "pagada";
+        const statusClass = isPaid
           ? "bg-green-100 text-green-800 border border-green-200"
           : "bg-red-100 text-red-800 border border-red-200";
 
         return (
           <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
-            {statusText}
+            {factura.status?.charAt(0).toUpperCase() + factura.status?.slice(1)}
           </span>
         );
       }
     },
     {
-      key: "registration_date",
-      label: "Registro",
+      key: "creation_date",
+      label: "Fecha Creación",
       responsive: "hidden sm:table-cell",
-      render: (lote) => new Date(lote.registration_date).toLocaleDateString()
+      render: (factura) => new Date(factura.creation_date).toLocaleDateString('es-CO')
+    },
+    {
+      key: "due_payment_date",
+      label: "Fecha Vencimiento",
+      responsive: "hidden sm:table-cell",
+      render: (factura) => new Date(factura.due_payment_date).toLocaleDateString('es-CO')
     }
   ];
 
   // Manejadores para las acciones
-  const handleViewFactura = (lote) => {
-    navigate(`/facturacion/lote/${lote.id_lot}`);
+  const handleViewFactura = (factura) => {
+    navigate(`/facturacion/detalle/${factura.id_bill}`);
   };
 
   return (
@@ -274,15 +254,15 @@ const HistorialFacturasLote = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Historial de facturas por lote
+          Historial de facturas
         </h1>
 
-        <InputFilter
+        <InputFilterFacturas
           filters={filters}
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
           showPersonTypeFilter={false}
-          showStatusFilter={false}
+          showStatusFilter={true}
         />
 
         {/* Modal de mensajes */}
@@ -292,10 +272,9 @@ const HistorialFacturasLote = () => {
             onClose={() => {
               setShowModal(false);
               if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
-                setFilteredLotes(null);
+                setFilteredFacturas(null);
               }
             }}
-            // title={modalMessage === "Lote eliminado correctamente" ? "Éxito" : "Error"}
             btnMessage="Cerrar"
           >
             <p>{modalMessage}</p>
@@ -303,18 +282,18 @@ const HistorialFacturasLote = () => {
         )}
 
         {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
-        {filteredLotes !== null && (
+        {filteredFacturas !== null && (
           <DataTable
             columns={columns}
-            data={filteredLotes}
-            emptyMessage="No se encontraron lotes con los filtros aplicados."
+            data={filteredFacturas}
+            emptyMessage="No se encontraron facturas con los filtros aplicados."
             onViewFactura={handleViewFactura}
           />
         )}
         
-        {filteredLotes === null && (
+        {filteredFacturas === null && (
           <div className="text-center my-10 text-gray-600">
-            No hay lotes para mostrar. Aplica filtros para ver resultados.
+            No hay facturas para mostrar. Aplica filtros para ver resultados.
           </div>
         )}
       </div>
