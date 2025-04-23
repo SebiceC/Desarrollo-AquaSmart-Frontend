@@ -273,9 +273,9 @@ const MisFacturas = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Historial de facturas
+          Mis facturas
         </h1>
-
+        
         <InputFilterFacturasUser
           filters={filters}
           onFilterChange={handleFilterChange}
