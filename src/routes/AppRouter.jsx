@@ -52,6 +52,8 @@ import HistorialFacturasLote from "../app/facturacion/HistorialFacturasLote";
 import MisFacturas from "../app/misFacturas/MisFacturas";
 
 import GestionFacturas from "../app/facturacion/GestionFacturas"
+import FacturaLoteDetails from "../app/facturacion/FacturaLoteDetails";
+import MisFacturasDetails from "../app/misFacturas/MisFacturasDetails";
 
 
 const AppRouter = () => {
@@ -113,6 +115,8 @@ const AppRouter = () => {
             <Route path="/facturacion/GestionFacturas" element={<ProtectedRoute element={<GestionFacturas />} />} />
             <Route path="/facturacion/historial-facturas-lote" element={<ProtectedRoute element={<HistorialFacturasLote />} />} />
             <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
+            <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
+            <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
         </Routes>
     );
 };
