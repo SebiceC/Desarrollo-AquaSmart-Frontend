@@ -16,7 +16,9 @@ const GestionFacturas = () => {
     ica: "",
     nombreEmpresa: "",
     nit: "",
-    ciudad: ""
+    address: "",
+    phone: "",
+    email: ""
   });
   // Añadir estado para almacenar los datos originales
   const [originalData, setOriginalData] = useState(null);
@@ -48,32 +50,64 @@ const GestionFacturas = () => {
       else if (value.length > 9) {
         isValid = false;
         errorMessage = "El NIT no puede tener más de 9 caracteres.";
-      } 
+      }
       else if (value.length === 9 && !/^\d+$/.test(value)) {
         isValid = false;
         errorMessage = "El NIT solo puede contener números.";
       }
+    } else if (name === "phone") {
+      // Validación para teléfono: solo números sin restricción de longitud durante la edición
+      if (value && !/^\d*$/.test(value)) {
+        isValid = false;
+        errorMessage = "El teléfono solo puede contener números.";
+      }
+      // Solo mostrar advertencia de longitud si ya tiene más de 0 caracteres pero no 10
+      else if (value.length > 0 && value.length !== 10) {
+        // Permitir la edición pero mostrar mensaje informativo
+        errorMessage = "El teléfono debe tener exactamente 10 caracteres.";
+        // No invalidamos el campo para permitir la edición
+        isValid = true;
+      }
+    } else if (name === "email") {
+      // Validación para email utilizando una expresión regular común
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (value && !emailRegex.test(value)) {
+        isValid = false;
+        errorMessage = "Por favor, ingrese un correo electrónico válido.";
+      }
+    } else if (name === "address") {
+      // Validación básica para dirección: no puede estar vacía y debe tener un formato válido
+      if (value && value.length < 5) {
+        isValid = false;
+        errorMessage = "La dirección debe tener al menos 5 caracteres.";
+      }
     }
-  
+
     if (["tarifaPiscicultura", "volumetricaPiscicultura", "tarifaAgricolaComun", "volumetricaAgricolaComun"].includes(name)) {
       if (!soloEnteros(value)) {
         isValid = false;
-        errorMessage = "Error, solo se permiten números enteros";	
+        errorMessage = "Error, solo se permiten números enteros";
       }
     } else if (["iva", "ica"].includes(name)) {
       if (!conDecimales(value)) {
         isValid = false;
         errorMessage = "Error, solo se permiten 2 decimales";
       }
-    } else if (["nombreEmpresa", "ciudad"].includes(name)) {
+    } else if (["nombreEmpresa"].includes(name)) {
       if (!soloLetras(value)) {
         isValid = false;
         errorMessage = "Error, solo se permiten letras";
       }
     }
-  
-    // Actualizar el estado de errores
+
+    // Actualizar el estado de errores - para teléfono, mostrar mensaje pero no impedir edición
     if (!isValid) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: errorMessage
+      }));
+    } else if (name === "phone" && errorMessage) {
+      // Para teléfono con longitud incorrecta, mostrar mensaje pero permitir edición
       setErrors(prevErrors => ({
         ...prevErrors,
         [name]: errorMessage
@@ -85,26 +119,32 @@ const GestionFacturas = () => {
         return newErrors;
       });
     }
-  
+
     if (value) {
       setEmptyFields(prev => prev.filter(field => field !== name));
     }
-  
-    if (isValid) {
+
+    // Para teléfono, siempre permitir actualizar el valor si son solo dígitos
+    if (name === "phone" && /^\d*$/.test(value)) {
+      setFormData(prevData => ({
+        ...prevData,
+        [name]: value
+      }));
+    } else if (isValid) {
       setFormData(prevData => ({
         ...prevData,
         [name]: value
       }));
     }
   };
-  
+
 
 
   const validateForm = () => {
     const newErrors = {};
     let isFormValid = true;
     const newEmptyFields = [];
-  
+
     // Verificar campos vacíos
     for (const field in formData) {
       if (!formData[field]) {
@@ -112,32 +152,54 @@ const GestionFacturas = () => {
         newEmptyFields.push(field);
       }
     }
-  
+
     // Verificación específica para NIT
-    if (formData.nit.length !== 9) {
+    if (formData.nit.length < 1) {
       isFormValid = false;
-      newErrors.nit = "El NIT debe tener exactamente 9 caracteres.";
+      newErrors.nit = "El NIT debe tener más de 1 caracter.";
     } else if (!/^\d+$/.test(formData.nit)) {
       isFormValid = false;
       newErrors.nit = "El NIT solo puede contener números.";
     }
-  
+
+    // Verificación específica para teléfono
+    if (formData.phone && formData.phone.length !== 10) {
+      isFormValid = false;
+      newErrors.phone = "El teléfono debe tener exactamente 10 caracteres.";
+    } else if (formData.phone && !/^\d+$/.test(formData.phone)) {
+      isFormValid = false;
+      newErrors.phone = "El teléfono solo puede contener números.";
+    }
+
+    // Verificación específica para email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      isFormValid = false;
+      newErrors.email = "Por favor, ingrese un correo electrónico válido.";
+    }
+
+    // Verificación para dirección
+    if (formData.address && formData.address.length < 5) {
+      isFormValid = false;
+      newErrors.address = "La dirección debe tener al menos 5 caracteres.";
+    }
+
     setEmptyFields(newEmptyFields);
-  
+
     // Si hay campos vacíos, mostramos el error general
     if (!isFormValid && newEmptyFields.length > 0) {
       setGeneralError("Todos los campos son obligatorios.");
     } else {
       setGeneralError(""); // Solo si el formulario está completamente válido
     }
-  
+
     setErrors(newErrors);
-  
-    return isFormValid && Object.keys(errors).length === 0;
+
+    return isFormValid && Object.keys(newErrors).length === 0;
   };
-  
-  
-  
+
+
+
 
   // Función para verificar si hay cambios en el formulario
   const checkForChanges = () => {
@@ -175,9 +237,12 @@ const GestionFacturas = () => {
 
     const requestData = {
       company: {
-        nombre: formData.nombreEmpresa,
+        name: formData.nombreEmpresa,
         nit: formData.nit,
-        ciudad: formData.ciudad
+        address: formData.address,
+        phone: formData.phone,
+        email: formData.email
+
       },
       tax_rates: [
         { tax_type: "IVA", tax_value: formData.iva },
@@ -257,24 +322,29 @@ const GestionFacturas = () => {
 
         const company = response.data.company || {};
         const taxRates = response.data.tax_rates || [];
-        const consumptionRates = response.data.consumption_rates || [];
+        const consumptionRates = response.data.fixed_consumption_rates || [];
+        const volumetricRates = response.data.volumetric_consumption_rates || [];
 
         const iva = taxRates.find(rate => rate.tax_type === "IVA")?.tax_value || "";
         const ica = taxRates.find(rate => rate.tax_type === "ICA")?.tax_value || "";
 
-        const piscicultura = consumptionRates.find(rate => rate.crop_type === 1) || {};
-        const agricola = consumptionRates.find(rate => rate.crop_type === 2) || {};
+        const pisciculturaConsumption = consumptionRates.find(rate => rate.crop_type === 1) || {};
+        const pisciculturaVolumetric = volumetricRates.find(rate => rate.crop_type === 1) || {};
+        const agricolaConsumption = consumptionRates.find(rate => rate.crop_type === 2) || {};
+        const agricolaVolumetric = volumetricRates.find(rate => rate.crop_type === 2) || {};
 
         const newFormData = {
-          tarifaPiscicultura: piscicultura.fixed_rate?.toString() || "",
-          volumetricaPiscicultura: piscicultura.volumetric_rate?.toString() || "",
-          tarifaAgricolaComun: agricola.fixed_rate?.toString() || "",
-          volumetricaAgricolaComun: agricola.volumetric_rate?.toString() || "",
+          tarifaPiscicultura: pisciculturaConsumption.fixed_rate?.toString() || "",
+          volumetricaPiscicultura: pisciculturaVolumetric.volumetric_rate?.toString() || "",
+          tarifaAgricolaComun: agricolaConsumption.fixed_rate?.toString() || "",
+          volumetricaAgricolaComun: agricolaVolumetric.volumetric_rate?.toString() || "",
           iva: iva.toString(),
           ica: ica.toString(),
-          nombreEmpresa: company.nombre || "",
+          nombreEmpresa: company.name || "",
           nit: company.nit || "",
-          ciudad: company.ciudad || ""
+          address: company.address || "",
+          phone: company.phone || "",
+          email: company.email || ""
         };
 
         setFormData(newFormData);
@@ -318,6 +388,7 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("tarifaPiscicultura") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("tarifaPiscicultura") ? "border-red-300" : ""}
+                maxLength={10}
               />
               {errors.tarifaPiscicultura && <p className="text-red-500 text-sm mt-1">{errors.tarifaPiscicultura}</p>}
             </div>
@@ -335,6 +406,7 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("volumetricaPiscicultura") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("volumetricaPiscicultura") ? "border-red-300" : ""}
+                maxLength={10}
               />
               {errors.volumetricaPiscicultura && <p className="text-red-500 text-sm mt-1">{errors.volumetricaPiscicultura}</p>}
             </div>
@@ -354,6 +426,7 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("tarifaAgricolaComun") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("tarifaAgricolaComun") ? "border-red-300" : ""}
+                maxLength={10}
               />
               {errors.tarifaAgricolaComun && <p className="text-red-500 text-sm mt-1">{errors.tarifaAgricolaComun}</p>}
             </div>
@@ -371,6 +444,7 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("volumetricaAgricolaComun") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("volumetricaAgricolaComun") ? "border-red-300" : ""}
+                maxLength={10}
               />
               {errors.volumetricaAgricolaComun && <p className="text-red-500 text-sm mt-1">{errors.volumetricaAgricolaComun}</p>}
             </div>
@@ -381,7 +455,7 @@ const GestionFacturas = () => {
               <InputItem
                 label={
                   <>
-                    IVA (%) <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                    IVA (%), los decimales con (.) <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
                   </>
                 }
                 type="text"
@@ -398,7 +472,7 @@ const GestionFacturas = () => {
               <InputItem
                 label={
                   <>
-                    ICA (%) <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                    ICA (%), los decimales con (.) <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
                   </>
                 }
                 type="text"
@@ -428,6 +502,7 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("nombreEmpresa") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("nombreEmpresa") ? "border-red-300" : ""}
+                maxLength={60}
               />
               {errors.nombreEmpresa && <p className="text-red-500 text-sm mt-1">{errors.nombreEmpresa}</p>}
             </div>
@@ -445,9 +520,46 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("nit") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("nit") ? "border-red-300" : ""}
-                maxLength={9}
+                maxLength={11}
               />
               {errors.nit && <p className="text-red-500 text-sm mt-1">{errors.nit}</p>}
+            </div>
+          </div>
+          <div className="flex flex-col lg:flex-row gap-5 mt-5">
+            <div className="w-full">
+              <InputItem
+                label={
+                  <>
+                    Dirección <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                  </>
+                }
+                type="text"
+                name="address"
+                placeholder="Dirección"
+                value={formData.address}
+                onChange={handleChange}
+                style={isFieldEmpty("direccion") ? { backgroundColor: "#FFEBEE" } : {}}
+                className={isFieldEmpty("direccion") ? "border-red-300" : ""}
+                maxLength={35}
+              />
+              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            </div>
+            <div className="w-full">
+              <InputItem
+                label={
+                  <>
+                    Teléfono <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                  </>
+                }
+                type="text"
+                name="phone"
+                placeholder="Teléfono"
+                value={formData.phone}
+                onChange={handleChange}
+                style={isFieldEmpty("phone") ? { backgroundColor: "#FFEBEE" } : {}}
+                className={isFieldEmpty("phone") ? "border-red-300" : ""}
+              />
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
           </div>
           <div className="flex gap-5 mt-5 w-full lg:w-[60%] mx-auto">
@@ -455,18 +567,19 @@ const GestionFacturas = () => {
               <InputItem
                 label={
                   <>
-                    Ciudad <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                    Correo electrónico <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
                   </>
                 }
-                type="text"
-                name="ciudad"
-                placeholder="Ciudad"
-                value={formData.ciudad}
+                type="email"
+                name="email"
+                placeholder="Correo electrónico"
+                value={formData.email}
                 onChange={handleChange}
-                style={isFieldEmpty("ciudad") ? { backgroundColor: "#FFEBEE" } : {}}
-                className={isFieldEmpty("ciudad") ? "border-red-300" : ""}
+                style={isFieldEmpty("email") ? { backgroundColor: "#FFEBEE" } : {}}
+                className={isFieldEmpty("email") ? "border-red-300" : ""}
+                maxLength={50}
               />
-              {errors.ciudad && <p className="text-red-500 text-sm mt-1">{errors.ciudad}</p>}
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
           </div>
 
