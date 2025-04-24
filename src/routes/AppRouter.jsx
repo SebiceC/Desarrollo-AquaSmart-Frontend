@@ -118,7 +118,7 @@ const AppRouter = () => {
             <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
             <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
-            <Route path="/facturacion/pagar" element={<ProtectedRoute element={<PagarFactura />} />} />
+            <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
         </Routes>
     );
