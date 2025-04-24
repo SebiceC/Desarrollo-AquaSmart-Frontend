@@ -180,10 +180,16 @@ const HistorialFacturasLote = () => {
       key: "status",
       label: "Estado",
       render: (factura) => {
-        const isPaid = factura.status?.toLowerCase() === "pagada";
-        const statusClass = isPaid
+        const statusClass = factura.status?.toLowerCase() === "pendiente" 
+          ? "bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200" 
+          : factura.status?.toLowerCase() === "validada"
+          ? "bg-blue-100 text-blue-800 border border-blue-200"
+          : factura.status?.toLowerCase() === "pagada"
           ? "bg-green-100 text-green-800 border border-green-200"
-          : "bg-red-100 text-red-800 border border-red-200";
+          : factura.status?.toLowerCase() === "vencida"
+          ? "bg-red-100 text-red-800 border border-red-200"
+          : "";
+
 
         return (
           <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
