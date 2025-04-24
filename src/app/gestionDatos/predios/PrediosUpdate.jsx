@@ -24,7 +24,7 @@ const ActualizacionPredios = () => {
     latitud: "",
     longitud: "",
     plot_name: "",
-    is_activate: ""
+    is_activate: "",
   })
   const [originalData, setOriginalData] = useState({})
 
@@ -142,8 +142,8 @@ const ActualizacionPredios = () => {
         }))
       }
     } else if (name === "plot_name") {
-      // Validar nombre del predio: solo letras y máximo 20 caracteres
-      if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(value) && value.length <= 20) {
+      // Validar nombre del predio: alfanumérico y máximo 20 caracteres
+      if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/.test(value) && value.length <= 20) {
         setFormData((prev) => ({
           ...prev,
           [name]: value,
@@ -179,7 +179,7 @@ const ActualizacionPredios = () => {
       formData.latitud === originalData.latitud &&
       formData.longitud === originalData.longitud &&
       formData.plot_name === originalData.plot_name &&
-      formData.is_activate === originalData.is_activate  // Add this line
+      formData.is_activate === originalData.is_activate // Add this line
 
     if (isUnchanged) {
       setShowNoChangeErrorModal(true)
@@ -197,7 +197,7 @@ const ActualizacionPredios = () => {
     Object.entries(formData).forEach(([key, value]) => {
       // Excluir campos de solo lectura y el campo is_activate
       if (key !== "predio" && key !== "fechaRegistro" && key !== "is_activate") {
-        if (typeof value === 'string' && !value.trim()) {
+        if (typeof value === "string" && !value.trim()) {
           errors[key] = "Este campo es obligatorio"
           isValid = false
         } else if (value === undefined || value === null) {
@@ -228,8 +228,8 @@ const ActualizacionPredios = () => {
     }
 
     if (formData.plot_name) {
-      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.plot_name)) {
-        errors.plot_name = "El nombre del predio solo puede contener letras"
+      if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.plot_name)) {
+        errors.plot_name = "El nombre del predio solo puede contener letras y números"
         isValid = false
       } else if (formData.plot_name.length > 20) {
         errors.plot_name = "El nombre del predio no debe exceder los 20 caracteres"
@@ -421,7 +421,7 @@ const ActualizacionPredios = () => {
         latitud: formData.latitud ? Number.parseFloat(formData.latitud) : null,
         longitud: formData.longitud ? Number.parseFloat(formData.longitud) : null,
         plot_name: formData.plot_name,
-        is_activate: formData.is_activate,  // Incluir el estado en la solicitud
+        is_activate: formData.is_activate, // Incluir el estado en la solicitud
       }
 
       // Enviar solicitud
@@ -596,26 +596,26 @@ const ActualizacionPredios = () => {
                     name="is_activate"
                     value={formData.is_activate === undefined ? "" : formData.is_activate.toString()}
                     onChange={(e) => {
-                      const value = e.target.value === "true";
+                      const value = e.target.value === "true"
                       setFormData((prev) => ({
                         ...prev,
                         is_activate: value,
-                      }));
-                      setValidationErrors((prev) => ({ ...prev, is_activate: "" }));
+                      }))
+                      setValidationErrors((prev) => ({ ...prev, is_activate: "" }))
                     }}
-                    disabled={originalData.is_activate === true}  // Solo deshabilitado si originalmente venía activo
+                    disabled={originalData.is_activate === true} // Solo deshabilitado si originalmente venía activo
                   >
                     <option value="">SELECCIÓN DE ESTADO</option>
                     <option value="true">Activo</option>
                     <option value="false">Inactivo</option>
                   </select>
                   <ChevronDown className="absolute right-15 top-1/2 transform -translate-y-1/2 text-gray-400" />
-
                 </div>
-                {validationErrors.is_activate && <p className="text-red-500 text-sm mt-1">{validationErrors.is_activate}</p>}
+                {validationErrors.is_activate && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.is_activate}</p>
+                )}
               </div>
             </div>
-
 
             <div className="col-span-1 md:col-span-2 flex flex-col items-start">
               {/* Mensajes de error */}

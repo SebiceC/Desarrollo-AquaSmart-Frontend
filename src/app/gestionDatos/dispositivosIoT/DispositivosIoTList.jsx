@@ -371,21 +371,11 @@ if (filters.plotId.trim() !== "") {
       label: "Registro Dispositivo",
       responsive: "hidden sm:table-cell",
       render: (dispositivo) => {
-        // Si el dispositivo no tiene id_plot, no hay predio asociado
-        if (!dispositivo.id_plot) {
-          return "N/A";
-        }
-        
-        // Buscar el predio asociado al dispositivo
-        const predioAsociado = predios.find(predio => predio.id_plot === dispositivo.id_plot);
-        
-
-        
-        return predioAsociado && predioAsociado.registration_date
-          ? new Date(predioAsociado.registration_date).toLocaleDateString()
+        return dispositivo.registration_date 
+          ? new Date(dispositivo.registration_date).toLocaleDateString()
           : "N/A";
       }
-    }
+    },
   ];
 
   // Manejadores para las acciones

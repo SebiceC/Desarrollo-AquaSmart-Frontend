@@ -21,6 +21,7 @@ const MisFacturas = () => {
     startDate: "",
     endDate: "",
     isActive: "",
+    status: "",
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -83,8 +84,9 @@ const MisFacturas = () => {
         filters.ownerDocument.trim() !== "" || 
         filters.startDate !== "" || 
         filters.endDate !== "" || 
-        filters.isActive !== "";
-      
+        filters.isActive !== "" || 
+        filters.status !== "";
+        
       // Validación de código de factura
       if (filters.id.trim() !== "" && !/^[A-Za-z0-9]+$/.test(filters.id.trim())) {
         setModalMessage("El campo ID de factura contiene caracteres no válidos");
@@ -141,9 +143,9 @@ const MisFacturas = () => {
 
         // Filtro por estado de pago
         const matchesStatus =
-          filters.isActive === "" ||
-          (filters.isActive === "true" && factura.status?.toLowerCase() === "pagada") ||
-          (filters.isActive === "false" && factura.status?.toLowerCase() === "pendiente");
+          filters.status === "" ||
+          factura.status?.toLowerCase() === filters.status.toLowerCase();
+        
 
         // Manejo de fechas para periodo de facturación (usando creation_date)
         let matchesDate = true;
@@ -216,12 +218,21 @@ const MisFacturas = () => {
         return;
       }
 
+      if (filters.status !== "" && filtered.length === 0) {
+        setModalMessage("No hay facturas con el estado seleccionado.");
+        setShowModal(true);
+        setFilteredFacturas([]);
+        return;
+      }
+
       setFilteredFacturas(filtered);
     } catch (error) {
       setModalMessage("¡Las facturas filtradas no se pudieron mostrar correctamente! Vuelve a intentarlo más tarde…");
       setShowModal(true);
       setFilteredFacturas([]);
     }
+
+    
   };
 
   // Configuración de columnas para DataTable
