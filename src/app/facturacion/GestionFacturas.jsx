@@ -5,6 +5,7 @@ import { PiAsteriskSimpleBold } from 'react-icons/pi';
 import BackButton from '../../components/BackButton';
 import Modal from '../../components/Modal';
 import axios from 'axios';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const GestionFacturas = () => {
   const [formData, setFormData] = useState({
@@ -29,6 +30,7 @@ const GestionFacturas = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const soloEnteros = (valor) => /^[0-9]*$/.test(valor);
   const conDecimales = (valor) => /^\d*\.?\d{0,2}$/.test(valor);
@@ -40,17 +42,23 @@ const GestionFacturas = () => {
     let isValid = true;
     let errorMessage = "";
 
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
+
+    if (value) {
+      setEmptyFields(prev => prev.filter(field => field !== name));
+    } else {
+      setEmptyFields(prev => prev.includes(name) ? prev : [...prev, name]);
+    }
+
     if (name === "nit") {
-      // Verificar que solo se permiten números
       if (value && !/^\d+$/.test(value)) {
         isValid = false;
         errorMessage = "El NIT solo puede contener números.";
       }
       // Verificar que el NIT tenga exactamente 9 caracteres solo si ya tiene 9 caracteres
-      else if (value.length > 9) {
-        isValid = false;
-        errorMessage = "El NIT no puede tener más de 9 caracteres.";
-      }
       else if (value.length === 9 && !/^\d+$/.test(value)) {
         isValid = false;
         errorMessage = "El NIT solo puede contener números.";
@@ -119,26 +127,7 @@ const GestionFacturas = () => {
         return newErrors;
       });
     }
-
-    if (value) {
-      setEmptyFields(prev => prev.filter(field => field !== name));
-    }
-
-    // Para teléfono, siempre permitir actualizar el valor si son solo dígitos
-    if (name === "phone" && /^\d*$/.test(value)) {
-      setFormData(prevData => ({
-        ...prevData,
-        [name]: value
-      }));
-    } else if (isValid) {
-      setFormData(prevData => ({
-        ...prevData,
-        [name]: value
-      }));
-    }
   };
-
-
 
   const validateForm = () => {
     const newErrors = {};
@@ -198,9 +187,6 @@ const GestionFacturas = () => {
     return isFormValid && Object.keys(newErrors).length === 0;
   };
 
-
-
-
   // Función para verificar si hay cambios en el formulario
   const checkForChanges = () => {
     if (!originalData) return true; // Si no hay datos originales, consideramos que hay cambios
@@ -209,15 +195,9 @@ const GestionFacturas = () => {
     return Object.keys(formData).some(key => formData[key] !== originalData[key]);
   };
 
-  // Manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
-
-    // Verificar si hubo cambios en el formulario
     const hasChanges = checkForChanges();
     if (!hasChanges) {
       setErrorMessage("No se han realizado cambios. No es necesario actualizar.");
@@ -225,6 +205,10 @@ const GestionFacturas = () => {
       return;
     }
 
+    setShowConfirmationModal(true); // Mostrar el modal de confirmación
+  };
+  // Manejar el envío del formulario
+  const handleConfirm = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
 
@@ -272,34 +256,12 @@ const GestionFacturas = () => {
 
       setShowSuccessModal(true);
       setLoading(false);
+      setShowConfirmationModal(false); // Cerrar el modal de confirmación
     } catch (error) {
-      console.error("Error updating data:", error);
-
-      let errorMsg = "";
-
-      if (error.response && error.response.data) {
-        if (error.response.data.error) {
-          errorMsg = error.response.data.error;
-        }
-        else if (typeof error.response.data === 'object' && error.response.data.message) {
-          errorMsg = error.response.data.message;
-        }
-        else if (typeof error.response.data === 'string') {
-          errorMsg = error.response.data;
-        }
-        else if (typeof error.response.data === 'object' && error.response.data.error === 'Formulario sin cambios. No se realizó ningún cambio en la información.') {
-          errorMsg = "No se realizó ningún cambio en la información.";
-        }
-        else {
-          errorMsg = `Error al actualizar los datos. Código: ${error.response.status}`;
-        }
-      } else {
-        errorMsg = "Error de conexión con el servidor.";
-      }
-
-      setErrorMessage(errorMsg);
+      setErrorMessage("Hubo un error al actualizar los datos.");
       setShowErrorModal(true);
       setLoading(false);
+      setShowConfirmationModal(false); // Cerrar el modal de confirmación en caso de error
     }
   };
 
@@ -465,6 +427,8 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("iva") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("iva") ? "border-red-300" : ""}
+                maxLength={5}
+
               />
               {errors.iva && <p className="text-red-500 text-sm mt-1">{errors.iva}</p>}
             </div>
@@ -482,6 +446,7 @@ const GestionFacturas = () => {
                 onChange={handleChange}
                 style={isFieldEmpty("ica") ? { backgroundColor: "#FFEBEE" } : {}}
                 className={isFieldEmpty("ica") ? "border-red-300" : ""}
+                maxLength={5}
               />
               {errors.ica && <p className="text-red-500 text-sm mt-1">{errors.ica}</p>}
             </div>
@@ -602,6 +567,13 @@ const GestionFacturas = () => {
         </form>
       </div>
 
+      <ConfirmationModal
+        showModal={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)} // Cerrar el modal sin hacer nada
+        onConfirm={handleConfirm} // Llamar a la función de confirmación
+      />
+
+      {/* Modal de éxito */}
       <Modal
         showModal={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
@@ -611,6 +583,7 @@ const GestionFacturas = () => {
         <p>Los datos han sido actualizados correctamente.</p>
       </Modal>
 
+      {/* Modal de error general */}
       <Modal
         showModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
