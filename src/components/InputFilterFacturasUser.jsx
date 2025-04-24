@@ -14,6 +14,10 @@ const InputFilterFacturasUser = ({ filters, onFilterChange, onApplyFilters }) =>
     onFilterChange(e.target.name, e.target.value);
   };
 
+  const handleStatusChange = (e) => {
+    onFilterChange("status", e.target.value);
+  };
+
   return (
     <div className="p-4 rounded-lg flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
       {/* Filtro por ID */}
@@ -30,7 +34,7 @@ const InputFilterFacturasUser = ({ filters, onFilterChange, onApplyFilters }) =>
           maxLength={10}
         />
       </div>
-      
+
       {/* Filtro por ID de lote */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
         <span className="absolute left-3 top-2 text-gray-400">
@@ -46,32 +50,31 @@ const InputFilterFacturasUser = ({ filters, onFilterChange, onApplyFilters }) =>
         />
       </div>
 
-
-      {/* Filtro por Estado (Activo/Inactivo) */}
-      {/* {showStatusFilter && (
-        <div className="relative w-full lg:w-[22%] xl:w-1/5">
-          <select
-            className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
-            value={filters.isActive}
-            onChange={handleStatusChange}
+      {/* Filtro por Estado */}
+      <div className="relative w-full lg:w-[22%] xl:w-1/5">
+        <select
+          className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+          value={filters.status}
+          onChange={handleStatusChange}
+        >
+          <option value="">Estado</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Validada">Validada</option>
+          <option value="Pagada">Pagada</option>
+          <option value="Vencida">Vencida</option>
+        </select>
+        <span className="absolute top-3 right-4 text-gray-400">
+          <svg
+            className="w-5 h-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <option value="">ESTADO</option>
-            <option value="true">Pagada</option>
-            <option value="false">Pendiente</option>
-          </select>
-          <span className="absolute top-3 right-4 text-gray-400">
-            <svg
-              className="w-5 h-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-        </div>
-      )} */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </div>
 
       {/* Filtro por Periodo de Facturación */}
       <div className="w-full lg:w-[40%] xl:w-1/3">
