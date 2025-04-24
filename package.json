@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:alpha": "standard-version --prerelease alpha",
+    "release:beta": "standard-version --prerelease beta"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -37,7 +42,13 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "globals": "^15.14.0",
     "postcss": "^8.5.2",
+    "standard-version": "^9.5.0",
     "tailwindcss": "^4.0.6",
     "vite": "^6.1.0"
+  },
+  "standard-version": {
+    "skip": {
+      "tag": true 
+    }
   }
 }
