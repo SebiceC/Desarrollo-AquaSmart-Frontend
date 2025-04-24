@@ -49,6 +49,15 @@ export const navegarAValvulaID = () => {
   cy.contains("h1", "Ajuste de posición").should("be.visible");
 };
 
+export const navegarAFacturaGestion = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Facturación").click();
+  cy.contains("a", "Gestión de facturas").should("be.visible").click();
+  cy.visit("http://localhost:5173/facturacion/GestionFacturas");
+  cy.url().should("include", "/facturacion/GestionFacturas");
+  cy.contains("h1", "Gestión de Facturas").should("be.visible");
+};
+
 export const clickAperturaTotal = () => {
   cy.contains("button", "Apertura Total").click();
   cy.wait(1000);
@@ -94,12 +103,78 @@ export const clickAceptar = () => {
   cy.wait(1000);
 };
 
+export const clickActualizar = () => {
+  cy.contains("button", "ACTUALIZAR").click();
+  cy.wait(1000);
+};
 export const limpiarCampos = () => {
   cy.get('input[placeholder="ID de válvula"]').clear();
   cy.get('input[placeholder="Nombre de válvula"]').clear();
   cy.get('input[placeholder="ID de ubicación"]').clear();
 };
+export const limpiarCAmposFactura = () => {
+  cy.wait(1000);
+  cy.get('input[placeholder="Tarifa fija piscicultura"]')
+    .clear()
+    .type(" ", { force: true }) // Dispara onChange en React
+    .type("{backspace}");
+  cy.wait(1000);
 
+  cy.get('input[placeholder="Tarifa volumétrica piscicultura"]')
+    .clear()
+    .type(" ", { force: true }) // Dispara onChange en React
+    .type("{backspace}");
+  cy.get('input[placeholder="Tarifa fija agrícola común"]')
+    .clear()
+    .type(" ", { force: true }) // Dispara onChange en React
+    .type("{backspace}");
+  cy.get('input[placeholder="Tarifa volumétrica agrícola común"]').type(
+    "{selectall}{backspace}"
+  );
+  cy.get('input[placeholder="Tarifa volumétrica agrícola común"]').clear();
+  cy.get('input[placeholder="IVA"]').clear();
+  cy.get('input[placeholder="ICA"]').clear();
+  cy.get('input[placeholder="Nombre o razón social"]').clear();
+  cy.get('input[placeholder="NIT"]').clear();
+  cy.get('input[placeholder="Teléfono"]').clear();
+  cy.get('input[placeholder="Dirección"]').clear();
+  cy.get('input[placeholder="Correo electrónico"]').clear();
+};
+export const validarAdressVacia = () => {
+  cy.get('input[placeholder="Dirección"]').clear().type(" ");
+};
+
+const direccionesHuila = [
+  "Calle 21 #6-42, Neiva (USCO)",
+  "Carrera 5 #10-50, Parque Industrial de Neiva",
+  "Calle 8 #12-34, Centro Comercial Industrial de Neiva",
+  "Kilómetro 2 vía Neiva - Rivera (Ceagrodex)",
+  "Carrera 1 #15-85, Universidad Surcolombiana",
+];
+export const ingresarDireccionHuila = () => {
+  const direccion =
+    direccionesHuila[Math.floor(Math.random() * direccionesHuila.length)];
+
+  cy.get('input[placeholder="Dirección"]')
+    .clear()
+    .type(direccion, { delay: 50 }); // simulamos tipeo humano
+};
+
+export const validarTelefonoVacio = () => {
+  cy.get('input[placeholder="Teléfono"]').clear().type(" ");
+};
+export const ingresarTelefonoAleatorio = () => {
+  const random = Math.floor(1000000 + Math.random() * 9000000); // 7 dígitos aleatorios
+  const telefono = `313${random}`; // Total: 10 dígitos
+
+  cy.get('input[placeholder="Teléfono"]').clear().type(telefono);
+};
+
+export const validarEmail = () => {
+  cy.get('input[placeholder="Correo electrónico"]')
+    .clear()
+    .type("prueba@gmail.co");
+};
 export const ingresarFechaHoy = (
   selector = 'input[type="date"]',
   index = 0
