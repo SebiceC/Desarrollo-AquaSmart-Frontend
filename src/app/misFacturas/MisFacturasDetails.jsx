@@ -379,9 +379,11 @@ const MisFacturasDetails = () => {
                         {factura?.status?.toLowerCase() === 'pagada' ? 'Pagado' : 'Pagar'}
                       </button>
                     ) : (
-                      <button 
+                      <button
                         className="bg-[#365486] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#344663] hover:scale-105 w-full lg:w-auto"
-                        onClick={() => navigate('/facturacion/pagar')}
+                        onClick={() =>
+                          navigate(`/facturacion/pagar/${factura.id_bill}`, { state: { invoiceId: factura.id_bill } })
+                        }
                       >
                         Pagar
                       </button>

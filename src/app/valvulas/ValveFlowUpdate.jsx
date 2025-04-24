@@ -1,12 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import NavBar from "../../components/NavBar"
 import Modal from "../../components/Modal"
 import BackButton from "../../components/BackButton"
 import { Search, Loader } from "lucide-react"
 import axios from "axios"
+
+// Crear una instancia de axios con configuración base
+const createAPI = (token) => {
+  return axios.create({
+    baseURL: import.meta.env.VITE_APP_API_URL,
+    headers: { Authorization: `Token ${token}` },
+  })
+}
 
 const ValveFlowUpdate = () => {
   const { id_valve } = useParams()
@@ -41,19 +49,22 @@ const ValveFlowUpdate = () => {
     is_active: false,
     current_flow: 0,
     max_flow: 180,
-    flow_unit: "grados",
+    flow_unit: "litros",
     valve_type: "",
     last_update: "",
   }
 
   const initialFormState = {
     flow: "",
-    flow_unit: "grados",
+    flow_unit: "litros",
   }
 
   // Usar estos estados iniciales en los useState
   const [valve, setValve] = useState(initialValveState)
   const [formData, setFormData] = useState(initialFormState)
+  const [deviceData, setDeviceData] = useState(null)
+  const [plots, setPlots] = useState([])
+  const [allLots, setAllLots] = useState([])
 
   // Validation states
   const [flowError, setFlowError] = useState("")
@@ -63,7 +74,7 @@ const ValveFlowUpdate = () => {
   const [errorModalMessage, setErrorModalMessage] = useState("")
 
   // Units options
-  const unitOptions = [{ value: "grados", label: "grados" }]
+  const unitOptions = [{ value: "litros", label: "litros" }]
 
   const API_URL = import.meta.env.VITE_APP_API_URL
 
@@ -99,12 +110,8 @@ const ValveFlowUpdate = () => {
     }
   }
 
-  useEffect(() => {
-    fetchValveData()
-  }, [id_valve, API_URL])
-
-  // Función para obtener datos básicos de la válvula
-  const fetchValveData = async () => {
+  // Función optimizada para cargar todos los datos necesarios en paralelo
+  const fetchAllData = useCallback(async () => {
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -113,113 +120,104 @@ const ValveFlowUpdate = () => {
         return
       }
 
-      // Obtener datos básicos primero
-      await fetchBasicValveData(token)
+      const api = createAPI(token)
 
-      // Luego cargar datos detallados en segundo plano
-      fetchDetailedValveData(token).catch((err) => {
-        console.error("Error al cargar datos adicionales:", err)
-        // No mostramos error al usuario porque ya tenemos los datos básicos
+      // Realizar todas las peticiones en paralelo
+      const [devicesResponse, plotsResponse] = await Promise.all([
+        api.get("/iot/iot-devices"),
+        api.get("/plot-lot/plots/list"),
+      ])
+
+      // Encontrar el dispositivo específico
+      const device = devicesResponse.data.find((d) => d.iot_id === id_valve)
+
+      if (!device) {
+        throw new Error("No se encontró la válvula solicitada.")
+      }
+
+      // Guardar los datos del dispositivo para uso posterior
+      setDeviceData(device)
+      setPlots(plotsResponse.data)
+
+      // Configurar los datos básicos de la válvula inmediatamente
+      const basicValveData = {
+        id: device.iot_id,
+        name: device.name || "Sin nombre",
+        is_active: device.is_active,
+        current_flow: device.actual_flow || 0,
+        max_flow: 180,
+        flow_unit: "litros",
+        registration_date: device.registration_date || new Date().toISOString(),
+      }
+
+      // Actualizar el estado con los datos básicos
+      setValve(basicValveData)
+      setFormData({
+        flow: "",
+        flow_unit: "litros",
       })
+
+      // Marcar que la carga principal ha terminado
+      setLoading(false)
+
+      // Iniciar la carga de lotes en segundo plano
+      fetchLotsData(token, device, plotsResponse.data)
     } catch (err) {
       const errorMessage = handleApiError(err, "No se pudieron cargar los datos de la válvula.")
       setError(errorMessage)
       setLoading(false)
       setLoadingValveInfo(false)
     }
-  }
+  }, [id_valve])
 
-  // Obtener datos básicos de la válvula
-  const fetchBasicValveData = async (token) => {
-    const devicesResponse = await axios.get(`${API_URL}/iot/iot-devices`, {
-      headers: { Authorization: `Token ${token}` },
-    })
+  // Función para cargar los datos de lotes en segundo plano
+  const fetchLotsData = useCallback(async (token, device, plots) => {
+    try {
+      const api = createAPI(token)
 
-    const deviceData = devicesResponse.data.find((device) => device.iot_id === id_valve)
+      // Crear un array de promesas para todas las peticiones de lotes
+      const lotPromises = plots.map((plot) =>
+        api
+          .get(`/plot-lot/plots/${plot.id_plot}`)
+          .then((response) => {
+            if (response.data.lotes && Array.isArray(response.data.lotes)) {
+              return response.data.lotes.map((lot) => ({
+                ...lot,
+                parent_plot_id: plot.id_plot,
+                parent_plot_name: plot.plot_name,
+                parent_plot_owner: plot.owner,
+              }))
+            }
+            return []
+          })
+          .catch((err) => {
+            console.error(`Error al obtener lotes del predio ${plot.id_plot}:`, err)
+            return []
+          }),
+      )
 
-    if (!deviceData) {
-      throw new Error("No se encontró la válvula solicitada.")
+      // Ejecutar todas las promesas en paralelo
+      const lotsArrays = await Promise.all(lotPromises)
+      const allLotsData = lotsArrays.flat()
+
+      // Guardar todos los lotes para uso posterior
+      setAllLots(allLotsData)
+
+      // Determinar la ubicación (predio o lote)
+      const locationInfo = determineLocation(device, plots, allLotsData)
+
+      // Actualizar el estado con los datos completos
+      setValve((prev) => ({
+        ...prev,
+        ...locationInfo,
+        valve_type: device.device_type_name || device.type || "N/A",
+      }))
+    } catch (err) {
+      console.error("Error al cargar datos detallados:", err)
+    } finally {
+      setLoadingValveInfo(false)
     }
-
-    // Configurar los datos básicos de la válvula
-    const basicValveData = {
-      id: deviceData.iot_id,
-      name: deviceData.name || "Sin nombre",
-      is_active: deviceData.is_active,
-      current_flow: deviceData.actual_flow || 0,
-      max_flow: 180,
-      flow_unit: "grados",
-      last_update: deviceData.last_update || new Date().toISOString(),
-    }
-
-    // Actualizar el estado con los datos básicos
-    setValve(basicValveData)
-    setFormData({
-      ...formData,
-      flow_unit: "grados",
-    })
-
-    // Marcar que la carga principal ha terminado
-    setLoading(false)
-
-    return deviceData
-  }
-
-  // Obtener datos detallados de la válvula
-  const fetchDetailedValveData = async (token) => {
-    const devicesResponse = await axios.get(`${API_URL}/iot/iot-devices`, {
-      headers: { Authorization: `Token ${token}` },
-    })
-
-    const deviceData = devicesResponse.data.find((device) => device.iot_id === id_valve)
-
-    // Obtener la lista de predios
-    const plotsResponse = await axios.get(`${API_URL}/plot-lot/plots/list`, {
-      headers: { Authorization: `Token ${token}` },
-    })
-
-    // Obtener todos los lotes
-    const allLots = await getAllLots(plotsResponse.data, token)
-
-    // Determinar la ubicación (predio o lote)
-    const locationInfo = determineLocation(deviceData, plotsResponse.data, allLots)
-
-    // Actualizar el estado con los datos completos
-    setValve((prevValve) => ({
-      ...prevValve,
-      ...locationInfo,
-      valve_type: deviceData.device_type_name || deviceData.type || "N/A",
-    }))
-
-    setLoadingValveInfo(false)
-  }
-
-  // Obtener todos los lotes de todos los predios
-  const getAllLots = async (plots, token) => {
-    let allLots = []
-
-    for (const plot of plots) {
-      try {
-        const plotDetailResponse = await axios.get(`${API_URL}/plot-lot/plots/${plot.id_plot}`, {
-          headers: { Authorization: `Token ${token}` },
-        })
-
-        if (plotDetailResponse.data.lotes && Array.isArray(plotDetailResponse.data.lotes)) {
-          const lotsWithPlotInfo = plotDetailResponse.data.lotes.map((lot) => ({
-            ...lot,
-            parent_plot_id: plot.id_plot,
-            parent_plot_name: plot.plot_name,
-            parent_plot_owner: plot.owner,
-          }))
-          allLots = [...allLots, ...lotsWithPlotInfo]
-        }
-      } catch (err) {
-        console.error(`Error al obtener lotes del predio ${plot.id_plot}:`, err)
-      }
-    }
-
-    return allLots
-  }
+  }, [])
 
   // Determinar la ubicación de la válvula
   const determineLocation = (deviceData, plots, allLots) => {
@@ -235,7 +233,18 @@ const ValveFlowUpdate = () => {
       property: "N/A",
     }
 
-    if (associatedPlot) {
+    if (associatedLot) {
+      // Si está asociado a un lote, mostrar el ID del lote
+      locationInfo = {
+        location_id: associatedLot.id_lot,
+        location_type: "lote",
+        location_name: associatedLot.crop_type ? `${associatedLot.crop_name || "Sin variedad"}` : "Sin información",
+        parent_plot_name: associatedLot.parent_plot_name,
+        owner: associatedLot.parent_plot_owner || "N/A",
+        property: "N/A", // Los lotes no tienen propiedad directa
+      }
+    } else if (associatedPlot) {
+      // Si no está asociado a un lote pero sí a un predio
       locationInfo = {
         location_id: associatedPlot.id_plot,
         location_type: "predio",
@@ -244,21 +253,14 @@ const ValveFlowUpdate = () => {
         property: associatedPlot.property || "N/A",
         parent_plot_name: null,
       }
-    } else if (associatedLot) {
-      locationInfo = {
-        location_id: associatedLot.id_lot,
-        location_type: "lote",
-        location_name: associatedLot.crop_type
-          ? `${associatedLot.crop_type} (${associatedLot.crop_variety || "Sin variedad"})`
-          : "Sin información",
-        parent_plot_name: associatedLot.parent_plot_name,
-        owner: associatedLot.parent_plot_owner || "N/A",
-        property: "N/A", // Los lotes no tienen propiedad directa
-      }
     }
 
     return locationInfo
   }
+
+  useEffect(() => {
+    fetchAllData()
+  }, [fetchAllData])
 
   // Validar entrada de flujo
   const validateFlowInput = (value) => {
@@ -275,12 +277,12 @@ const ValveFlowUpdate = () => {
 
     // Validar máximo
     if (numValue > 180) {
-      return "ERROR: El valor ingresado no es permitido, valor máximo es 180 grados"
+      return "ERROR: El valor ingresado no es permitido, valor máximo es 180 litros"
     }
 
     // Validar mínimo
     if (value !== "" && numValue < 0) {
-      return "ERROR: El valor ingresado no es permitido, valor mínimo es 0 grados"
+      return "ERROR: El valor ingresado no es permitido, valor mínimo es 0 litros"
     }
 
     // Validar si es igual al valor actual
@@ -325,7 +327,7 @@ const ValveFlowUpdate = () => {
 
     // Validar si se proporcionó un valor
     if (!formData.flow) {
-      setFlowError("ERROR: El valor en grados es requerido")
+      setFlowError("ERROR: El valor en litros es requerido")
       return false
     }
 
@@ -337,7 +339,7 @@ const ValveFlowUpdate = () => {
 
     // Validar si el valor excede el máximo
     if (Number.parseFloat(formData.flow) > 180) {
-      setFlowError(`ERROR: El valor ingresado no es permitido, valor máximo es 180 grados`)
+      setFlowError(`ERROR: El valor ingresado no es permitido, valor máximo es 180 litros`)
       return false
     }
 
@@ -360,17 +362,17 @@ const ValveFlowUpdate = () => {
       }
 
       const token = localStorage.getItem("token")
-      await axios.put(`${API_URL}/iot/update-flow/${valve.id}`, updateData, {
-        headers: { Authorization: `Token ${token}` },
-      })
+      const api = createAPI(token)
 
-      showMessage("Éxito", "El valor en grados ha sido actualizado correctamente.", "success")
+      await api.put(`/iot/update-flow/${valve.id}`, updateData)
 
-      // Actualizar datos locales
+      showMessage("Éxito", "El valor en litros ha sido actualizado correctamente.", "success")
+
+      // Actualizar datos locales con la fecha actual
+      const currentDate = new Date().toISOString()
       setValve({
         ...valve,
         current_flow: Number.parseFloat(formData.flow),
-        last_update: new Date().toISOString(),
       })
 
       // Limpiar formulario
@@ -379,7 +381,7 @@ const ValveFlowUpdate = () => {
         flow: "",
       })
     } catch (err) {
-      showMessage("ERROR", handleApiError(err, "No se pudo actualizar el valor en grados de la válvula."), "error")
+      showMessage("ERROR", handleApiError(err, "No se pudo actualizar el valor en litros de la válvula."), "error")
     } finally {
       setIsSaving(false)
     }
@@ -426,10 +428,9 @@ const ValveFlowUpdate = () => {
     try {
       const updateData = { actual_flow: targetFlow }
       const token = localStorage.getItem("token")
+      const api = createAPI(token)
 
-      await axios.put(`${API_URL}/iot/update-flow/${valve.id}`, updateData, {
-        headers: { Authorization: `Token ${token}` },
-      })
+      await api.put(`/iot/update-flow/${valve.id}`, updateData)
 
       setShowModal(false)
       showMessage("Éxito", successMessage, "success")
@@ -437,7 +438,6 @@ const ValveFlowUpdate = () => {
       setValve({
         ...valve,
         current_flow: targetFlow,
-        last_update: new Date().toISOString(),
       })
     } catch (err) {
       setShowModal(false)
@@ -456,8 +456,7 @@ const ValveFlowUpdate = () => {
     setIsConnectivityIssue(false)
     setError(null)
     setLoading(true)
-
-    // La reconexión se manejará automáticamente en el useEffect
+    fetchAllData()
   }
 
   const formatDate = (dateString) => {
@@ -532,28 +531,14 @@ const ValveFlowUpdate = () => {
 
   // Renderizar información de ubicación
   const renderLocationInfo = () => {
-    const { location_type, location_id, location_name, parent_plot_name } = valve
+    const { location_id, location_name } = valve
 
-    if (location_type === "predio") {
-      return (
-        <>
-          <ValveInfoItem label="ID Ubicación" value={location_id} />
-          <ValveInfoItem label="Nombre Ubicación" value={location_name} />
-        </>
-      )
-    }
-
-    if (location_type === "lote") {
-      return (
-        <>
-          <ValveInfoItem label="ID Ubicación (Lote)" value={location_id} />
-          <ValveInfoItem label="Nombre Ubicación" value={location_name} />
-          {parent_plot_name && <ValveInfoItem label="Predio" value={parent_plot_name} />}
-        </>
-      )
-    }
-
-    return <ValveInfoItem label="Ubicación" value="No disponible" />
+    return (
+      <>
+        <ValveInfoItem label="ID Ubicación" value={location_id} />
+        <ValveInfoItem label="Nombre Ubicación" value={location_name} />
+      </>
+    )
   }
 
   // Renderizar botón de acción (apertura/cierre)
@@ -636,7 +621,7 @@ const ValveFlowUpdate = () => {
         <div className="pt-4">
           <div className="mb-5 text-center">
             <h1 className="text-2xl font-semibold text-[#365486] mb-1">Ajuste de posición</h1>
-            <p className="text-sm text-gray-600">Modifique la posición en grados</p>
+            <p className="text-sm text-gray-600">Modifique la posición en litros</p>
             <div className="w-16 h-1 bg-[#365486] mx-auto mt-2 rounded-full"></div>
           </div>
 
@@ -673,7 +658,7 @@ const ValveFlowUpdate = () => {
                   </>
                 )}
 
-                <ValveInfoItem label="Última actualización" value={formatDate(valve.last_update)} />
+                <ValveInfoItem label="Fecha de registro" value={formatDate(valve.registration_date || "N/A")} />
 
                 <div className="pt-4 mt-4 border-t border-gray-200">
                   <BackButton
@@ -722,7 +707,7 @@ const ValveFlowUpdate = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="flow">
-                      Posición en grados <span className="text-red-500">*</span>
+                      Posición en litros <span className="text-red-500">*</span>
                     </label>
                     <div className="flex">
                       <div className="relative flex-grow">
@@ -738,7 +723,7 @@ const ValveFlowUpdate = () => {
                           className={`w-full pl-10 py-2 bg-gray-100 text-gray-700 border ${
                             flowError ? "border-red-500" : "border-gray-300"
                           } rounded-l-full focus:outline-none text-sm`}
-                          placeholder="Ingrese la posición en grados (0-180)"
+                          placeholder="Ingrese la posición en litros (0-180)"
                         />
                       </div>
                       <select
@@ -831,7 +816,7 @@ const ValveFlowUpdate = () => {
         onCancel={() => !isProcessingOpen && setShowConfirmOpenModal(false)}
         onConfirm={handleFullOpen}
         title="¿Estás seguro?"
-        message="¿Estás seguro que deseas abrir completamente la válvula a 180 grados?"
+        message="¿Estás seguro que deseas abrir completamente la válvula a 180 litros?"
         isProcessing={isProcessingOpen}
         confirmText="Sí, abrir!"
       />
@@ -841,7 +826,7 @@ const ValveFlowUpdate = () => {
         onCancel={() => !isProcessingClose && setShowConfirmCloseModal(false)}
         onConfirm={handleFullClose}
         title="¿Estás seguro?"
-        message="¿Estás seguro que deseas cerrar completamente la válvula a 0 grados?"
+        message="¿Estás seguro que deseas cerrar completamente la válvula a 0 litros?"
         isProcessing={isProcessingClose}
         confirmText="Sí, cerrar!"
       />
@@ -850,4 +835,3 @@ const ValveFlowUpdate = () => {
 }
 
 export default ValveFlowUpdate
-
