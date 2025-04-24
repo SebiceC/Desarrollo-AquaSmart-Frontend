@@ -1,21 +1,13 @@
 import React from "react";
 import { Search } from "lucide-react";
 
-const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true, showStatusFilter = true }) => {
+const InputFilterFacturasUser = ({ filters, onFilterChange, onApplyFilters }) => {
   const handleIdChange = (e) => {
     onFilterChange("id", e.target.value);
   };
 
   const handleLotIdChange = (e) => {
     onFilterChange("lotId", e.target.value);
-  };
-
-  const handleOwnerDocumentChange = (e) => {
-    onFilterChange("ownerDocument", e.target.value);
-  };
-
-  const handleStatusChange = (e) => {
-    onFilterChange("isActive", e.target.value);
   };
 
   const handleDateChange = (e) => {
@@ -54,20 +46,6 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
         />
       </div>
 
-      {/* Filtro por documento del propietario */}
-      <div className="relative w-full lg:w-[22%] xl:w-1/4">
-        <span className="absolute left-3 top-2 text-gray-400">
-          <Search size={18} />
-        </span>
-        <input
-          type="number"
-          placeholder="Documento del propietario"
-          className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
-          value={filters.owner}
-          onChange={handleOwnerDocumentChange}
-          maxLength={15}
-        />
-      </div>
 
       {/* Filtro por Estado (Activo/Inactivo) */}
       {/* {showStatusFilter && (
@@ -142,4 +120,4 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
   );
 };
 
-export default InputFilterFacturas;
+export default InputFilterFacturasUser;

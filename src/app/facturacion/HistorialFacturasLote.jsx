@@ -59,53 +59,74 @@ const HistorialFacturasLote = () => {
 
   const applyFilters = () => {
     try {
-      // Verificamos si hay al menos un filtro aplicado
-      const hasActiveFilters = 
-        filters.id.trim() !== "" || 
-        filters.lotId.trim() !== "" || 
-        filters.ownerDocument.trim() !== "" || 
-        filters.startDate !== "" || 
-        filters.endDate !== "" || 
-        filters.isActive !== "";
+      // Verificación inicial de los valores de fechas tal como los ingresa el usuario
+      console.log("Fechas ingresadas:", {
+        startDate: filters.startDate, 
+        endDate: filters.endDate
+      });
       
-      // Validación de código de factura
-      if (filters.id.trim() !== "" && !/^[A-Za-z0-9]+$/.test(filters.id.trim())) {
-        setModalMessage("El campo ID de factura contiene caracteres no válidos");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      // Validación de formato del ID del lote
-      if (filters.lotId.trim() !== "") {
-        const isValidLoteFormat = /^(\d{1,7}|\d{1,7}-\d{0,3})$/.test(filters.lotId.trim());
+      // Crear un nuevo arreglo para almacenar los resultados filtrados
+      let filteredResults = [...facturas];
+      
+      // PASO 1: Aplicar el filtro de fechas PRIMERO, de forma aislada
+      if (filters.startDate || filters.endDate) {
+        // console.log("Aplicando filtro de fechas...");
+        // console.log("Total facturas antes del filtro:", filteredResults.length);
         
-        if (!isValidLoteFormat) {
-          setModalMessage("El campo ID del lote contiene caracteres no válidos");
-          setShowModal(true);
-          setFilteredFacturas([]);
-          return;
-        }
+        // Filtrar por fechas
+        filteredResults = filteredResults.filter(factura => {
+          // Convertir a fecha y remover componente de hora
+          const facturaDate = new Date(factura.creation_date);
+          const facturaDateOnly = new Date(
+            facturaDate.getFullYear(), 
+            facturaDate.getMonth(), 
+            facturaDate.getDate()
+          );
+          
+          let keepFactura = true;
+          
+          // Filtro de fecha inicial
+          if (filters.startDate) {
+            const startDateParts = filters.startDate.split('-');
+            const startDate = new Date(
+              parseInt(startDateParts[0]), // año
+              parseInt(startDateParts[1]) - 1, // mes (0-11)
+              parseInt(startDateParts[2]) // día
+            );
+            
+            // console.log(`Factura ${factura.code} - fecha: ${facturaDateOnly.toLocaleDateString()}, comparando con inicio: ${startDate.toLocaleDateString()}`);
+            
+            if (facturaDateOnly < startDate) {
+              keepFactura = false;
+              // console.log(`-> FILTRADA: Fecha anterior a la inicial`);
+            }
+          }
+          
+          // Filtro de fecha final
+          if (keepFactura && filters.endDate) {
+            const endDateParts = filters.endDate.split('-');
+            const endDate = new Date(
+              parseInt(endDateParts[0]), // año
+              parseInt(endDateParts[1]) - 1, // mes (0-11)
+              parseInt(endDateParts[2]) // día
+            );
+            
+            // console.log(`Factura ${factura.code} - comparando con fin: ${endDate.toLocaleDateString()}`);
+            
+            if (facturaDateOnly > endDate) {
+              keepFactura = false;
+              // console.log(`-> FILTRADA: Fecha posterior a la final`);
+            }
+          }
+          
+          return keepFactura;
+        });
+        
+        // console.log("Total facturas después del filtro de fechas:", filteredResults.length);
       }
-
-      // Validación de formato del documento del propietario
-      if (filters.ownerDocument.trim() !== "" && !/^\d+$/.test(filters.ownerDocument.trim())) {
-        setModalMessage("El campo ID del propietario contiene caracteres no válidos");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      // Validación de fechas
-      if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
-        setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      // Filtrado de facturas
-      const filtered = facturas.filter((factura) => {
+      
+      // PASO 2: Aplicar el resto de los filtros
+      filteredResults = filteredResults.filter(factura => {
         // Filtro por código de factura
         const matchesId = filters.id.trim() === "" ||
           (filters.id.trim().length > 0 &&
@@ -120,88 +141,29 @@ const HistorialFacturasLote = () => {
         // Filtro por documento del cliente/propietario
         const matchesOwner = filters.ownerDocument.trim() === "" ||
           factura.client_document?.includes(filters.ownerDocument.trim());
-
+  
         // Filtro por estado de pago
         const matchesStatus =
           filters.isActive === "" ||
           (filters.isActive === "true" && factura.status?.toLowerCase() === "pagada") ||
           (filters.isActive === "false" && factura.status?.toLowerCase() === "pendiente");
-
-        // Manejo de fechas para periodo de facturación (usando creation_date)
-  let matchesDate = true;
-
-  if (filters.startDate || filters.endDate) {
-    try {
-      // Obtener la fecha de creación de la factura como un objeto Date
-      const facturaDate = new Date(factura.creation_date);
-      // Convertimos la fecha de la factura a formato local y eliminamos la hora para la comparación
-      const facturaDateOnly = new Date(facturaDate.getFullYear(), facturaDate.getMonth(), facturaDate.getDate());
-
-      // Si hay fecha de inicio, verificar que la factura no sea anterior a la fecha de inicio
-      if (filters.startDate) {
-        const startDate = new Date(filters.startDate);
-        // Convertimos la fecha de inicio a la misma zona horaria y eliminamos la hora
-        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        
-        // Comprobamos si la fecha de la factura es antes de la fecha de inicio
-        if (facturaDateOnly < startDateOnly) {
-          matchesDate = false;
-        }
-      }
-
-      // Si hay fecha de fin, verificar que la factura no sea posterior a la fecha de fin
-      if (matchesDate && filters.endDate) {
-        const endDate = new Date(filters.endDate);
-        // Convertimos la fecha de fin a la misma zona horaria y eliminamos la hora
-        const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        
-        // Comprobamos si la fecha de la factura es después de la fecha de fin
-        if (facturaDateOnly > endDateOnly) {
-          matchesDate = false;
-        }
+          
+        return matchesId && matchesIdLote && matchesOwner && matchesStatus;
+      });
+      
+      // Establecer los resultados filtrados
+      // console.log("Total facturas después de todos los filtros:", filteredResults.length);
+      setFilteredFacturas(filteredResults);
+      
+      // Mostrar mensaje si no hay resultados
+      if (filteredResults.length === 0) {
+        setModalMessage("No se encontraron facturas que coincidan con los filtros aplicados.");
+        setShowModal(true);
       }
     } catch (error) {
-      console.error("Error al procesar fechas:", error, "para factura:", factura.code);
-      matchesDate = false;
-    }
-  }
-
-  return matchesId && matchesIdLote && matchesOwner && matchesDate && matchesStatus;
-});
-      // Validaciones adicionales para mostrar mensajes específicos
-      if (filters.id.trim() !== "" && filtered.length === 0) {
-        setModalMessage("La factura filtrada no existe.");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      if (filters.lotId.trim() !== "" && filtered.length === 0) {
-        setModalMessage("No hay facturas asociadas al lote filtrado.");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      if (filters.ownerDocument.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El documento del propietario no se encuentra asociado a ninguna factura");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
-        setModalMessage("No hay facturas en el periodo especificado.");
-        setShowModal(true);
-        setFilteredFacturas([]);
-        return;
-      }
-
-      setFilteredFacturas(filtered);
-    } catch (error) {
-      setModalMessage("¡Las facturas filtradas no se pudieron mostrar correctamente! Vuelve a intentarlo más tarde…");
+      // console.error("Error al aplicar filtros:", error);
+      setModalMessage("Ocurrió un error al aplicar los filtros. Por favor, inténtalo de nuevo.");
       setShowModal(true);
-      setFilteredFacturas([]);
     }
   };
 
@@ -218,10 +180,16 @@ const HistorialFacturasLote = () => {
       key: "status",
       label: "Estado",
       render: (factura) => {
-        const isPaid = factura.status?.toLowerCase() === "pagada";
-        const statusClass = isPaid
+        const statusClass = factura.status?.toLowerCase() === "pendiente" 
+          ? "bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200" 
+          : factura.status?.toLowerCase() === "validada"
+          ? "bg-blue-100 text-blue-800 border border-blue-200"
+          : factura.status?.toLowerCase() === "pagada"
           ? "bg-green-100 text-green-800 border border-green-200"
-          : "bg-red-100 text-red-800 border border-red-200";
+          : factura.status?.toLowerCase() === "vencida"
+          ? "bg-red-100 text-red-800 border border-red-200"
+          : "";
+
 
         return (
           <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
