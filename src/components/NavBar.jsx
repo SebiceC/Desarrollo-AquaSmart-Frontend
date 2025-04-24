@@ -119,8 +119,9 @@ function NavBar() {
                         direction="/facturacion"
                         text="Facturación"
                         subItems={[
-                            { direction: "/facturacion/historial", text: "Historial" },
+                            { direction: "/facturacion/GestionFacturas", text: "Gestión de facturas" },
                             { direction: "/facturacion/reportes", text: "Reportes" },
+                            { direction: "/facturacion/historial-facturas-lote", text: "Historial de factura" },
                         ]}
                     />
                     {
@@ -214,8 +215,9 @@ function NavBar() {
                             direction="/facturacion"
                             text="Facturación"
                             subItems={[
-                                { direction: "/facturacion/historial", text: "Historial" },
+                                { direction: "/facturacion/GestionFacturas", text: "Gestión de facturas" },
                                 { direction: "/facturacion/reportes", text: "Reportes" },
+                                { direction: "/facturacion/historial-facturas-lote", text: "Historial de factura" },
                             ]}
                         />
                         {

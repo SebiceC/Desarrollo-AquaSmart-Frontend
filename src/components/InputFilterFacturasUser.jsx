@@ -1,21 +1,13 @@
 import React from "react";
 import { Search } from "lucide-react";
 
-const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true, showStatusFilter = true }) => {
+const InputFilterFacturasUser = ({ filters, onFilterChange, onApplyFilters }) => {
   const handleIdChange = (e) => {
     onFilterChange("id", e.target.value);
   };
 
   const handleLotIdChange = (e) => {
     onFilterChange("lotId", e.target.value);
-  };
-
-  const handleOwnerDocumentChange = (e) => {
-    onFilterChange("ownerDocument", e.target.value);
-  };
-
-  const handleStatusChange = (e) => {
-    onFilterChange("isActive", e.target.value);
   };
 
   const handleDateChange = (e) => {
@@ -31,17 +23,15 @@ const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTy
         </span>
         <input
           type="text"
-          placeholder="Filtrar por ID de predio"
+          placeholder="Filtrar por ID de factura"
           className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
           value={filters.id}
           onChange={handleIdChange}
           maxLength={10}
         />
       </div>
-
-
       
-      {/* Filtro por ID  de lote */}
+      {/* Filtro por ID de lote */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
         <span className="absolute left-3 top-2 text-gray-400">
           <Search size={18} />
@@ -56,24 +46,9 @@ const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTy
         />
       </div>
 
-      {/* Filtro por documento del propietario */}
-      <div className="relative w-full lg:w-[22%] xl:w-1/4">
-        <span className="absolute left-3 top-2 text-gray-400">
-          <Search size={18} />
-        </span>
-        <input
-          type="text"
-          placeholder="Documento del propietario"
-          className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
-          value={filters.owner}
-          onChange={handleOwnerDocumentChange}
-          maxLength={15}
-        />
-      </div>
 
-
-            {/* Filtro por Estado (Activo/Inactivo) */}
-            {showStatusFilter && (
+      {/* Filtro por Estado (Activo/Inactivo) */}
+      {/* {showStatusFilter && (
         <div className="relative w-full lg:w-[22%] xl:w-1/5">
           <select
             className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
@@ -81,8 +56,8 @@ const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTy
             onChange={handleStatusChange}
           >
             <option value="">ESTADO</option>
-            <option value="true">Activo</option>
-            <option value="false">Inactivo</option>
+            <option value="true">Pagada</option>
+            <option value="false">Pendiente</option>
           </select>
           <span className="absolute top-3 right-4 text-gray-400">
             <svg
@@ -96,11 +71,11 @@ const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTy
             </svg>
           </span>
         </div>
-      )}
+      )} */}
 
-      {/* Filtro por Fecha de Registro */}
+      {/* Filtro por Periodo de Facturación */}
       <div className="w-full lg:w-[40%] xl:w-1/3">
-        <p className="text-gray-500 text-sm text-center mb-1">Filtrar por fecha de registro</p>
+        <p className="text-gray-500 text-sm text-center mb-1">Filtrar por periodo de facturación</p>
         <div className="flex items-center bg-gray-100 rounded-full px-1 w-full border border-gray-300">
           {/* Icono de búsqueda */}
           <span className="text-gray-400 px-2 flex-shrink-0">
@@ -145,4 +120,4 @@ const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTy
   );
 };
 
-export default InputFilterLote;
+export default InputFilterFacturasUser;

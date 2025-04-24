@@ -4,8 +4,8 @@ const Modal = ({ showModal, onClose, title, children, btnMessage }) => {
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs">
-      <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] sm:w-[400px]">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] sm:w-[400px] z-50">
         {/* Título del modal */}
         <h2 className="text-xl font-bold mb-4">{title}</h2>
 
