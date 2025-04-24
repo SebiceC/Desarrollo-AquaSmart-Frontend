@@ -353,7 +353,7 @@ const GestionFacturas = () => {
 
       } catch (error) {
         console.error("Error fetching data:", error);
-        setErrorMessage("Error al cargar los datos de la empresa.");
+        setErrorMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.");
         setShowErrorModal(true);
       }
     };
