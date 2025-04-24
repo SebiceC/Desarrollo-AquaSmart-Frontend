@@ -615,7 +615,7 @@ const GestionFacturas = () => {
         showModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
         title="Error"
-        btnMessage="Cerrar"
+        btnMessage="Aceptar"
       >
         <p>{errorMessage}</p>
       </Modal>
