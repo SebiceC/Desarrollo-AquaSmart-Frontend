@@ -13,8 +13,15 @@ const DataTable = ({
   onViewFactura,
   // Agregamos el nuevo prop onRequest
   onRequest,
+  // Agregamos el prop actionButtonText para personalizar el texto del botón
+  actionButtonText = "Solicitar",
+  // Agregamos el prop para determinar si el botón está habilitado
+  isActionEnabled = () => true,
+  // Agregamos el prop para el tooltip cuando el botón está deshabilitado
+  disabledTooltip = "",
   actions = true,
   showStatus = true,
+  customStyles = {},
 }) => {
   // Verifica si hay datos para mostrar
   const isEmpty = data.length === 0;
@@ -69,7 +76,7 @@ const DataTable = ({
                   </td>
                 ))}
                 {actions && (
-                  <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
+                  <td className={`px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900 ${customStyles.actionCellStyles || ""}`}>
                     <div className="flex space-x-1 justify-start">
                       {/* Mantenemos los botones originales */}
                       {onDelete && (item.is_active || item.is_activate) && (
@@ -98,15 +105,20 @@ const DataTable = ({
                         </button>
                       )}
                       
-                      {/* Agregamos el nuevo botón de solicitar */}
+                      {/* Modificamos el botón de solicitar/reportar para usar el texto personalizado */}
                       {onRequest && (
-                        <button
-                          className="bg-[#365486] hover:bg-blue-700 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-                          onClick={() => onRequest(item)}
-                          aria-label="Solicitar"
-                        >
-                          <p className="font-bold text-white px-2">Solicitar</p>
-                        </button>
+                        <div className="relative" title={!isActionEnabled(item) ? disabledTooltip : ""}>
+                          <button
+                            className={`bg-[#365486] hover:bg-blue-700 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                              !isActionEnabled(item) ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                            onClick={() => isActionEnabled(item) && onRequest(item)}
+                            aria-label={actionButtonText}
+                            disabled={!isActionEnabled(item)}
+                          >
+                            <p className="font-bold text-white px-2">{actionButtonText}</p>
+                          </button>
+                        </div>
                       )}
                       
                       {onConsult && (
