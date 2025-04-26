@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import InputFilterLoteReportes from "../../components/InputFilterLoteReportes";
 import Modal from "../../components/Modal";
@@ -9,6 +9,7 @@ import DataTable from "../../components/DataTable";
 
 const ReportesYNovedadesLotesList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [lotes, setLotes] = useState([]);
   const [predios, setPredios] = useState([]);
   const [filteredLotes, setFilteredLotes] = useState(null);
@@ -18,6 +19,8 @@ const ReportesYNovedadesLotesList = () => {
   const [loading, setLoading] = useState(true);
   const [showFlowModal, setShowFlowModal] = useState(false);
   const [selectedLote, setSelectedLote] = useState(null);
+  // Determinar si es modo reporte o solicitud basado en la ruta o parámetro
+  const [isReportMode, setIsReportMode] = useState(false);
   const [filters, setFilters] = useState({
     id: "",
     ownerDocument: "",
@@ -36,6 +39,12 @@ const ReportesYNovedadesLotesList = () => {
   };
 
   useEffect(() => {
+    // Determinar si estamos en modo reporte o solicitud
+    // Esto podría venir como un state desde la navegación o un query param
+    const searchParams = new URLSearchParams(location.search);
+    const mode = searchParams.get('mode');
+    setIsReportMode(mode === 'report');
+
     const fetchUserAndLotes = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -100,7 +109,7 @@ const ReportesYNovedadesLotesList = () => {
     };
 
     fetchUserAndLotes();
-  }, [API_URL]);
+  }, [API_URL, location.search]);
 
   const handleFilterChange = (name, value) => {
     setFilters({
@@ -258,16 +267,40 @@ const ReportesYNovedadesLotesList = () => {
     }
   };
   
-  // Manejador para el nuevo botón "Solicitar"
+  // Manejador para el botón "Solicitar" o "Reportar" según el modo
   const handleRequest = (lote) => {
-    setSelectedLote(lote);
-    setShowFlowModal(true);
+    if (isReportMode) {
+      // Lógica para manejo de reportes
+      console.log("Generando reporte para el lote:", lote);
+      setModalMessage("Reporte generado correctamente para el lote " + lote.id_lot);
+      setShowModal(true);
+    } else {
+      // Lógica para solicitudes (la original)
+      // Validar primero si el lote está activo
+      if (!lote.is_activate) {
+        setModalMessage("No se puede solicitar cambio de caudal para un lote inactivo. Contacte al administrador para activar el lote.");
+        setShowModal(true);
+        return;
+      }
+      
+      // Si el lote está activo, mostrar el modal de solicitud
+      setSelectedLote(lote);
+      setShowFlowModal(true);
+    }
   };
   
   // Manejador para mensajes de éxito
   const handleRequestSuccess = (message) => {
     setModalMessage(message);
     setShowModal(true);
+  };
+
+  // Función para verificar si un lote está activo (para el botón)
+  const isLoteActive = (lote) => {
+    // En modo reporte, permitimos siempre acciones
+    if (isReportMode) return true;
+    // En modo solicitud, solo si está activo
+    return lote.is_activate === true;
   };
 
   // Configuración de columnas para DataTable
@@ -299,12 +332,18 @@ const ReportesYNovedadesLotesList = () => {
     }
   ];
 
+  // Texto para el botón según el modo
+  const actionButtonText = isReportMode ? "Reportar" : "Solicitar";
+  
+  // Mensaje para el tooltip en modo solicitud cuando está deshabilitado
+  const disabledTooltip = isReportMode ? "" : "Lote inactivo. No se pueden solicitar cambios de caudal.";
+
   return (
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Gestion de caudal
+          {isReportMode ? "Generación de Reportes" : "Gestión de caudal"}
         </h1>
 
         {loading ? (
@@ -329,9 +368,10 @@ const ReportesYNovedadesLotesList = () => {
                   }
                 }}
                 title={
-                  modalMessage === "Lote eliminado correctamente" || 
-                  modalMessage === "Solicitud de cambio de caudal enviada correctamente" 
+                  modalMessage.includes("correctamente") 
                     ? "Éxito" 
+                    : modalMessage.includes("inactivo")
+                    ? "Advertencia"
                     : "Error"
                 }
                 btnMessage="Cerrar"
@@ -340,8 +380,8 @@ const ReportesYNovedadesLotesList = () => {
               </Modal>
             )}
 
-            {/* Modal de solicitud de cambio de caudal */}
-            {showFlowModal && selectedLote && (
+            {/* Modal de solicitud de cambio de caudal (solo en modo solicitud) */}
+            {!isReportMode && showFlowModal && selectedLote && (
               <FlowRequestModal
                 showModal={showFlowModal}
                 onClose={() => setShowFlowModal(false)}
@@ -357,8 +397,13 @@ const ReportesYNovedadesLotesList = () => {
                 columns={columns}
                 data={filteredLotes}
                 emptyMessage="No se encontraron lotes con los filtros aplicados."
-                // Reemplazamos los tres manejadores por uno solo para solicitar
                 onRequest={handleRequest}
+                // Pasar el texto del botón según el modo
+                actionButtonText={actionButtonText}
+                // Pasar una función para determinar si el botón debe estar habilitado
+                isActionEnabled={isLoteActive}
+                // Agregar tooltip para el botón deshabilitado
+                disabledTooltip={disabledTooltip}
               />
             )}
             
