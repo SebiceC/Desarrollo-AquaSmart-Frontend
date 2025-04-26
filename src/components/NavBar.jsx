@@ -157,7 +157,8 @@ function NavBar() {
                     )}
 
                     <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
-
+                    <NavItem direction="/reportes-y-novedades" text="Reportes y novedades" />
+                    
                     {showPermisosSection && (
                         <NavItem direction="/permisos" text="Permisos" />
                     )}
@@ -228,6 +229,7 @@ function NavBar() {
                         )}
 
                         <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
+                        <NavItem direction="/reportes-y-novedades" text="Reportes y novedades" />
 
                         {showPermisosSection && (
                             <NavItem direction="/permisos" text="Permisos" />

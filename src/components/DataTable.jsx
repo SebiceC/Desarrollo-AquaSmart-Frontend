@@ -11,6 +11,8 @@ const DataTable = ({
   onDelete,
   onConsult,
   onViewFactura,
+  // Agregamos el nuevo prop onRequest
+  onRequest,
   actions = true,
   showStatus = true,
 }) => {
@@ -69,6 +71,7 @@ const DataTable = ({
                 {actions && (
                   <td className="px-4 py-4 whitespace-nowrap space-x-2 text-sm text-gray-900">
                     <div className="flex space-x-1 justify-start">
+                      {/* Mantenemos los botones originales */}
                       {onDelete && (item.is_active || item.is_activate) && (
                         <button
                           className="bg-red-500 hover:bg-red-600 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
@@ -94,13 +97,24 @@ const DataTable = ({
                           <Pencil className="text-white" />
                         </button>
                       )}
+                      
+                      {/* Agregamos el nuevo botón de solicitar */}
+                      {onRequest && (
+                        <button
+                          className="bg-[#365486] hover:bg-blue-700 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                          onClick={() => onRequest(item)}
+                          aria-label="Solicitar"
+                        >
+                          <p className="font-bold text-white px-2">Solicitar</p>
+                        </button>
+                      )}
+                      
                       {onConsult && (
                         <button
                           className="bg-[#365486] hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
                           onClick={() => onConsult(item)}
                           aria-label="Consulta"
                         >
-                          {/* <Pencil className="text-white" /> */}
                           <p className="font-bold text-white">Consulta</p>
                         </button>
                       )}
@@ -110,7 +124,6 @@ const DataTable = ({
                           onClick={() => onViewFactura(item)}
                           aria-label="VER FACTURA"
                         >
-                          {/* <Pencil className="text-white" /> */}
                           <p className="font-bold text-white">VER FACTURA</p>
                         </button>
                       )}
