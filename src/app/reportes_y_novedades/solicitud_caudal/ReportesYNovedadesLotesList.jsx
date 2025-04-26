@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import NavBar from "../../components/NavBar";
+import NavBar from "../../../components/NavBar";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import InputFilterLoteReportes from "../../components/InputFilterLoteReportes";
-import Modal from "../../components/Modal";
+import InputFilterLoteReportes from "../../../components/InputFilterLoteReportes";
+import Modal from "../../../components/Modal";
 import FlowRequestModal from "./FlowRequestModal";
-import DataTable from "../../components/DataTable";
+import DataTable from "../../../components/DataTable";
 
 const ReportesYNovedadesLotesList = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const ReportesYNovedadesLotesList = () => {
   const [filters, setFilters] = useState({
     id: "",
     ownerDocument: "",
-    plotId:"",
+    plotId: "",
     lotId: "",
     cropType: "",
     startDate: "",
@@ -54,24 +54,24 @@ const ReportesYNovedadesLotesList = () => {
           setLoading(false);
           return;
         }
-        
+
         // Obtener información del usuario actual
         const userResponse = await axios.get(`${API_URL}/users/profile`, {
           headers: { Authorization: `Token ${token}` },
         });
-        
+
         setCurrentUser(userResponse.data);
-        
+
         // Obtener la lista de predios
         const prediosResponse = await axios.get(`${API_URL}/plot-lot/plots/list`, {
           headers: { Authorization: `Token ${token}` },
         });
-        
+
         // Filtrar solo los predios del usuario actual
-        const userPredios = prediosResponse.data.filter(predio => 
+        const userPredios = prediosResponse.data.filter(predio =>
           predio.owner === userResponse.data.document
         );
-        
+
         setPredios(userPredios);
 
         // Obtener la lista de lotes
@@ -81,7 +81,7 @@ const ReportesYNovedadesLotesList = () => {
 
         // Filtrar solo los lotes que pertenecen a los predios del usuario actual
         const userPrediosIds = userPredios.map(predio => predio.id_plot);
-        const userLotes = lotesResponse.data.filter(lote => 
+        const userLotes = lotesResponse.data.filter(lote =>
           userPrediosIds.includes(lote.plot)
         );
 
@@ -89,7 +89,7 @@ const ReportesYNovedadesLotesList = () => {
         const lotesConPredios = userLotes.map(lote => {
           // Buscar el predio correspondiente
           const predio = userPredios.find(p => p.id_plot === lote.plot);
-          
+
           return {
             ...lote,
             predioOwner: predio ? predio.owner : "No disponible"
@@ -121,23 +121,23 @@ const ReportesYNovedadesLotesList = () => {
   const applyFilters = () => {
     try {
       // Verificamos si hay al menos un filtro aplicado
-      const hasActiveFilters = 
-        filters.id.trim() !== "" || 
-        filters.lotId.trim() !== "" || 
-        filters.ownerDocument.trim() !== "" || 
-        filters.startDate !== "" || 
-        filters.endDate !== "" || 
+      const hasActiveFilters =
+        filters.id.trim() !== "" ||
+        filters.lotId.trim() !== "" ||
+        filters.ownerDocument.trim() !== "" ||
+        filters.startDate !== "" ||
+        filters.endDate !== "" ||
         filters.isActive !== "";
 
       // Validación de ID
       if (filters.id.trim() !== "") {
         // Verifica si es un prefijo válido del formato PR-NNNNNNN
         const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim());
-        
+
         // Verifica si son solo dígitos (cualquier cantidad)
         const isOnlyDigits = /^\d+$/.test(filters.id.trim());
-  
-         // Si no cumple ninguna de las condiciones permitidas
+
+        // Si no cumple ninguna de las condiciones permitidas
         if (!isPrefixValid && !isOnlyDigits) {
           setModalMessage("El campo ID del predio contiene caracteres no válidos");
           setShowModal(true);
@@ -150,7 +150,7 @@ const ReportesYNovedadesLotesList = () => {
       if (filters.lotId.trim() !== "") {
         // Validación de formato del ID del lote
         const isValidLoteFormat = /^(\d{1,7}|\d{1,7}-\d{0,3})$/.test(filters.lotId.trim());
-        
+
         if (!isValidLoteFormat) {
           setModalMessage("El campo ID del lote contiene caracteres no válidos");
           setShowModal(true);
@@ -181,12 +181,12 @@ const ReportesYNovedadesLotesList = () => {
         const matchesId = filters.id.trim() === "" ||
           (filters.id.trim().length > 0 &&
             lots.plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
-      
+
         // Modificación para permitir búsqueda parcial por ID del lote
         const matchesIdlote = filters.lotId.trim() === "" ||
-        (filters.lotId.trim().length > 0 &&
-          (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
-           lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
+          (filters.lotId.trim().length > 0 &&
+            (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) ||
+              lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
         // Ahora buscamos en el predioOwner en lugar de owner
         const matchesOwner = filters.ownerDocument.trim() === "" ||
           lots.predioOwner.includes(filters.ownerDocument.trim());
@@ -199,14 +199,14 @@ const ReportesYNovedadesLotesList = () => {
 
         // Manejo de fechas - enfoque idéntico al que funciona en UserList
         let matchesDate = true; // Por defecto asumimos que coincide
-        
+
         if (filters.startDate !== "" || filters.endDate !== "") {
           // Solo verificamos fechas si hay algún filtro de fecha
-          
+
           // Convertir fecha de predio a formato YYYY-MM-DD
           const loteDate = new Date(lots.registration_date);
           const loteDateStr = loteDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
-          
+
           // Verificar límite inferior
           if (filters.startDate !== "") {
             const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
@@ -214,7 +214,7 @@ const ReportesYNovedadesLotesList = () => {
               matchesDate = false;
             }
           }
-          
+
           // Verificar límite superior
           if (matchesDate && filters.endDate !== "") {
             const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
@@ -266,7 +266,7 @@ const ReportesYNovedadesLotesList = () => {
       setFilteredLotes([]);
     }
   };
-  
+
   // Manejador para el botón "Solicitar" o "Reportar" según el modo
   const handleRequest = (lote) => {
     if (isReportMode) {
@@ -282,13 +282,13 @@ const ReportesYNovedadesLotesList = () => {
         setShowModal(true);
         return;
       }
-      
+
       // Si el lote está activo, mostrar el modal de solicitud
       setSelectedLote(lote);
       setShowFlowModal(true);
     }
   };
-  
+
   // Manejador para mensajes de éxito
   const handleRequestSuccess = (message) => {
     setModalMessage(message);
@@ -334,7 +334,7 @@ const ReportesYNovedadesLotesList = () => {
 
   // Texto para el botón según el modo
   const actionButtonText = isReportMode ? "Reportar" : "Solicitar";
-  
+
   // Mensaje para el tooltip en modo solicitud cuando está deshabilitado
   const disabledTooltip = isReportMode ? "" : "Lote inactivo. No se pueden solicitar cambios de caudal.";
 
@@ -350,7 +350,7 @@ const ReportesYNovedadesLotesList = () => {
           <div className="text-center my-10">Cargando...</div>
         ) : (
           <>
-            <InputFilterLoteReportes  
+            <InputFilterLoteReportes
               filters={filters}
               onFilterChange={handleFilterChange}
               onApplyFilters={applyFilters}
@@ -368,11 +368,11 @@ const ReportesYNovedadesLotesList = () => {
                   }
                 }}
                 title={
-                  modalMessage.includes("correctamente") 
-                    ? "Éxito" 
+                  modalMessage.includes("correctamente")
+                    ? "Éxito"
                     : modalMessage.includes("inactivo")
-                    ? "Advertencia"
-                    : "Error"
+                      ? "Advertencia"
+                      : "Error"
                 }
                 btnMessage="Cerrar"
               >
@@ -406,7 +406,7 @@ const ReportesYNovedadesLotesList = () => {
                 disabledTooltip={disabledTooltip}
               />
             )}
-            
+
             {filteredLotes === null && (
               <div className="text-center my-10 text-gray-600">
                 No hay lotes para mostrar. Aplica filtros para ver resultados.

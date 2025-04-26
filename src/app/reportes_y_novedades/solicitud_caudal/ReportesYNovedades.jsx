@@ -1,23 +1,21 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import NavBar from '../../components/NavBar'
-import DataTable from '../../components/DataTable'
-import Modal from '../../components/Modal'
+import NavBar from '../../../components/NavBar'
+import DataTable from '../../../components/DataTable'
+import Modal from '../../../components/Modal'
 
 const ReportesYNovedades = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([
-    { id: 1, nombre: 'Solicitud de cambio de caudal del lote', tipo: 'solicitud' },
-    { id: 2, nombre: 'Informe de Ventas Primer Trimestre', tipo: 'reporte' },
-    { id: 3, nombre: 'Novedades del Sistema v2.3', tipo: 'reporte' },
-    { id: 4, nombre: 'Reporte de Incidencias Técnicas', tipo: 'reporte' },
-    { id: 5, nombre: 'Solicitud de actualización de datos', tipo: 'solicitud' }
+    { id: 1, nombre: 'Solicitud para cambiar el caudal del lote', tipo: 'solicitud' },
+    { id: 2, nombre: 'Solicitar activación de caudal del lote', tipo: 'solicitud' },
+    { id: 3, nombre: 'Solicitar cancelación de caudal del lote', tipo: 'solicitud' },
   ]);
-  
+
   // Configuración de columnas para DataTable
   const getColumns = () => [
-    { 
-      key: "nombre", 
+    {
+      key: "nombre",
       label: "Nombre",
     },
     {
@@ -56,7 +54,6 @@ const ReportesYNovedades = () => {
     tableBodyStyles: "",
     tableRowStyles: "",
     tableCellStyles: "",
-    // La siguiente clase se aplicará a la celda de acciones
     actionCellStyles: "flex justify-center items-center"
   };
 
@@ -64,8 +61,8 @@ const ReportesYNovedades = () => {
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
-        <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Reportes y Novedades del Sistema
+        <h1 className="text-center my-10 text-lg md:text-2xl font-bold mb-6">
+          SOLICITUDES DE CAUDAL
         </h1>
 
         {/* DataTable con los reportes y solicitudes */}
@@ -73,7 +70,7 @@ const ReportesYNovedades = () => {
           columns={getColumns()}
           data={items}
           emptyMessage="No hay reportes o solicitudes disponibles."
-          onConsult={handleConsult}
+          onApplication={handleConsult}
           actions={true}
           // Pasamos un objeto para centrar los botones de acción
           customStyles={customStyles}
