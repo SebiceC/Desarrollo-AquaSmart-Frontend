@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import NavBar from "../../components/NavBar"
@@ -20,255 +20,280 @@ const ValvesList = () => {
   const [filters, setFilters] = useState({
     id: "",
     name: "",
-    locationId: "", // Cambiado de plotId a locationId
+    locationId: "",
     status: "todos",
     startDate: "",
     endDate: "",
   })
   const [loading, setLoading] = useState(false)
-  const [dataLoaded, setDataLoaded] = useState(false) // Nuevo estado para controlar si los datos ya fueron cargados
+  const [dataLoaded, setDataLoaded] = useState(false)
+  const [isPreloading, setIsPreloading] = useState(true) // Estado para controlar la precarga, pero no visible para el usuario
 
   const API_URL = import.meta.env.VITE_APP_API_URL
 
   // ID específico para Válvula 4"
   const VALVE_4_ID = "06"
 
-  const openErrorModal = (message, title = "Error") => {
+  const openErrorModal = useCallback((message, title = "Error") => {
     console.log(`${title}: ${message}`)
     setModalTitle(title)
     setModalMessage(message)
     setShowModal(true)
-  }
+  }, [])
 
-  const handleEdit = (valve) => {
-    if (!valve.is_active) {
-      openErrorModal("No se puede ajustar el caudal de una válvula inactiva.", "Advertencia")
-      return
-    }
-    navigate(`/control-IoT/valvulas/${valve.id}/update-flow`)
-  }
+  const handleEdit = useCallback(
+    (valve) => {
+      if (!valve.is_active) {
+        openErrorModal("No se puede ajustar el caudal de una válvula inactiva.", "Advertencia")
+        return
+      }
+      navigate(`/control-IoT/valvulas/${valve.id}/update-flow`)
+    },
+    [navigate, openErrorModal],
+  )
 
-  const handleFilterChange = (name, value) => {
-    setFilters({
-      ...filters,
+  const handleFilterChange = useCallback((name, value) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
       [name]: value,
-    })
-  }
+    }))
+  }, [])
 
-  // Función para cargar los datos desde la API
-  const loadDataFromAPI = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const token = localStorage.getItem("token")
-      if (!token) {
-        setError("No hay una sesión activa. Por favor, inicie sesión.")
-        setLoading(false)
-        return false
+  // Función para cargar los datos desde la API - optimizada
+  const loadDataFromAPI = useCallback(
+    async (isInitialLoad = false) => {
+      if (!isInitialLoad) {
+        setLoading(true)
       }
+      // No mostramos indicador visual durante la precarga
 
-      // Obtener la lista de predios
-      const plotsResponse = await axios.get(`${API_URL}/plot-lot/plots/list`, {
-        headers: { Authorization: `Token ${token}` },
-      })
+      setError(null)
 
-      console.log("Predios obtenidos:", plotsResponse.data)
-      setPlots(plotsResponse.data)
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setError("No hay una sesión activa. Por favor, inicie sesión.")
+          if (!isInitialLoad) setLoading(false)
+          setIsPreloading(false)
+          return false
+        }
 
-      // Crear un array para almacenar todos los lotes
-      let allLots = []
-
-      // Para cada predio, obtener sus lotes si existen
-      for (const plot of plotsResponse.data) {
-        try {
-          // Obtener los lotes del predio
-          const plotDetailResponse = await axios.get(`${API_URL}/plot-lot/plots/${plot.id_plot}`, {
+        // Realizar todas las peticiones iniciales en paralelo
+        const [plotsResponse, devicesResponse] = await Promise.all([
+          axios.get(`${API_URL}/plot-lot/plots/list`, {
             headers: { Authorization: `Token ${token}` },
-          })
+          }),
+          axios.get(`${API_URL}/iot/iot-devices`, {
+            headers: { Authorization: `Token ${token}` },
+          }),
+        ])
 
-          if (plotDetailResponse.data.lotes && Array.isArray(plotDetailResponse.data.lotes)) {
-            // Añadir el id_plot a cada lote para saber a qué predio pertenece
-            const lotsWithPlotInfo = plotDetailResponse.data.lotes.map((lot) => ({
-              ...lot,
-              parent_plot_id: plot.id_plot,
-              parent_plot_name: plot.plot_name,
-            }))
-            allLots = [...allLots, ...lotsWithPlotInfo]
+        console.log("Predios obtenidos:", plotsResponse.data)
+        setPlots(plotsResponse.data)
+
+        console.log("Dispositivos IoT obtenidos:", devicesResponse.data)
+
+        // Filtrar SOLO las válvulas con device_type = 14 (Válvula 4")
+        const valvesData = devicesResponse.data.filter((device) => {
+          return device.device_type === VALVE_4_ID
+        })
+
+        console.log('Válvulas filtradas por tipo 14 (Válvula 4"):', valvesData)
+        console.log("Cantidad de válvulas encontradas:", valvesData.length)
+
+        // Obtener lotes en paralelo para todos los predios
+        const lotPromises = plotsResponse.data.map((plot) =>
+          axios
+            .get(`${API_URL}/plot-lot/plots/${plot.id_plot}`, {
+              headers: { Authorization: `Token ${token}` },
+            })
+            .then((response) => {
+              if (response.data.lotes && Array.isArray(response.data.lotes)) {
+                return response.data.lotes.map((lot) => ({
+                  ...lot,
+                  parent_plot_id: plot.id_plot,
+                  parent_plot_name: plot.plot_name,
+                }))
+              }
+              return []
+            })
+            .catch((err) => {
+              console.error(`Error al obtener lotes del predio ${plot.id_plot}:`, err)
+              return [] // Continuamos con el siguiente predio aunque haya error
+            }),
+        )
+
+        const lotsArrays = await Promise.all(lotPromises)
+        const allLots = lotsArrays.flat()
+
+        console.log("Todos los lotes obtenidos:", allLots)
+        setLots(allLots)
+
+        // Mapear los datos para que coincidan con la estructura esperada por el componente
+        const formattedValves = valvesData.map((device) => {
+          // Verificar si la válvula está asociada a un predio
+          const associatedPlot = plotsResponse.data.find((plot) => plot.id_plot === device.id_plot)
+
+          // Verificar si la válvula está asociada a un lote
+          const associatedLot = allLots.find((lot) => lot.id_lot === device.id_lot)
+
+          // Determinar la ubicación (predio o lote)
+          let locationId = "N/A"
+          let locationType = "N/A"
+          let locationName = "N/A"
+          let parentPlotName = null
+
+          if (associatedLot) {
+            // Si está asociado a un lote, mostrar el ID del lote
+            locationId = associatedLot.id_lot
+            locationType = "lote"
+            locationName = associatedLot.crop_type ? `${associatedLot.crop_name || "Sin variedad"}` : "Sin información"
+            parentPlotName = associatedLot.parent_plot_name
+          } else if (associatedPlot) {
+            // Si no está asociado a un lote pero sí a un predio
+            locationId = associatedPlot.id_plot
+            locationType = "predio"
+            locationName = associatedPlot.plot_name
           }
-        } catch (err) {
-          console.error(`Error al obtener lotes del predio ${plot.id_plot}:`, err)
-          // Continuamos con el siguiente predio aunque haya error
-        }
-      }
 
-      console.log("Todos los lotes obtenidos:", allLots)
-      setLots(allLots)
+          // Usar actual_flow del dispositivo si existe, de lo contrario usar 0
+          const currentFlow = device.actual_flow !== null && device.actual_flow !== undefined ? device.actual_flow : 0
 
-      // Obtener la lista de dispositivos IoT desde la API
-      const devicesResponse = await axios.get(`${API_URL}/iot/iot-devices`, {
-        headers: { Authorization: `Token ${token}` },
-      })
+          return {
+            id: device.iot_id,
+            name: device.name || "Sin nombre",
+            location_id: locationId,
+            location_type: locationType,
+            location_name: locationName,
+            parent_plot_name: parentPlotName,
+            is_active: device.is_active,
+            current_flow: currentFlow,
+            max_flow: device.max_flow || 100,
+            flow_unit: "L/s", // Según el modelo, la unidad es L/s (litros por segundo)
+            valve_type: device.device_type_name || device.type || device.valve_type || "N/A",
+            registration_date: device.registration_date || new Date().toISOString(),
+          }
+        })
 
-      console.log("Dispositivos IoT obtenidos:", devicesResponse.data)
+        console.log("Válvulas formateadas con información de ubicación:", formattedValves)
+        setValves(formattedValves)
+        setDataLoaded(true) // Marcar que los datos ya fueron cargados
+        setIsPreloading(false)
+        return formattedValves
+      } catch (err) {
+        console.error("Error al cargar las válvulas:", err)
 
-      // Verificar la estructura de los datos para depuración
-      if (devicesResponse.data.length > 0) {
-        console.log("Ejemplo de estructura de dispositivo:", devicesResponse.data[0])
-        console.log("Propiedades disponibles:", Object.keys(devicesResponse.data[0]))
-      }
+        // Extract detailed error message from response
+        let errorMessage = "No se pudieron cargar las válvulas."
 
-      // Filtrar SOLO las válvulas con device_type = 14 (Válvula 4")
-      const valvesData = devicesResponse.data.filter((device) => {
-        return device.device_type === VALVE_4_ID
-      })
-
-      console.log('Válvulas filtradas por tipo 14 (Válvula 4"):', valvesData)
-      console.log("Cantidad de válvulas encontradas:", valvesData.length)
-
-      // Mapear los datos para que coincidan con la estructura esperada por el componente
-      const formattedValves = valvesData.map((device) => {
-        // Verificar si la válvula está asociada a un predio
-        const associatedPlot = plotsResponse.data.find((plot) => plot.id_plot === device.id_plot)
-
-        // Verificar si la válvula está asociada a un lote
-        const associatedLot = allLots.find((lot) => lot.id_lot === device.id_lot)
-
-        // Determinar la ubicación (predio o lote)
-        let locationId = "N/A"
-        let locationType = "N/A"
-        let locationName = "N/A"
-        let parentPlotName = null
-
-        if (associatedPlot) {
-          locationId = associatedPlot.id_plot
-          locationType = "predio"
-          locationName = associatedPlot.plot_name
-        } else if (associatedLot) {
-          locationId = associatedLot.id_lot
-          locationType = "lote"
-          locationName = associatedLot.crop_type
-            ? `${associatedLot.crop_type} (${associatedLot.crop_variety || "Sin variedad"})`
-            : "Sin información"
-          parentPlotName = associatedLot.parent_plot_name
-        }
-
-        // Usar actual_flow del dispositivo si existe, de lo contrario usar 0
-        const currentFlow = device.actual_flow !== null && device.actual_flow !== undefined ? device.actual_flow : 0
-
-        return {
-          id: device.iot_id,
-          name: device.name || "Sin nombre",
-          location_id: locationId,
-          location_type: locationType,
-          location_name: locationName,
-          parent_plot_name: parentPlotName,
-          is_active: device.is_active,
-          current_flow: currentFlow,
-          max_flow: device.max_flow || 100,
-          flow_unit: "L/s", // Según el modelo, la unidad es L/s (litros por segundo)
-          valve_type: device.device_type_name || device.type || device.valve_type || "N/A",
-          registration_date: device.registration_date || new Date().toISOString(),
-          last_update: device.last_update || new Date().toISOString(),
-        }
-      })
-
-      console.log("Válvulas formateadas con información de ubicación:", formattedValves)
-      setValves(formattedValves)
-      setDataLoaded(true) // Marcar que los datos ya fueron cargados
-      return formattedValves
-    } catch (err) {
-      console.error("Error al cargar las válvulas:", err)
-
-      // Extract detailed error message from response
-      let errorMessage = "No se pudieron cargar las válvulas."
-
-      if (err.response) {
-        if (err.response.status === 403) {
-          errorMessage = "No tiene permisos para acceder a las válvulas."
-          if (err.response.data?.detail) {
+        if (err.response) {
+          if (err.response.status === 403) {
+            errorMessage = "No tiene permisos para acceder a las válvulas."
+            if (err.response.data?.detail) {
+              errorMessage = err.response.data.detail
+            }
+          } else if (err.response.data?.detail) {
             errorMessage = err.response.data.detail
+          } else if (err.response.data?.message) {
+            errorMessage = err.response.data.message
           }
-        } else if (err.response.data?.detail) {
-          errorMessage = err.response.data.detail
-        } else if (err.response.data?.message) {
-          errorMessage = err.response.data.message
+        } else if (err.request) {
+          errorMessage = "No se pudo conectar con el servidor. Verifique su conexión a internet."
+        } else {
+          errorMessage = `Error de configuración: ${err.message}`
         }
-      } else if (err.request) {
-        errorMessage = "No se pudo conectar con el servidor. Verifique su conexión a internet."
-      } else {
-        errorMessage = `Error de configuración: ${err.message}`
+
+        // Solo mostrar errores si no es la carga inicial
+        if (!isInitialLoad) {
+          setError(errorMessage)
+          setModalMessage(errorMessage)
+          setModalTitle("Error")
+          setShowModal(true)
+        } else {
+          console.error("Error en precarga:", errorMessage)
+        }
+
+        setFilteredValves([])
+        setIsPreloading(false)
+        return false
+      } finally {
+        if (!isInitialLoad) {
+          setLoading(false)
+        }
+      }
+    },
+    [API_URL, VALVE_4_ID],
+  )
+
+  // Precargar datos al montar el componente
+  useEffect(() => {
+    // Solo precargar si no hay datos cargados
+    if (!dataLoaded) {
+      loadDataFromAPI(true) // true indica que es una carga inicial (precarga)
+    }
+  }, [dataLoaded, loadDataFromAPI])
+
+  // Función para aplicar filtros a los datos ya cargados - optimizada con useMemo
+  const applyFiltersToData = useCallback(
+    (data) => {
+      let filtered = data
+
+      // Filtrado de válvulas
+      if (filters.id.trim() !== "") {
+        filtered = filtered.filter((valve) => valve.id.toLowerCase().includes(filters.id.trim().toLowerCase()))
       }
 
-      setError(errorMessage)
-      setModalMessage(errorMessage)
-      setModalTitle("Error")
-      setShowModal(true)
-      setFilteredValves([])
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
+      if (filters.name.trim() !== "") {
+        filtered = filtered.filter((valve) => valve.name.toLowerCase().includes(filters.name.trim().toLowerCase()))
+      }
 
-  // Función para aplicar filtros a los datos ya cargados
-  const applyFiltersToData = (data) => {
-    let filtered = data
+      if (filters.locationId.trim() !== "") {
+        filtered = filtered.filter((valve) =>
+          valve.location_id.toLowerCase().includes(filters.locationId.trim().toLowerCase()),
+        )
+      }
 
-    // Filtrado de válvulas
-    if (filters.id.trim() !== "") {
-      filtered = filtered.filter((valve) => valve.id.toLowerCase().includes(filters.id.trim().toLowerCase()))
-    }
+      if (filters.status !== "todos") {
+        filtered = filtered.filter((valve) => {
+          if (filters.status === "activa") {
+            return valve.is_active
+          } else if (filters.status === "inactiva") {
+            return !valve.is_active
+          }
+          return true
+        })
+      }
 
-    if (filters.name.trim() !== "") {
-      filtered = filtered.filter((valve) => valve.name.toLowerCase().includes(filters.name.trim().toLowerCase()))
-    }
+      if (filters.startDate) {
+        const startDate = new Date(filters.startDate).setHours(0, 0, 0, 0)
+        filtered = filtered.filter((valve) => {
+          const valveDate = new Date(valve.registration_date).setHours(0, 0, 0, 0)
+          return valveDate >= startDate
+        })
+      }
 
-    if (filters.locationId.trim() !== "") {
-      filtered = filtered.filter((valve) =>
-        valve.location_id.toLowerCase().includes(filters.locationId.trim().toLowerCase()),
-      )
-    }
+      if (filters.endDate) {
+        const endDate = new Date(filters.endDate).setHours(23, 59, 59, 999)
+        filtered = filtered.filter((valve) => {
+          const valveDate = new Date(valve.registration_date).setHours(23, 59, 59, 999)
+          return valveDate <= endDate
+        })
+      }
 
-    if (filters.status !== "todos") {
-      filtered = filtered.filter((valve) => {
-        if (filters.status === "activa") {
-          return valve.is_active
-        } else if (filters.status === "inactiva") {
-          return !valve.is_active
-        }
-        return true
-      })
-    }
+      if (filtered.length === 0) {
+        setModalMessage(
+          "No se encontraron válvulas que coincidan con los criterios de búsqueda. Por favor, intente con otros filtros.",
+        )
+        setModalTitle("Sin resultados")
+        setShowModal(true)
+      }
 
-    if (filters.startDate) {
-      const startDate = new Date(filters.startDate).setHours(0, 0, 0, 0)
-      filtered = filtered.filter((valve) => {
-        const valveDate = new Date(valve.registration_date).setHours(0, 0, 0, 0)
-        return valveDate >= startDate
-      })
-    }
+      return filtered
+    },
+    [filters],
+  )
 
-    if (filters.endDate) {
-      const endDate = new Date(filters.endDate).setHours(23, 59, 59, 999)
-      filtered = filtered.filter((valve) => {
-        const valveDate = new Date(valve.registration_date).setHours(23, 59, 59, 999)
-        return valveDate <= endDate
-      })
-    }
-
-    if (filtered.length === 0) {
-      setModalMessage(
-        "No se encontraron válvulas que coincidan con los criterios de búsqueda. Por favor, intente con otros filtros.",
-      )
-      setModalTitle("Sin resultados")
-      setShowModal(true)
-    }
-
-    return filtered
-  }
-
-  const applyFilters = async () => {
+  const applyFilters = useCallback(async () => {
     // Validaciones de formato antes de hacer la petición
     if (filters.id.trim() !== "" && !/^V\d{3}$/.test(filters.id.trim()) && !/^\d+$/.test(filters.id.trim())) {
       setModalMessage(
@@ -316,75 +341,89 @@ const ValvesList = () => {
         setFilteredValves(filtered)
       }
     }
-  }
+  }, [filters, dataLoaded, valves, loadDataFromAPI, applyFiltersToData])
 
-  const columns = [
-    { key: "id", label: "ID" },
-    { key: "name", label: "NOMBRE" },
-    { key: "location_id", label: "ID UBICACIÓN" },
-    {
-      key: "location_name",
-      label: "NOMBRE UBICACIÓN",
-      responsive: "hidden md:table-cell",
-      render: (valve) => {
-        if (valve.location_type === "lote" && valve.parent_plot_name) {
+  // Memoizar las columnas para evitar recreaciones innecesarias
+  const columns = useMemo(
+    () => [
+      { key: "id", label: "ID" },
+      { key: "name", label: "NOMBRE" },
+      { key: "location_id", label: "ID UBICACIÓN" },
+      {
+        key: "location_name",
+        label: "NOMBRE UBICACIÓN",
+        responsive: "hidden md:table-cell",
+        render: (valve) => {
+          if (valve.location_type === "lote" && valve.parent_plot_name) {
+            return (
+              <div>
+                <span>{valve.location_name}</span>
+                <span className="block text-xs text-gray-500">Predio: {valve.parent_plot_name}</span>
+              </div>
+            )
+          }
+          return valve.location_name
+        },
+      },
+      {
+        key: "is_active",
+        label: "ESTADO",
+        render: (valve) => {
+          const statusText = valve.is_active ? "Activa" : "Inactiva"
+          const statusClass = valve.is_active
+            ? "bg-green-100 text-green-800 border border-green-200"
+            : "bg-red-100 text-red-800 border border-red-200"
+
           return (
-            <div>
-              <span>{valve.location_name}</span>
-              <span className="block text-xs text-gray-500">Predio: {valve.parent_plot_name}</span>
-            </div>
+            <span
+              className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}
+            >
+              {statusText}
+            </span>
           )
-        }
-        return valve.location_name
+        },
       },
-    },
-    {
-      key: "is_active",
-      label: "ESTADO",
-      render: (valve) => {
-        const statusText = valve.is_active ? "Activa" : "Inactiva"
-        const statusClass = valve.is_active
-          ? "bg-green-100 text-green-800 border border-green-200"
-          : "bg-red-100 text-red-800 border border-red-200"
-
-        return (
-          <span
-            className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}
+      {
+        key: "current_flow",
+        label: "CAUDAL ACTUAL",
+        render: (valve) => `${valve.current_flow} ${valve.flow_unit}`,
+      },
+      {
+        key: "registration_date",
+        label: "REGISTRO",
+        responsive: "hidden sm:table-cell",
+        render: (valve) => {
+          try {
+            return new Date(valve.registration_date).toLocaleDateString("es-ES", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
+          } catch (error) {
+            return "Fecha no disponible"
+          }
+        },
+      },
+      {
+        key: "action",
+        label: "ACCIÓN",
+        render: (valve) => (
+          <button
+            onClick={() => handleEdit(valve)}
+            className={`px-2 py-2 rounded-lg w-full ${
+              valve.is_active
+                ? "bg-[#365486] hover:bg-[#42A5F5] text-white"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+            disabled={!valve.is_active}
           >
-            {statusText}
-          </span>
-        )
+            Ajustar caudal
+          </button>
+        ),
       },
-    },
-    {
-      key: "current_flow",
-      label: "CAUDAL ACTUAL",
-      render: (valve) => `${valve.current_flow} ${valve.flow_unit}`,
-    },
-    {
-      key: "registration_date",
-      label: "REGISTRO",
-      responsive: "hidden sm:table-cell",
-      render: (valve) => new Date(valve.registration_date).toLocaleDateString(),
-    },
-    {
-      key: "action",
-      label: "ACCIÓN",
-      render: (valve) => (
-        <button
-          onClick={() => handleEdit(valve)}
-          className={`px-2 py-2 rounded-lg w-full ${
-            valve.is_active
-              ? "bg-[#365486] hover:bg-[#42A5F5] text-white"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-          disabled={!valve.is_active}
-        >
-          Ajustar caudal
-        </button>
-      ),
-    },
-  ]
+    ],
+    [handleEdit],
+  )
 
   return (
     <div>
@@ -585,4 +624,3 @@ const ValvesList = () => {
 }
 
 export default ValvesList
-

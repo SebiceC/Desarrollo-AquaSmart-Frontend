@@ -56,6 +56,9 @@ import FacturaLoteDetails from "../app/facturacion/FacturaLoteDetails";
 import MisFacturasDetails from "../app/misFacturas/MisFacturasDetails";
 import PagarFactura from "../app/misFacturas/PagarFactura";
 
+import ReportesYNovedades from "../app/reportes_y_novedades/ReportesYNovedades";
+import ReportesYNovedadesLotesList from "../app/reportes_y_novedades/ReportesYNovedadesLotesList";
+
 
 const AppRouter = () => {
     return (
@@ -118,8 +121,10 @@ const AppRouter = () => {
             <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
             <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
-            <Route path="/facturacion/pagar" element={<ProtectedRoute element={<PagarFactura />} />} />
+            <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
+            <Route path="/reportes-y-novedades" element={<ProtectedRoute element={<ReportesYNovedades />} />} />
+            <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
         </Routes>
     );
 };

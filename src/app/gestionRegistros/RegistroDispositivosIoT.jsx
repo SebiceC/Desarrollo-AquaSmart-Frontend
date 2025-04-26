@@ -290,7 +290,7 @@ const RegistroDispositivos = () => {
     return regex.test(text)
   }
 
-  // Validar número para el caudal (0-180 grados)
+  // Validar número para el caudal (0-180 litros)
   const validateActualFlow = (value) => {
     // Verificar que sea un número válido
     if (value === "" || !/^\d*\.?\d*$/.test(value)) {
@@ -388,7 +388,7 @@ const RegistroDispositivos = () => {
         if (!validateActualFlow(value)) {
           setFieldErrors((prev) => ({
             ...prev,
-            actual_flow: "El valor debe ser un número entre 0 y 180 grados",
+            actual_flow: "El valor debe ser un número entre 0 y 180 litros",
           }))
         } else {
           setFieldErrors((prev) => ({ ...prev, actual_flow: "" }))
@@ -512,7 +512,7 @@ const RegistroDispositivos = () => {
         newErrors.actual_flow = " "
         setFieldErrors((prev) => ({
           ...prev,
-          actual_flow: "El valor debe ser un número entre 0 y 180 grados",
+          actual_flow: "El valor debe ser un número entre 0 y 180 litros",
         }))
         isValid = false
       }
@@ -808,7 +808,7 @@ const RegistroDispositivos = () => {
                   {requiresActualFlow && (
                     <div className="flex flex-col">
                       <label htmlFor="actual_flow" className="block text-sm mb-2">
-                        Posición en grados <span className="text-red-500">*</span>
+                        Posición en litros <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
