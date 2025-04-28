@@ -16,6 +16,7 @@ const LoteEdit = () => {
   const { id_lot } = useParams() // Obtener ID del lote a actualizar
   const [formData, setFormData] = useState({
     id_lot: "",
+    nombre_cultivo: "",
     tipo_cultivo: "",
     predio_asignado: "",
     tipo_suelo: "",
@@ -39,7 +40,7 @@ const LoteEdit = () => {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const navigate = useNavigate()
   const [initialIsActive, setInitialIsActive] = useState(false)
-
+  const [cropTypes, setCropTypes] = useState([])
   
   
 
@@ -58,7 +59,14 @@ const LoteEdit = () => {
             "Content-Type": "application/json",
           },
         })
+        const cropTypesResponse = await axios.get(`${API_URL}/plot-lot/crop-types`, {
+          headers: {
+              Authorization: `Token ${token}`,
+              "Content-Type": "application/json",
+          },
+        });
 
+        setCropTypes(cropTypesResponse.data);
         setSoilTypes(soilTypesResponse.data)
       } catch (error) {
         console.error("Error al obtener las opciones:", error)
@@ -75,6 +83,7 @@ const LoteEdit = () => {
         })
         setFormData({
           id_lot: response.data.id_lot || "",
+          nombre_cultivo: response.data.crop_name || "",
           tipo_cultivo: response.data.crop_type || "",
           predio_asignado: response.data.plot || "",
           tipo_suelo: response.data.soil_type || "",
@@ -93,7 +102,7 @@ const LoteEdit = () => {
   }, [id_lot])
 
   const validateField = (name, value) => {
-    if (name === "tipo_cultivo" || name === "variedad_cultivo") {
+    if (name === "tipo_cultivo" || name === "variedad_cultivo" || name === "nombre_cultivo") {
       const regex = /^[A-Za-zÁÉÍÓÚáéíóú0-9\s]*$/ // Se agregan vocales con tilde
       return regex.test(value)
     } else if (name === "predio_asignado") {
@@ -120,12 +129,16 @@ const LoteEdit = () => {
   }
 
   const validateForm = () => {
-    const { tipo_cultivo, predio_asignado, tipo_suelo, variedad_cultivo } = formData
+    const { nombre_cultivo, tipo_cultivo, predio_asignado, tipo_suelo, variedad_cultivo } = formData
 
     const newErrors = {} // Este objeto almacenará los errores para cada campo
 
     // Verificar campos obligatorios
-    if (!tipo_cultivo.trim()) {
+    
+    if (!nombre_cultivo.trim()) {
+      newErrors.nombre_cultivo = " "
+    }
+    if (String(tipo_cultivo).trim().length === 0) {
       newErrors.tipo_cultivo = " "
     }
     if (!predio_asignado.trim()) {
@@ -175,6 +188,7 @@ const LoteEdit = () => {
 
     const updatedData = {
       id_lot: formData.id_lot,
+      crop_name: formData.nombre_cultivo,
       crop_type: formData.tipo_cultivo,
       plot: formData.predio_asignado,
       soil_type: formData.tipo_suelo,
@@ -184,6 +198,7 @@ const LoteEdit = () => {
 
     try {
       // Enviar los datos de actualización con is_activate incluido
+      // console.log(updatedData)
       const response = await axios.patch(`${API_URL}/plot-lot/lots/${id_lot}/update`, updatedData, {
         headers: {
           Authorization: `Token ${token}`,
@@ -228,6 +243,24 @@ const LoteEdit = () => {
         </div>
         <div className="bg-white p-6 w-full max-w-3xl">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <InputItem
+            label={
+                <>
+                    Nombre del cultivo <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                </>
+            }
+            type="text"
+            name="nombre_cultivo"
+            placeholder="Ej: Cacao"
+            value={formData.nombre_cultivo}
+            onChange={handleChange}
+            maxLength={20}
+            error={errors.nombre_cultivo}
+            className={`${errors.nombre_cultivo ? "border-red-500" : "border-gray-300"}`} // Condición de borde rojo
+           />
+           {/* {errors.nombre_cultivo && <p className="text-[#F90000] text-sm mt-1">{errors.nombre_cultivo}</p>} */}
+
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 ID lote
@@ -244,16 +277,26 @@ const LoteEdit = () => {
               />
               {errors.id_lot && <p className="text-[#F90000] text-sm mt-1">{errors.id_lot}</p>}
             </div>
-            <InputItem
-              label="Tipo de cultivo"
-              type="text"
-              name="tipo_cultivo"
-              placeholder="Ej: Cacao"
-              value={formData.tipo_cultivo}
-              onChange={handleChange}
-              error={errors.tipo_cultivo}
-              maxLength={20}
-            />
+            <div className="relative mt-2 flex flex-col">
+              <label htmlFor="tipo_cultivo" className="text-sm font-medium text-gray-700">
+                  Tipo de Cultivo <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+              </label>
+              <select
+                  id="tipo_cultivo"
+                  name="tipo_cultivo"
+                  value={formData.tipo_cultivo}
+                  onChange={handleChange}
+                  className="w-[85%] border border-gray-300 rounded px-3 py-2 pr-8 appearance-none"
+              >
+                  <option value="">SELECCIÓN DE TIPO DE CULTIVO</option>
+                  {cropTypes.map((type, index) => (
+                      <option key={index} value={type.id}>
+                          {type.name}
+                      </option>
+                  ))}
+              </select>
+              <ChevronDown className="absolute right-14 lg:right-16 top-1/2 transform lg:-translate-y-0 text-gray-500 w-4 h-4 pointer-events-none" />
+          </div>
             <InputItem
               label="Predio a asignar"
               type="text"
@@ -327,7 +370,6 @@ const LoteEdit = () => {
               </div>
               {errors.is_activate && <p className="text-red-500 text-sm mt-1">{errors.is_activate}</p>}
             </div>
-
 
             {/* Contenedor para mensajes de error y botones */}
             <div className="col-span-1 md:col-span-2 flex flex-col items-start mt-4">

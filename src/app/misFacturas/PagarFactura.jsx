@@ -139,39 +139,52 @@ const PagarFactura = () => {
         window.open("https://bold.co/", "_blank")
 
         // Después de abrir Bold, simulamos que el pago fue exitoso
-        setTimeout(() => {
-          // Simular actualización del estado de la factura a "Pagada"
+        setTimeout(async () => {
+          // Actualizar el estado de la factura en el backend
           if (factura) {
-            // Crear una copia de la factura con estado actualizado
-            const facturaActualizada = {
-              ...factura,
-              status: "Pagada",
-            }
-
-            // Actualizar el estado de la factura
-            setFactura(facturaActualizada)
-
-            // Marcar el pago como completado
-            setPaymentCompleted(true)
-
-            // Intentar actualizar la factura en el backend (simulado)
             try {
               const token = localStorage.getItem("token")
 
-              // En un entorno real, esto actualizaría el estado en el backend
-              console.log("Actualizando estado de factura en el backend:", facturaActualizada.id_bill)
+              // Realizar la petición al backend para actualizar el estado
+              // Usamos POST como indica el backend
+              const updateResponse = await axios.post(
+                `${API_URL}/billing/bills/update-status`,
+                {
+                  "code": factura.code,
+                  status: "pagada",
+                },
+                {
+                  headers: { Authorization: `Token ${token}` },
+                },
+              )
 
-              // Simulamos una actualización exitosa en el backend
-              localStorage.setItem(`factura_${facturaActualizada.id_bill}_status`, "Pagada")
+              // Crear una copia de la factura con estado actualizado
+              const facturaActualizada = {
+                ...factura,
+                status: "Pagada",
+              }
+
+              // Actualizar el estado de la factura en el componente
+              setFactura(facturaActualizada)
+
+              // Marcar el pago como completado
+              setPaymentCompleted(true)
+
+              // Mostrar mensaje de éxito
+              showMessageModal("¡Pago procesado con éxito! La factura ha sido marcada como pagada.", "Pago Exitoso")
             } catch (error) {
               console.error("Error al actualizar estado en backend:", error)
+              let errorMessage = "Error al actualizar el estado de la factura. Por favor, contacte a soporte."
+
+              if (error.response && error.response.data && error.response.data.detail) {
+                errorMessage = error.response.data.detail
+              }
+
+              showMessageModal(errorMessage, "Error")
+            } finally {
+              // Finalizar el procesamiento
+              setProcessingPayment(false)
             }
-
-            // Mostrar mensaje de éxito
-            showMessageModal("¡Pago procesado con éxito! La factura ha sido marcada como pagada.", "Pago Exitoso")
-
-            // Finalizar el procesamiento
-            setProcessingPayment(false)
           }
         }, 3000) // Simulamos que el pago toma 3 segundos en procesarse
       }, 1500)
@@ -211,22 +224,8 @@ const PagarFactura = () => {
             }
             // Si es un mensaje de pago exitoso, redirigir al detalle de la factura
             else if (modalTitle === "Pago Exitoso" && factura) {
-              // Antes de redirigir, intentamos actualizar la factura en el backend (simulado)
-              try {
-                const token = localStorage.getItem("token")
-
-                // En un entorno real, esto actualizaría el estado en el backend
-                console.log("Confirmando actualización de factura antes de redirigir:", factura.id_bill)
-
-                // Simulamos una actualización exitosa en el backend
-                localStorage.setItem(`factura_${factura.id_bill}_status`, "Pagada")
-
-                // Redirigir al detalle de la factura con el ID y un parámetro para forzar la actualización
-                navigate(`/mis-facturas/detalle/${factura.id_bill}?updated=true`)
-              } catch (error) {
-                console.error("Error al confirmar actualización:", error)
-                navigate(`/mis-facturas/detalle/${factura.id_bill}`)
-              }
+              // Redirigir al detalle de la factura con el ID y un parámetro para forzar la actualización
+              navigate(`/mis-facturas/detalle/${factura.id_bill}?updated=true`)
             }
           }}
           title={modalTitle}

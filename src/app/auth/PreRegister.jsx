@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { ChevronDown, EyeIcon, Upload } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Asterisk, ChevronDown, EyeIcon, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputItem from "../../components/InputItem"; // Componente reutilizable
@@ -40,6 +40,7 @@ const PreRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Obtener los tipos de documento y persona desde el backend
   useEffect(() => {
@@ -127,6 +128,10 @@ const PreRegister = () => {
   const handleRemoveFile = (index) => {
     const updatedFiles = formData.attachments.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, attachments: updatedFiles }));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   // Manejar cambios en los campos del formulario
@@ -455,83 +460,95 @@ const PreRegister = () => {
             </div>
           </div>
 
-          {/* Sección de carga de archivos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <div className="flex items-center">
-                <label className="border border-gray-300 rounded px-3 py-2 bg-gray-50 text-sm cursor-pointer flex items-center">
-                  <span>Seleccionar archivos</span>
+          <div className="flex flex-col gap-2 w-[94%]">
+            <label className="text-sm font-semibold flex items-center gap-1">
+              Documentos Requeridos{" "}
+              <Asterisk size={12} className="text-red-500" />
+            </label>
+
+            <div className="flex flex-col md:flex-row justify-between gap-4 bg-white">
+              {/* Sección de carga de archivos */}
+              <div className="w-full md:w-[55%] border border-dashed border-gray-300 rounded-md p-4">
+                <label className="flex items-center justify-center w-full h-12 bg-[#3b5998] text-white rounded cursor-pointer hover:bg-[#334b85] text-sm font-medium">
+                  Seleccionar archivos
                   <input
                     type="file"
                     className="hidden"
+                    ref={fileInputRef}
                     onChange={handleFileChange}
                     multiple
-                    accept="application/pdf" // Aceptar solo archivos PDF
+                    accept="application/pdf"
                   />
-                  <Upload className="ml-2 w-4 h-4" />
                 </label>
-                <span className="ml-2 text-sm text-gray-500">
-                  {formData.attachments.length}/5 archivos seleccionados
-                </span>
-              </div>
 
-              {formData.attachments.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium">Archivos seleccionados:</p>
-                  <ul className="mt-2 space-y-2">
-                    {formData.attachments.map((file, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span>
-                          {file.name} - {(file.size / 1024).toFixed(2)}KB
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="mt-3 text-sm text-gray-600">
+                  {formData.attachments.length}/5 archivos
                 </div>
-              )}
 
-              {errors.attachments && (
-                <p className="text-[#F90000] mt-2">{errors.attachments}</p>
-              )}
+                {formData.attachments.length > 0 && (
+                  <div className="mt-4">
+                    <ul className="space-y-2 text-sm text-gray-800">
+                      {formData.attachments.map((file, index) => (
+                        <li
+                          key={index}
+                          className="flex items-center justify-between bg-gray-100 px-3 py-1 rounded"
+                        >
+                          <span className="truncate">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(index)}
+                            className="text-red-500 text-lg font-bold hover:text-red-700"
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              <div className="mt-4 text-sm">
-                <p>Anexar los siguientes documentos:</p>
-                <ul className="list-disc pl-5 text-sm">
-                  <li>Cédula</li>
-                  <li>NIT (en caso de persona jurídica)</li>
-                  <li>Escrituras</li>
-                  <li>RUT</li>
-                  <li>Certificado de libertad y tradición (CTL)</li>
-                </ul>
+                {errors.attachments && (
+                  <p className="text-[#F90000] mt-2 text-sm">
+                    {errors.attachments}
+                  </p>
+                )}
               </div>
-            </div>
 
-            {/* Botón de registro */}
-            <div className="flex flex-col items-center md:items-end space-y-8 py-2">
-              <button
-                type="submit"
-                className="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
-              >
-                Registro
-              </button>
+              {/* Documentos requeridos y botones */}
+              <div className="w-full md:w-[55%] bg-gray-100 p-4 rounded-md flex flex-col justify-between">
+                <div>
+                  <p className="font-semibold text-sm mb-2">
+                    Documentos requeridos:
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-gray-700">
+                    <li>Cédula</li>
+                    <li>NIT (en caso de persona jurídica)</li>
+                    <li>Escrituras</li>
+                    <li>RUT</li>
+                    <li>Certificado de libertad y tradición (CTL)</li>
+                  </ul>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Todos los archivos deben estar en formato PDF y no exceder
+                    los 500KB cada uno.
+                  </p>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => navigate("/Login")}
-                className="bg-[#e0f5f2] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#cce7e3] transition-colors"
-              >
-                Iniciar Sesion
-              </button>
+                <div className="flex flex-col gap-2 mt-6">
+                  <button
+                    type="submit"
+                    className="bg-[#3b5998] text-white py-2 rounded hover:bg-[#334b85] transition-colors"
+                  >
+                    Registrarse
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/Login")}
+                    className="border border-gray-400 py-2 rounded text-gray-700 hover:bg-gray-200 transition-colors"
+                  >
+                    Iniciar Sesión
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </form>

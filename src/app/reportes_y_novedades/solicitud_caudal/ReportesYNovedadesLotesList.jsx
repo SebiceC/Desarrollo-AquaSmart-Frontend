@@ -1,27 +1,30 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "../../../components/NavBar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import InputFilter from "../../../components/InputFilterLote";
+import InputFilterLoteReportes from "../../../components/InputFilterLoteReportes";
 import Modal from "../../../components/Modal";
+import FlowRequestModal from "./FlowRequestModal";
 import DataTable from "../../../components/DataTable";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import DeleteLotes from "./DeleteLote";
 
-
-const LotesList = () => {
+const ReportesYNovedadesLotesList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [lotes, setLotes] = useState([]);
   const [predios, setPredios] = useState([]);
-  const [filteredLotes, setFilteredLotes] = useState(null); // Cambiado a null para controlar si se han aplicado filtros
+  const [filteredLotes, setFilteredLotes] = useState(null);
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [loteToDelete, setLoteToDelete] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showFlowModal, setShowFlowModal] = useState(false);
+  const [selectedLote, setSelectedLote] = useState(null);
+  // Determinar si es modo reporte o solicitud basado en la ruta o parámetro
+  const [isReportMode, setIsReportMode] = useState(false);
   const [filters, setFilters] = useState({
     id: "",
     ownerDocument: "",
-    plotId:"",
+    plotId: "",
     lotId: "",
     cropType: "",
     startDate: "",
@@ -36,33 +39,57 @@ const LotesList = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    // Determinar si estamos en modo reporte o solicitud
+    // Esto podría venir como un state desde la navegación o un query param
+    const searchParams = new URLSearchParams(location.search);
+    const mode = searchParams.get('mode');
+    setIsReportMode(mode === 'report');
+
+    const fetchUserAndLotes = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
           setModalMessage("No hay una sesión activa. Por favor, inicie sesión.");
           setShowModal(true);
+          setLoading(false);
           return;
         }
-        
+
+        // Obtener información del usuario actual
+        const userResponse = await axios.get(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Token ${token}` },
+        });
+
+        setCurrentUser(userResponse.data);
+
         // Obtener la lista de predios
         const prediosResponse = await axios.get(`${API_URL}/plot-lot/plots/list`, {
           headers: { Authorization: `Token ${token}` },
         });
-        
-        setPredios(prediosResponse.data);
-        console.log("Todos los predios:", prediosResponse.data);
+
+        // Filtrar solo los predios del usuario actual
+        const userPredios = prediosResponse.data.filter(predio =>
+          predio.owner === userResponse.data.document
+        );
+
+        setPredios(userPredios);
 
         // Obtener la lista de lotes
         const lotesResponse = await axios.get(`${API_URL}/plot-lot/lots/list`, {
           headers: { Authorization: `Token ${token}` },
         });
 
+        // Filtrar solo los lotes que pertenecen a los predios del usuario actual
+        const userPrediosIds = userPredios.map(predio => predio.id_plot);
+        const userLotes = lotesResponse.data.filter(lote =>
+          userPrediosIds.includes(lote.plot)
+        );
+
         // Combinar la información de lotes y predios
-        const lotesConPredios = lotesResponse.data.map(lote => {
+        const lotesConPredios = userLotes.map(lote => {
           // Buscar el predio correspondiente
-          const predio = prediosResponse.data.find(p => p.id_plot === lote.plot);
-          
+          const predio = userPredios.find(p => p.id_plot === lote.plot);
+
           return {
             ...lote,
             predioOwner: predio ? predio.owner : "No disponible"
@@ -71,16 +98,18 @@ const LotesList = () => {
 
         // Store all plots, both active and inactive
         setLotes(lotesConPredios);
-        console.log("Todos los lotes con propietarios:", lotesConPredios);
+        console.log("Lotes del usuario con propietarios:", lotesConPredios);
+        setLoading(false);
       } catch (error) {
         console.error("Error al obtener la lista de lotes o predios:", error);
         setModalMessage("Error al cargar los datos. Por favor, intente más tarde.");
         setShowModal(true);
+        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [API_URL]);
+    fetchUserAndLotes();
+  }, [API_URL, location.search]);
 
   const handleFilterChange = (name, value) => {
     setFilters({
@@ -89,33 +118,30 @@ const LotesList = () => {
     });
   };
 
-  // Modified applyFilters function to show modal when owner ID doesn't exist
   const applyFilters = () => {
     try {
       // Verificamos si hay al menos un filtro aplicado
-      const hasActiveFilters = 
-        filters.id.trim() !== "" || 
-        filters.lotId.trim() !== "" || 
-        filters.ownerDocument.trim() !== "" || 
-        filters.startDate !== "" || 
-        filters.endDate !== "" || 
+      const hasActiveFilters =
+        filters.id.trim() !== "" ||
+        filters.lotId.trim() !== "" ||
+        filters.ownerDocument.trim() !== "" ||
+        filters.startDate !== "" ||
+        filters.endDate !== "" ||
         filters.isActive !== "";
-      
-
 
       // Validación de ID
       if (filters.id.trim() !== "") {
         // Verifica si es un prefijo válido del formato PR-NNNNNNN
         const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim());
-        
+
         // Verifica si son solo dígitos (cualquier cantidad)
         const isOnlyDigits = /^\d+$/.test(filters.id.trim());
-  
-         // Si no cumple ninguna de las condiciones permitidas
+
+        // Si no cumple ninguna de las condiciones permitidas
         if (!isPrefixValid && !isOnlyDigits) {
           setModalMessage("El campo ID del predio contiene caracteres no válidos");
           setShowModal(true);
-          setFilteredPredios([]);
+          setFilteredLotes([]);
           return;
         }
       }
@@ -124,7 +150,7 @@ const LotesList = () => {
       if (filters.lotId.trim() !== "") {
         // Validación de formato del ID del lote
         const isValidLoteFormat = /^(\d{1,7}|\d{1,7}-\d{0,3})$/.test(filters.lotId.trim());
-        
+
         if (!isValidLoteFormat) {
           setModalMessage("El campo ID del lote contiene caracteres no válidos");
           setShowModal(true);
@@ -155,12 +181,12 @@ const LotesList = () => {
         const matchesId = filters.id.trim() === "" ||
           (filters.id.trim().length > 0 &&
             lots.plot.toLowerCase().includes(filters.id.trim().toLowerCase()));
-      
+
         // Modificación para permitir búsqueda parcial por ID del lote
         const matchesIdlote = filters.lotId.trim() === "" ||
-        (filters.lotId.trim().length > 0 &&
-          (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) || 
-           lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
+          (filters.lotId.trim().length > 0 &&
+            (lots.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) ||
+              lots.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())));
         // Ahora buscamos en el predioOwner en lugar de owner
         const matchesOwner = filters.ownerDocument.trim() === "" ||
           lots.predioOwner.includes(filters.ownerDocument.trim());
@@ -173,14 +199,14 @@ const LotesList = () => {
 
         // Manejo de fechas - enfoque idéntico al que funciona en UserList
         let matchesDate = true; // Por defecto asumimos que coincide
-        
+
         if (filters.startDate !== "" || filters.endDate !== "") {
           // Solo verificamos fechas si hay algún filtro de fecha
-          
+
           // Convertir fecha de predio a formato YYYY-MM-DD
           const loteDate = new Date(lots.registration_date);
           const loteDateStr = loteDate.toISOString().split('T')[0]; // formato YYYY-MM-DD
-          
+
           // Verificar límite inferior
           if (filters.startDate !== "") {
             const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
@@ -188,7 +214,7 @@ const LotesList = () => {
               matchesDate = false;
             }
           }
-          
+
           // Verificar límite superior
           if (matchesDate && filters.endDate !== "") {
             const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
@@ -241,28 +267,47 @@ const LotesList = () => {
     }
   };
 
-  const handleDelete = (lots) => {
-    setLoteToDelete(lots);
-    setShowDeleteModal(true);
-  };
-  
-  const handleDeleteSuccess = (lotsId) => {
-    // Actualizar la lista de lotes
-    setLotes(lotes.filter(lots => lots.id_lot !== lotsId));
+  // Manejador para el botón "Solicitar" o "Reportar" según el modo
+  const handleRequest = (lote) => {
+    if (isReportMode) {
+      // Lógica para manejo de reportes
+      console.log("Generando reporte para el lote:", lote);
+      setModalMessage("Reporte generado correctamente para el lote " + lote.id_lot);
+      setShowModal(true);
+    } else {
+      // Lógica para solicitudes (la original)
+      // Validar primero si el lote está activo
+      if (!lote.is_activate) {
+        setModalMessage("No se puede solicitar cambio de caudal para un lote inactivo. Contacte al administrador para activar el lote.");
+        setShowModal(true);
+        return;
+      }
 
-    // Si hay lotes filtrados, actualizar esa lista también
-    if (filteredLotes && filteredLotes.length > 0) {
-      setFilteredLotes(filteredLotes.filter(lots => lots.id_lot !== lotsId));
+      // Si el lote está activo, mostrar el modal de solicitud
+      setSelectedLote(lote);
+      setShowFlowModal(true);
     }
   };
 
+  // Manejador para mensajes de éxito
+  const handleRequestSuccess = (message) => {
+    setModalMessage(message);
+    setShowModal(true);
+  };
+
+  // Función para verificar si un lote está activo (para el botón)
+  const isLoteActive = (lote) => {
+    // En modo reporte, permitimos siempre acciones
+    if (isReportMode) return true;
+    // En modo solicitud, solo si está activo
+    return lote.is_activate === true;
+  };
 
   // Configuración de columnas para DataTable
   const columns = [
     { key: "id_lot", label: "ID Lote" },
     { key: "crop_type", label: "Tipo de Cultivo", render: (lote) => cropTypeMap[lote.crop_type] || `Tipo ${lote.crop_type}` },
     { key: "plot", label: "ID Predio" },
-    { key: "predioOwner", label: "Propietario del Predio" }, // Cambiado de owner a predioOwner
     {
       key: "is_activate",
       label: "Estado",
@@ -287,78 +332,91 @@ const LotesList = () => {
     }
   ];
 
-  // Manejadores para las acciones
-  const handleView = (lote) => {
-    navigate(`/gestionDatos/lotes/${lote.id_lot}`);
-  };
+  // Texto para el botón según el modo
+  const actionButtonText = isReportMode ? "Reportar" : "Solicitar";
 
-  const handleEdit = (lote) => {
-    navigate(`/gestionDatos/lotes/${lote.id_lot}/update`);
-  };
+  // Mensaje para el tooltip en modo solicitud cuando está deshabilitado
+  const disabledTooltip = isReportMode ? "" : "Lote inactivo. No se pueden solicitar cambios de caudal.";
 
   return (
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
         <h1 className="text-center my-10 text-lg md:text-xl font-semibold mb-6">
-          Lista de Lotes del distrito
+          {isReportMode ? "Generación de Reportes" : "Gestión de caudal"}
         </h1>
 
-        <InputFilter
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onApplyFilters={applyFilters}
-          showPersonTypeFilter={false}
-        />
+        {loading ? (
+          <div className="text-center my-10">Cargando...</div>
+        ) : (
+          <>
+            <InputFilterLoteReportes
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onApplyFilters={applyFilters}
+              showPersonTypeFilter={false}
+            />
 
-        {/* Modal de mensajes */}
-        {showModal && (
-          <Modal
-            showModal={showModal}
-            onClose={() => {
-              setShowModal(false);
-              if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
-                setFilteredLotes(null);
-              }
-            }}
-            title={modalMessage === "Lote eliminado correctamente" ? "Éxito" : "Error"}
-            btnMessage="Cerrar"
-          >
-            <p>{modalMessage}</p>
-          </Modal>
-        )}
+            {/* Modal de mensajes */}
+            {showModal && (
+              <Modal
+                showModal={showModal}
+                onClose={() => {
+                  setShowModal(false);
+                  if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
+                    setFilteredLotes(null);
+                  }
+                }}
+                title={
+                  modalMessage.includes("correctamente")
+                    ? "Éxito"
+                    : modalMessage.includes("inactivo")
+                      ? "Advertencia"
+                      : "Error"
+                }
+                btnMessage="Cerrar"
+              >
+                <p>{modalMessage}</p>
+              </Modal>
+            )}
 
-        {showDeleteModal && loteToDelete && (
-          <DeleteLotes
-          lots={loteToDelete}
-          showModal={showDeleteModal}
-          setShowModal={setShowDeleteModal}
-          onDeleteSuccess={handleDeleteSuccess}
-          setModalMessage={setModalMessage}
-          setShowErrorModal={setShowModal}
-          />
-        )}
+            {/* Modal de solicitud de cambio de caudal (solo en modo solicitud) */}
+            {!isReportMode && showFlowModal && selectedLote && (
+              <FlowRequestModal
+                showModal={showFlowModal}
+                onClose={() => setShowFlowModal(false)}
+                lote={selectedLote}
+                onSuccess={handleRequestSuccess}
+                API_URL={API_URL}
+              />
+            )}
 
-        {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
-        {filteredLotes !== null && (
-          <DataTable
-            columns={columns}
-            data={filteredLotes}
-            emptyMessage="No se encontraron lotes con los filtros aplicados."
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        )}
-        
-        {filteredLotes === null && (
-          <div className="text-center my-10 text-gray-600">
-            No hay lotes para mostrar. Aplica filtros para ver resultados.
-          </div>
+            {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}
+            {filteredLotes !== null && (
+              <DataTable
+                columns={columns}
+                data={filteredLotes}
+                emptyMessage="No se encontraron lotes con los filtros aplicados."
+                onRequest={handleRequest}
+                // Pasar el texto del botón según el modo
+                actionButtonText={actionButtonText}
+                // Pasar una función para determinar si el botón debe estar habilitado
+                isActionEnabled={isLoteActive}
+                // Agregar tooltip para el botón deshabilitado
+                disabledTooltip={disabledTooltip}
+              />
+            )}
+
+            {filteredLotes === null && (
+              <div className="text-center my-10 text-gray-600">
+                No hay lotes para mostrar. Aplica filtros para ver resultados.
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 };
 
-export default LotesList;
+export default ReportesYNovedadesLotesList;

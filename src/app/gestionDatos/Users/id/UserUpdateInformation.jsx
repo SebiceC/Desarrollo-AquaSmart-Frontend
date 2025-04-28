@@ -5,6 +5,7 @@ import InputItem from "../../../../components/InputItem";
 import { validateField } from "../../../../components/ValidationRules";
 import Modal from "../../../../components/Modal";
 import NavBar from "../../../../components/NavBar";
+import BackButton from "../../../../components/BackButton";
 
 const UserUpdateInformation = () => {
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -32,33 +33,39 @@ const UserUpdateInformation = () => {
           setError("No hay sesión activa.");
           return;
         }
-  
+
         // Paso 1: Obtener perfil del usuario
-        const profileResponse = await axios.get(`${API_URL}/users/profile`, {
-          headers: { Authorization: `Token ${token}` },
-        }).catch(profileError => {
-          console.error("Error al obtener perfil:", profileError);
-          setError("Error al obtener perfil.");
-          throw profileError;
-        });
-  
+        const profileResponse = await axios
+          .get(`${API_URL}/users/profile`, {
+            headers: { Authorization: `Token ${token}` },
+          })
+          .catch((profileError) => {
+            console.error("Error al obtener perfil:", profileError);
+            setError("Error al obtener perfil.");
+            throw profileError;
+          });
+
         const userData = profileResponse.data;
-  
+
         // Paso 2: Obtener permisos del usuario
         let role = "Sin rol asignado";
         try {
-  
-          const permissionsResponse = await axios.get(`${API_URL}/admin/users/${userData.document}/permissions`, {
-            headers: { Authorization: `Token ${token}` },
-          });
-  
+          const permissionsResponse = await axios.get(
+            `${API_URL}/admin/users/${userData.document}/permissions`,
+            {
+              headers: { Authorization: `Token ${token}` },
+            }
+          );
+
           if (permissionsResponse.data?.Permisos_Rol) {
             const roles = Object.keys(permissionsResponse.data.Permisos_Rol);
             if (roles.length > 0) {
-              role = roles.join(', ');
+              role = roles.join(", ");
             }
           } else {
-            console.warn("No se encontraron roles en la respuesta de permisos.");
+            console.warn(
+              "No se encontraron roles en la respuesta de permisos."
+            );
           }
         } catch (permissionsError) {
           console.warn(
@@ -66,26 +73,24 @@ const UserUpdateInformation = () => {
             permissionsError
           );
         }
-  
+
         const userWithRole = { ...userData, role };
         setUser(userWithRole);
-  
+
         setFormData({
           email: userData.email || "",
           phone: userData.phone || "",
         });
-  
       } catch (err) {
         console.error("Error al cargar datos:", err);
         setShowErrorModal2(true);
       }
     };
-  
+
     if (API_URL) {
       fetchProfile();
     }
   }, [API_URL]);
-  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -102,11 +107,11 @@ const UserUpdateInformation = () => {
 
     // Crear un objeto con solo los campos modificados
     const changedFields = {};
-    
+
     if (formData.email !== user.email) {
       changedFields.email = formData.email;
     }
-    
+
     if (formData.phone !== user.phone) {
       changedFields.phone = formData.phone;
     }
@@ -132,9 +137,9 @@ const UserUpdateInformation = () => {
       );
 
       // Actualizar el objeto de usuario con los nuevos valores
-      setUser(prev => ({
+      setUser((prev) => ({
         ...prev,
-        ...changedFields
+        ...changedFields,
       }));
 
       setShowSuccessModal(true);
@@ -198,9 +203,34 @@ const UserUpdateInformation = () => {
                   </p>
                   <div className="space-y-1">
                     <div className="mt-2 space-y-2">
-                      <span>
-                        {user.drive_folder_id || "Carpeta no disponible"}
-                      </span>
+                      {user.drive_folder_id ? (
+                        <a
+                          href={`https://drive.google.com/drive/u/1/folders/${user.drive_folder_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 border-blue-800 text-blue-800 hover:bg-blue-100 rounded-lg transition-colors border"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          Ver documentos en Google Drive
+                        </a>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">
+                          No hay documentos disponibles.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -235,18 +265,12 @@ const UserUpdateInformation = () => {
               </div>
             </div>
 
-            <div className="flex gap-4 justify-end mt-8">
-              <button
-                type="button"
-                onClick={() => navigate("/home")}
-                className="bg-gray-200 px-6 py-2 rounded hover:bg-gray-300"
-              >
-                Salir
-              </button>
+            <div className="flex gap-[60%] mt-8 w-full">
+              <BackButton to="/perfil" text="Regresar" />
 
               <button
                 type="submit"
-                className="bg-[#67f0dd] border border-gray-300 rounded px-8 py-2 text-sm cursor-pointer hover:bg-[#5acbbb] transition-colors"
+                className="bg-[#365486] border border-gray-300 rounded-lg px-8 py-2 text-md text-white  cursor-pointer hover:bg-[#364660] transition-colors"
               >
                 Actualizar
               </button>

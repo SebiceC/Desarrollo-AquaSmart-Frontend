@@ -3,10 +3,24 @@
 import { useState, useEffect, useRef } from "react"
 import NavBar from "../../components/NavBar"
 import Modal from "../../components/Modal"
-import BackButton from "../../components/BackButton"
 import { useNavigate } from "react-router-dom"
-import { ChevronDown, AlertCircle, Info, Search, X } from "lucide-react"
+import { ChevronDown, AlertCircle, Info, Search, X, ChevronLeft } from "lucide-react"
 import axios from "axios"
+
+// Modificar el componente BackButton para que tenga un ancho normal en pantallas web
+const BackButton = ({ to, text }) => {
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(to)}
+      className="flex items-center justify-center gap-2 text-[#365486] border border-[#365486] px-5 py-2 rounded-lg hover:bg-gray-50 w-full sm:w-auto"
+    >
+      <ChevronLeft className="h-4 w-4" />
+      <span>{text}</span>
+    </button>
+  )
+}
 
 // Modificar el componente SearchableSelect para que coincida con el estilo de InputItem
 const SearchableSelect = ({
@@ -148,6 +162,7 @@ const RegistroDispositivos = () => {
     id_lot: "",
     is_active: "true",
     characteristics: "",
+    actual_flow: "", // Cambiado de flow_rate a actual_flow para coincidir con el backend
   })
 
   // Estados para listas de selección
@@ -163,6 +178,7 @@ const RegistroDispositivos = () => {
     device_type: "",
     id_plot: "",
     id_lot: "",
+    actual_flow: "", // Cambiado de flow_rate a actual_flow
   })
   const [loading, setLoading] = useState(false)
   const [loadingPredios, setLoadingPredios] = useState(false)
@@ -173,6 +189,10 @@ const RegistroDispositivos = () => {
 
   const navigate = useNavigate()
   const API_URL = import.meta.env.VITE_APP_API_URL
+
+  // IDs de válvulas especiales
+  const SPECIAL_VALVE_ID = "05" // Válvula de bocatoma
+  const FLOW_RATE_VALVE_IDS = ["05", "06"] // Válvulas que necesitan campo de caudal
 
   // Cargar tipos de dispositivos al montar el componente
   useEffect(() => {
@@ -235,8 +255,8 @@ const RegistroDispositivos = () => {
   // Cargar lotes cuando se selecciona un predio
   useEffect(() => {
     const fetchLotes = async () => {
-      // Si no hay predio seleccionado o el tipo es "valvula_48", no cargar lotes
-      if (!formData.id_plot || formData.device_type === "valvula_48") {
+      // Si no hay predio seleccionado o el tipo es la válvula especial, no cargar lotes
+      if (!formData.id_plot || formData.device_type === SPECIAL_VALVE_ID) {
         setLotes([])
         return
       }
@@ -261,13 +281,25 @@ const RegistroDispositivos = () => {
     }
 
     fetchLotes()
-  }, [formData.id_plot, formData.device_type, API_URL])
+  }, [formData.id_plot, formData.device_type, API_URL, SPECIAL_VALVE_ID])
 
   // Validar que el texto solo contenga caracteres permitidos (letras, números y algunos símbolos básicos)
   const validateTextInput = (text) => {
     // Permitir letras, números, espacios y algunos caracteres básicos como . , - _
     const regex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,\-_]+$/
     return regex.test(text)
+  }
+
+  // Validar número para el caudal (0-180 litros)
+  const validateActualFlow = (value) => {
+    // Verificar que sea un número válido
+    if (value === "" || !/^\d*\.?\d*$/.test(value)) {
+      return false
+    }
+
+    // Convertir a número y verificar rango
+    const numValue = Number.parseFloat(value)
+    return numValue >= 0 && numValue <= 180
   }
 
   // Validar longitud mínima
@@ -348,6 +380,22 @@ const RegistroDispositivos = () => {
           characteristics: "",
         }))
       }
+    } else if (name === "actual_flow") {
+      // Validar que sea un número válido entre 0 y 180
+      setFormData((prevData) => ({ ...prevData, [name]: value }))
+
+      if (value.trim() !== "") {
+        if (!validateActualFlow(value)) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            actual_flow: "El valor debe ser un número entre 0 y 180 litros",
+          }))
+        } else {
+          setFieldErrors((prev) => ({ ...prev, actual_flow: "" }))
+        }
+      } else {
+        setFieldErrors((prev) => ({ ...prev, actual_flow: "" }))
+      }
     } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }))
     }
@@ -355,17 +403,27 @@ const RegistroDispositivos = () => {
     // Limpiar mensaje de error general al cambiar cualquier campo
     setErrorMessage("")
 
-    // Si cambia el tipo de dispositivo a Válvula 48, limpiar predio y lote
+    // Si cambia el tipo de dispositivo a la válvula especial, limpiar predio y lote
     if (name === "device_type") {
-      const isValvula = tiposDispositivo.some(
-        (tipo) => tipo.device_id === value && tipo.name.toLowerCase().includes("válvula 48"),
-      )
+      const isSpecialValve = value === SPECIAL_VALVE_ID
 
-      if (isValvula) {
+      if (isSpecialValve) {
         setFormData((prevData) => ({
           ...prevData,
           id_plot: "",
           id_lot: "",
+        }))
+      }
+
+      // Si no es una válvula que necesita caudal, limpiar el campo de caudal
+      if (!FLOW_RATE_VALVE_IDS.includes(value)) {
+        setFormData((prevData) => ({
+          ...prevData,
+          actual_flow: "",
+        }))
+        setFieldErrors((prev) => ({
+          ...prev,
+          actual_flow: "",
         }))
       }
     }
@@ -444,11 +502,25 @@ const RegistroDispositivos = () => {
       }
     }
 
-    // Predio es obligatorio solo si el tipo de dispositivo NO es Válvula 48
-    const isValvulaDevice = tiposDispositivo.some(
-      (tipo) => tipo.device_id === formData.device_type && tipo.name.toLowerCase().includes("válvula 48"),
-    )
-    if (!isValvulaDevice && !formData.id_plot) {
+    // Validar caudal para válvulas específicas
+    if (FLOW_RATE_VALVE_IDS.includes(formData.device_type)) {
+      if (!formData.actual_flow.trim()) {
+        newErrors.actual_flow = " "
+        setFieldErrors((prev) => ({ ...prev, actual_flow: "El caudal es requerido para este tipo de válvula" }))
+        isValid = false
+      } else if (!validateActualFlow(formData.actual_flow)) {
+        newErrors.actual_flow = " "
+        setFieldErrors((prev) => ({
+          ...prev,
+          actual_flow: "El valor debe ser un número entre 0 y 180 litros",
+        }))
+        isValid = false
+      }
+    }
+
+    // Predio es obligatorio solo si el tipo de dispositivo NO es la válvula especial
+    const isSpecialValve = formData.device_type === SPECIAL_VALVE_ID
+    if (!isSpecialValve && !formData.id_plot) {
       newErrors.id_plot = " "
       isValid = false
     }
@@ -503,11 +575,14 @@ const RegistroDispositivos = () => {
         characteristics: formData.characteristics,
       }
 
-      // Agregar id_plot solo si no es Válvula 48
-      const isValvulaForSubmit = tiposDispositivo.some(
-        (tipo) => tipo.device_id === formData.device_type && tipo.name.toLowerCase().includes("válvula 48"),
-      )
-      if (!isValvulaForSubmit) {
+      // Agregar caudal si es una válvula que lo requiere
+      if (FLOW_RATE_VALVE_IDS.includes(formData.device_type) && formData.actual_flow) {
+        requestData.actual_flow = Number.parseFloat(formData.actual_flow)
+      }
+
+      // Agregar id_plot solo si no es la válvula especial
+      const isSpecialValve = formData.device_type === SPECIAL_VALVE_ID
+      if (!isSpecialValve) {
         requestData.id_plot = formData.id_plot
       }
 
@@ -560,13 +635,24 @@ const RegistroDispositivos = () => {
           setErrorMessage(`ERROR: ${error.response.data.characteristics[0]}`)
         }
 
-        // Manejar error de lote duplicado
-        if (error.response.data.non_field_errors) {
-          setErrorMessage(error.response.data.non_field_errors[0])
+        if (error.response.data.actual_flow) {
+          newErrors.actual_flow = " "
+          setErrorMessage(`ERROR: ${error.response.data.actual_flow[0]}`)
+        }
 
-          // Si el error menciona un lote, marcar el campo de lote
-          if (error.response.data.non_field_errors[0].includes("lote")) {
+        // Manejar error de lote duplicado
+        // Replace this section:
+        if (error.response.data.non_field_errors) {
+          // Check if it's the uniqueness constraint error
+          if (error.response.data.non_field_errors[0].includes("conjunto único")) {
+            setErrorMessage("Ya existe un dispositivo de este tipo registrado en este predio o lote.")
+            newErrors.device_type = " "
+            newErrors.id_plot = " "
+          } else if (error.response.data.non_field_errors[0].includes("lote")) {
+            setErrorMessage(error.response.data.non_field_errors[0])
             newErrors.id_lot = " "
+          } else {
+            setErrorMessage(error.response.data.non_field_errors[0])
           }
         }
 
@@ -590,11 +676,12 @@ const RegistroDispositivos = () => {
     </div>
   )
 
-  // Verificar si el tipo de dispositivo seleccionado es Válvula 48 (usando el ID)
-  const isValvula48 = tiposDispositivo.some(
-    (tipo) => tipo.device_id === formData.device_type && tipo.name.toLowerCase().includes("válvula 48"),
-  )
-  const showPlotFields = !isValvula48
+  // Verificar si el tipo de dispositivo seleccionado es la válvula especial (usando el ID)
+  const isSpecialValve = formData.device_type === SPECIAL_VALVE_ID
+  const showPlotFields = !isSpecialValve
+
+  // Verificar si el tipo de dispositivo seleccionado requiere campo de caudal
+  const requiresActualFlow = FLOW_RATE_VALVE_IDS.includes(formData.device_type)
 
   // Preparar opciones para los selects
   const tiposDispositivoOptions = tiposDispositivo.map((tipo) => ({
@@ -642,7 +729,7 @@ const RegistroDispositivos = () => {
       <div className="w-full min-h-screen flex flex-col items-center pt-24 bg-white p-6">
         <div className="w-full max-w-3xl">
           <h2 className="text-center text-2xl font-semibold text-[#365486] mb-2">Registro de Dispositivos</h2>
-          
+
           {/* Mensaje de error general en la parte superior */}
           {errorMessage && (
             <div className="w-full border border-red-100 bg-red-50 rounded px-4 py-3 text-red-600 text-sm mb-6 flex items-start">
@@ -652,138 +739,230 @@ const RegistroDispositivos = () => {
           )}
         </div>
 
-        <div className="bg-white p-6 w-full max-w-3xl">
+        <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
           {loading && !showSuccessModal ? (
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#365486]"></div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
-              {/* Campo de Nombre */}
-              <div className="flex flex-col w-full">
-                <label htmlFor="name" className="block text-sm font-medium mb-1">
-                  Nombre del Dispositivo <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Ej: Válvula principal"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full border ${errors.name ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
-                  required
-                  maxLength={20}
-                />
-                {errors.name && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
-                {fieldErrors.name && renderFieldError(fieldErrors.name)}
-              </div>
-
-              {/* Tipo de Dispositivo */}
-              <div className="flex flex-col w-full">
-                <label htmlFor="device_type" className="block text-sm font-medium mb-1">
-                  Tipo de Dispositivo <span className="text-red-500">*</span>
-                </label>
-                <SearchableSelect
-                  id="device_type"
-                  name="device_type"
-                  value={formData.device_type}
-                  onChange={handleChange}
-                  options={tiposDispositivoOptions}
-                  placeholder="SELECCIONE TIPO"
-                  hasError={errors.device_type}
-                  required
-                  className="w-full"
-                />
-              </div>
-
-              {/* Campo de Predio */}
-              <div className="flex flex-col w-full">
-                <label htmlFor="id_plot" className="block text-sm font-medium mb-1">
-                  Predio a asignar <span className="text-red-500">*</span>
-                </label>
-                <SearchableSelect
-                  id="id_plot"
-                  name="id_plot"
-                  value={formData.id_plot}
-                  onChange={handleChange}
-                  options={prediosOptions}
-                  placeholder="SELECCIONE UN PREDIO"
-                  hasError={errors.id_plot}
-                  required
-                  className="w-full"
-                />
-              </div>
-
-              {/* Campo de Lote (bloqueado si no hay predio seleccionado) */}
-              <div className="flex flex-col w-full">
-                <label htmlFor="id_lot" className="block text-sm font-medium mb-1">
-                  Lote a asignar
-                </label>
-                <div className="relative">
-                  {loadingLotes ? (
-                    <div className="w-full border border-gray-300 rounded px-3 py-2 flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#365486] mr-2"></div>
-                      <span className="text-gray-500">Cargando lotes...</span>
-                    </div>
-                  ) : lotes.length > 0 ? (
-                    <SearchableSelect
-                      id="id_lot"
-                      name="id_lot"
-                      value={formData.id_lot}
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Sección de información básica */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h3 className="text-sm font-medium text-gray-700 mb-4">Información básica</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Campo de Nombre */}
+                  <div className="flex flex-col">
+                    <label htmlFor="name" className="block text-sm mb-2">
+                      Nombre del Dispositivo <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      placeholder="Ej: Válvula principal"
+                      value={formData.name}
                       onChange={handleChange}
-                      options={lotesOptions}
-                      placeholder="SELECCIONE UN LOTE (OPCIONAL)"
-                      hasError={errors.id_lot}
-                      className={`w-full ${!formData.id_plot ? "opacity-50 cursor-not-allowed" : ""}`}
-                      disabled={!formData.id_plot} // Deshabilita si no hay predio seleccionado
+                      className={`w-full border ${errors.name ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
+                      required
+                      maxLength={20}
                     />
-                  ) : formData.id_plot ? (
-                    <div className="w-full border border-gray-100 bg-gray-50 rounded px-3 py-2 text-gray-500 text-sm flex items-center">
-                      <Info className="h-4 w-4 text-gray-400 mr-2" />
-                      No hay lotes disponibles para este predio
-                    </div>
-                  ) : (
-                    <div className="w-full border border-gray-200 rounded px-3 py-2 text-gray-400 bg-gray-50">
-                      Seleccione un predio primero
+                    {errors.name && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
+                    {fieldErrors.name && renderFieldError(fieldErrors.name)}
+                  </div>
+
+                  {/* Campo de Tipo de Dispositivo con búsqueda */}
+                  <div className="flex flex-col">
+                    <label htmlFor="device_type" className="block text-sm mb-2">
+                      Tipo de Dispositivo <span className="text-red-500">*</span>
+                    </label>
+                    <SearchableSelect
+                      id="device_type"
+                      name="device_type"
+                      value={formData.device_type}
+                      onChange={handleChange}
+                      options={tiposDispositivoOptions}
+                      placeholder="SELECCIONE TIPO DE DISPOSITIVO"
+                      hasError={errors.device_type}
+                      required={true}
+                    />
+                  </div>
+
+                  {/* Campo de Estado con búsqueda */}
+                  <div className="flex flex-col">
+                    <label htmlFor="is_active" className="block text-sm mb-2">
+                      Estado <span className="text-red-500">*</span>
+                    </label>
+                    <SearchableSelect
+                      id="is_active"
+                      name="is_active"
+                      value={formData.is_active}
+                      onChange={handleChange}
+                      options={estadoOptions}
+                      placeholder="SELECCIONE ESTADO"
+                      hasError={errors.is_active}
+                      required={true}
+                    />
+                  </div>
+
+                  {/* Campo de Caudal (solo para válvulas específicas) */}
+                  {requiresActualFlow && (
+                    <div className="flex flex-col">
+                      <label htmlFor="actual_flow" className="block text-sm mb-2">
+                        Posición en litros <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="actual_flow"
+                        name="actual_flow"
+                        placeholder="Ej: 90 (0-180)"
+                        value={formData.actual_flow}
+                        onChange={handleChange}
+                        className={`w-full border ${errors.actual_flow ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
+                        required
+                      />
+                      {errors.actual_flow && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
+                      {fieldErrors.actual_flow && renderFieldError(fieldErrors.actual_flow)}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Campo de Características */}
-              <div className="flex flex-col col-span-1 md:col-span-2 w-full">
-                <label htmlFor="characteristics" className="block text-sm font-medium mb-1">
-                  Características <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="characteristics"
-                  name="characteristics"
-                  value={formData.characteristics}
-                  onChange={handleChange}
-                  placeholder="Describa las características del dispositivo"
-                  className={`w-full border resize-none h-24 ${errors.characteristics ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
-                  maxLength={300}
-                  required
-                />
-                <div className="text-xs text-gray-400 text-right mt-1">
-                  {formData.characteristics.length}/300 caracteres
+              {/* Mensaje informativo cuando se selecciona la válvula especial */}
+              {isSpecialValve && (
+                <div className="w-full border border-gray-100 bg-gray-50 rounded px-4 py-3 text-gray-600 text-sm flex items-center">
+                  <Info className="h-4 w-4 text-gray-400 mr-2" />
+                  <p>Este tipo de dispositivo se asigna a la bocatoma y no requiere selección de predio ni lote.</p>
+                </div>
+              )}
+
+              {/* Sección de ubicación - solo visible si no es válvula especial */}
+              {showPlotFields && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-700 mb-4">Ubicación</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Campo de Predio con búsqueda */}
+                    <div className="flex flex-col">
+                      <label htmlFor="id_plot" className="block text-sm mb-2">
+                        Predio a asignar <span className="text-red-500">*</span>
+                      </label>
+                      <SearchableSelect
+                        id="id_plot"
+                        name="id_plot"
+                        value={formData.id_plot}
+                        onChange={handleChange}
+                        options={prediosOptions}
+                        placeholder="SELECCIONE UN PREDIO"
+                        hasError={errors.id_plot}
+                        required={showPlotFields}
+                      />
+                    </div>
+
+                    {/* Campo de Lote con búsqueda o mensaje informativo */}
+                    <div className="flex flex-col">
+                      <label htmlFor="id_lot" className="block text-sm mb-2">
+                        Lote a asignar
+                      </label>
+                      <div className="relative">
+                        {loadingLotes ? (
+                          <div className="w-full border border-gray-300 rounded px-3 py-2 flex items-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#365486] mr-2"></div>
+                            <span className="text-gray-500">Cargando lotes...</span>
+                          </div>
+                        ) : lotes.length > 0 ? (
+                          <>
+                            <SearchableSelect
+                              id="id_lot"
+                              name="id_lot"
+                              value={formData.id_lot}
+                              onChange={handleChange}
+                              options={lotesOptions}
+                              placeholder="SELECCIONE UN LOTE (OPCIONAL)"
+                              hasError={errors.id_lot}
+                            />
+                            {formData.id_lot && (
+                              <div className="mt-1 text-xs text-gray-600 flex items-start">
+                                <Info className="h-3 w-3 text-gray-400 mr-1 mt-0.5 flex-shrink-0" />
+                                <p>
+                                  Al seleccionar un lote, el dispositivo se asignará específicamente a este lote dentro
+                                  del predio.
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        ) : formData.id_plot ? (
+                          <div className="w-full border border-gray-100 bg-gray-50 rounded px-3 py-2 text-gray-500 text-sm flex items-center">
+                            <Info className="h-4 w-4 text-gray-400 mr-2" />
+                            No hay lotes disponibles para este predio
+                          </div>
+                        ) : (
+                          <div className="w-full border border-gray-200 rounded px-3 py-2 text-gray-400 bg-gray-50">
+                            Seleccione un predio primero
+                          </div>
+                        )}
+                      </div>
+                      {errors.id_lot && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="w-full border border-blue-100 bg-blue-50 rounded px-4 py-3 text-blue-700 text-sm flex items-start">
+                      <Info className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium mb-1">Información sobre la asignación:</p>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>Si solo selecciona un predio, el dispositivo se asignará al predio en general.</li>
+                          <li>
+                            Si selecciona un predio y un lote, el dispositivo se asignará específicamente a ese lote.
+                          </li>
+                          <li>No puede haber dos dispositivos del mismo tipo en el mismo predio o lote.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sección de características */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h3 className="text-sm font-medium text-gray-700 mb-4">Características</h3>
+                <div className="flex flex-col">
+                  <label htmlFor="characteristics" className="block text-sm mb-2">
+                    Características <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="characteristics"
+                    name="characteristics"
+                    value={formData.characteristics}
+                    onChange={handleChange}
+                    placeholder="Describa las características del dispositivo"
+                    className={`w-full border resize-none h-24 ${errors.characteristics || fieldErrors.characteristics ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}
+                    maxLength={300}
+                    required
+                  />
+                  <div
+                    className={`text-xs ${formData.characteristics.length > 280 ? "text-amber-500" : "text-gray-400"} ${formData.characteristics.length >= 300 ? "text-red-600" : ""} text-right mt-1`}
+                  >
+                    {formData.characteristics.length}/300 caracteres
+                  </div>
+                  {errors.characteristics && <div className="h-0.5 bg-red-200 mt-0.5 rounded-full opacity-70"></div>}
+                  {fieldErrors.characteristics && renderFieldError(fieldErrors.characteristics)}
                 </div>
               </div>
 
-              {/* Botones en columna en móvil y fila en escritorio */}
-              <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row gap-3 sm:justify-between w-full mt-4">
-                <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar al listado de dispositivos" className="w-full sm:w-auto" />
+              {/* Botones de acción */}
+              <div className="flex flex-col sm:flex-row justify-between w-full mt-6 gap-3">
+                <div className="w-full sm:w-auto">
+                  <BackButton to="/gestionDatos/dispositivosIoT" text="Regresar a la lista" />
+                </div>
                 <button
                   type="submit"
-                  className="bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275] disabled:bg-gray-400 w-full sm:w-auto"
+                  className="w-full sm:w-auto bg-[#365486] text-white px-5 py-2 rounded-lg hover:bg-[#2f4275] disabled:bg-gray-400"
                   disabled={loading}
                 >
                   {loading ? "Registrando..." : "Registrar"}
                 </button>
               </div>
             </form>
-
           )}
         </div>
 
