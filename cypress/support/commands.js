@@ -58,6 +58,26 @@ export const navegarAFacturaGestion = () => {
   cy.contains("h1", "Gestión de Facturas").should("be.visible");
 };
 
+//NAVEGACION SECCION DE NOVEDAD Y REPORTES
+
+export const navegarARNreportarFalla = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Reportes y novedades").click();
+  cy.contains("a", "Reportar fallos").should("be.visible").click();
+  cy.visit("http://localhost:5173/reportes-y-novedades/reportar_fallos");
+  cy.url().should("include", "/reportes-y-novedades/reportar_fallos");
+  cy.contains("h1", "REPORTE DE FALLOS").should("be.visible");
+};
+
+export const navegarARNsolicitarCaudal = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Reportes y novedades").click();
+  cy.contains("a", "Solicitudes de caudal").should("be.visible").click();
+  cy.visit("http://localhost:5173/reportes-y-novedades/solicitud_caudal");
+  cy.url().should("include", "/reportes-y-novedades/solicitud_caudal");
+  cy.contains("h1", "SOLICITUDES DE CAUDAL").should("be.visible");
+};
+
 export const clickAperturaTotal = () => {
   cy.contains("button", "Apertura Total").click();
   cy.wait(1000);
