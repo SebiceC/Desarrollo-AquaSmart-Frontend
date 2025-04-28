@@ -24,15 +24,17 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 // cypress/support/commandsCustom.js
+// <reference types="cypress" />
+//<reference types="cypress/types" />
 /* eslint-env mocha */
+/* global , Cypress */
 /* eslint-env cypress */
-/* global cy */
+/* global , , cy */
 // Ensure Cypress is globally available
 // Ensure Cypress types are loaded for proper IntelliSense and type checking
 // Definir un identificador único para la sesión (eliminado porque no se usa)
 // Agregar un comando para definir el objeto `process` de manera consistente
 // Agregamos un comando para definir el objeto process de manera consistente
-// Importar funciones específicas
 
 export const navegarAValvulas = () => {
   cy.visit("http://localhost:5173/perfil");
@@ -56,6 +58,15 @@ export const navegarAFacturaGestion = () => {
   cy.visit("http://localhost:5173/facturacion/GestionFacturas");
   cy.url().should("include", "/facturacion/GestionFacturas");
   cy.contains("h1", "Gestión de Facturas").should("be.visible");
+};
+
+export const navegarAHistorialFacturacion = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Facturación").click();
+  cy.contains("a", "Historial de factura").should("be.visible").click();
+  cy.visit("http://localhost:5173/facturacion/historial-facturas-lote");
+  cy.url().should("include", "/facturacion/historial-facturas-lote");
+  cy.contains("h1", "Historial de facturas").should("be.visible");
 };
 
 export const clickAperturaTotal = () => {
@@ -88,6 +99,18 @@ export const cerrarModal = () => {
   });
 };
 
+// Cerrar modal de confirmación (click en Cancelar)
+export const cerrarModalFacturas = () => {
+  cy.get(".bg-white.p-6.rounded-lg.shadow-lg.text-center").within(() => {
+    cy.contains("button", "Cancelar").click();
+  });
+};
+// Aceptar en el modal de confirmación
+export const aceptarModalFacturas = () => {
+  cy.get(".bg-white.p-6.rounded-lg.shadow-lg.text-center").within(() => {
+    cy.contains("button", "Aceptar").click();
+  });
+};
 export const clickFiltrar = () => {
   cy.contains("button", "Filtrar").click();
   cy.wait(1000);
@@ -140,10 +163,43 @@ export const limpiarCAmposFactura = () => {
   cy.get('input[placeholder="Dirección"]').clear();
   cy.get('input[placeholder="Correo electrónico"]').clear();
 };
-export const validarAdressVacia = () => {
-  cy.get('input[placeholder="Dirección"]').clear().type(" ");
+export const caracteresInvalidosEnCamposFactura = () => {
+  const placeholders = [
+    "Tarifa fija piscicultura",
+    "Tarifa volumétrica piscicultura",
+    "Tarifa fija agrícola común",
+    "Tarifa volumétrica agrícola común",
+    "IVA",
+    "ICA",
+    "Nombre o razón social",
+    "NIT",
+    "Teléfono",
+    "Dirección",
+    "Correo electrónico",
+  ];
+  cy.wait(1000);
+  placeholders.forEach((placeholder) => {
+    cy.get(`input[placeholder="${placeholder}"]`).clear().type("|");
+    cy.wait(1000);
+  });
 };
+export const validarMensaje = (textoEsperado) => {
+  let falloDetectado = false;
 
+  Cypress.on("fail", (error) => {
+    falloDetectado = true;
+    cy.log(`❌ ERROR: ${textoEsperado}`);
+    throw error; // Lanza el error real para no taparlo
+  });
+
+  cy.contains(textoEsperado)
+    .should("be.visible")
+    .then(() => {
+      if (!falloDetectado) {
+        cy.log(`✅ OK: ${textoEsperado}`);
+      }
+    });
+};
 const direccionesHuila = [
   "Calle 21 #6-42, Neiva (USCO)",
   "Carrera 5 #10-50, Parque Industrial de Neiva",
@@ -160,9 +216,6 @@ export const ingresarDireccionHuila = () => {
     .type(direccion, { delay: 50 }); // simulamos tipeo humano
 };
 
-export const validarTelefonoVacio = () => {
-  cy.get('input[placeholder="Teléfono"]').clear().type(" ");
-};
 export const ingresarTelefonoAleatorio = () => {
   const random = Math.floor(1000000 + Math.random() * 9000000); // 7 dígitos aleatorios
   const telefono = `313${random}`; // Total: 10 dígitos
@@ -173,7 +226,7 @@ export const ingresarTelefonoAleatorio = () => {
 export const validarEmail = () => {
   cy.get('input[placeholder="Correo electrónico"]')
     .clear()
-    .type("prueba@gmail.co");
+    .type("aguainteligentes@gmail.com");
 };
 export const ingresarFechaHoy = (
   selector = 'input[type="date"]',
@@ -197,5 +250,29 @@ export const capturarBackFlow = () => {
     cy.log("📤 Payload enviado: " + JSON.stringify(requestBody));
     cy.log("📥 Mensaje del backend: " + responseBody?.message);
     cy.log("🟡 HTTP Status: " + statusCode);
+  });
+};
+
+export const cambiarActivosInactivos = () => {
+  const opciones = ["activa", "inactiva"];
+  const seleccion = opciones[Math.floor(Math.random() * opciones.length)];
+
+  cy.get("select").select(seleccion);
+  clickFiltrar();
+  cy.wait(3000);
+  cy.get("body").then(($body) => {
+    if ($body.find('button:contains("Ajustar caudal")').length > 0) {
+      cy.log("✅ OK - Botón 'Ajustar caudal' disponible.");
+    } else if (
+      $body
+        .text()
+        .includes(
+          "No se encontraron válvulas que coincidan con los criterios de búsqueda. Por favor, intente con otros filtros."
+        )
+    ) {
+      cy.log("❌ ERROR - No se encontraron válvulas según filtro de estado.");
+    } else {
+      cy.log("⚠️ Advertencia - No se detectó respuesta esperada.");
+    }
   });
 };
