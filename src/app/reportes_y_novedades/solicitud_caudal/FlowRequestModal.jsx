@@ -76,9 +76,31 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
       // Manejo específico de errores que vienen del backend
       if (error.response?.data) {
         const responseData = error.response.data;
+        console.log("Datos de respuesta de error:", JSON.stringify(responseData)); // Agregado para depuración
         
+        // Verificar si hay errores en el campo error general
+        if (responseData.error && Array.isArray(responseData.error) && responseData.error.length > 0) {
+          const errorMessage = responseData.error[0];
+          console.log("Mensaje de error encontrado:", errorMessage); // Agregado para depuración
+          
+          if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
+            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
+          } else {
+            setError(errorMessage);
+          }
+        }
+        // Puede que el error venga como un objeto directo, no como array
+        else if (responseData.error && typeof responseData.error === 'string') {
+          const errorMessage = responseData.error;
+          
+          if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
+            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
+          } else {
+            setError(errorMessage);
+          }
+        }
         // Verificar si hay errores específicos para el caudal solicitado
-        if (responseData.requested_flow && responseData.requested_flow.length > 0) {
+        else if (responseData.requested_flow && responseData.requested_flow.length > 0) {
           setError(responseData.requested_flow[0]);
         }
         // Verificar si hay errores específicos para el lote
@@ -86,16 +108,39 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
           // Manejar específicamente el error de válvula
           const errorMessage = responseData.lot[0];
           
-          // Si el mensaje contiene algo sobre válvula 4" (con comillas), lo formateamos correctamente
+          // Aplicar validaciones específicas con mensajes personalizados
           if (errorMessage.includes("válvula 4")) {
             setError("El lote no tiene una válvula asociada.");
+          } else if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
+            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
           } else {
+            // Para cualquier otro mensaje de error no reconocido
             setError(errorMessage);
           }
         }
-        // Otros errores que puedan venir del backend
+        // Si la respuesta es un string con error (a veces ocurre en APIs)
         else if (typeof responseData === 'string') {
-          setError(responseData);
+          if (responseData.includes("solicitud de cambio de caudal en curso")) {
+            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
+          } else {
+            setError(responseData);
+          }
+        }
+        // Verificar si responseData es ya un string en formato JSON
+        else if (typeof responseData === 'string' && responseData.includes('"error"')) {
+          try {
+            const parsedError = JSON.parse(responseData);
+            if (parsedError.error && Array.isArray(parsedError.error) && parsedError.error.length > 0) {
+              const errorMessage = parsedError.error[0];
+              if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
+                setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
+              } else {
+                setError(errorMessage);
+              }
+            }
+          } catch (e) {
+            setError(responseData);
+          }
         }
         // Si hay errores pero no se pueden categorizar
         else {
