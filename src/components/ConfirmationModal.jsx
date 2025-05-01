@@ -1,11 +1,11 @@
 import React from 'react';
 
-const ConfirmationModal = ({ showModal, onClose, onConfirm }) => {
+const ConfirmationModal = ({ showModal, onClose, onConfirm, message }) => {
     return (
         showModal && (
             <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-50">
                 <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] sm:w-[400px] z-50">
-                    <h2 className="tex-lg mb-4">¿Estás seguro de realizar la actualización?</h2>
+                    <h2 className="text-lg font-bold mb-4">{message}</h2>
                     <div className="mt-4 flex justify-center space-x-7">
                         <button
                             onClick={onClose}

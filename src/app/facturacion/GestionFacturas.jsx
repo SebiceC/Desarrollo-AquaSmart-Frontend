@@ -571,6 +571,7 @@ const GestionFacturas = () => {
         showModal={showConfirmationModal}
         onClose={() => setShowConfirmationModal(false)} // Cerrar el modal sin hacer nada
         onConfirm={handleConfirm} // Llamar a la función de confirmación
+        message="¿Estás seguro de realizar la actualización?"
       />
 
       {/* Modal de éxito */}

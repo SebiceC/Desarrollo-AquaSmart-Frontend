@@ -38,14 +38,21 @@ const ReportesYNovedades = () => {
 
   // Función para manejar la navegación según el tipo de elemento
   const handleConsult = (item) => {
-    if (item.tipo === 'solicitud') {
-      // Navegar a la página de solicitudes de lotes
-      navigate('/reportes-y-novedades/lotes');
-    } else {
-      // Navegar a la página de lotes pero en modo reporte
-      navigate('/reportes-y-novedades/lotes?mode=report');
+    switch (item.nombre) {
+      case 'Solicitud para cambiar el caudal del lote':
+        navigate('/reportes-y-novedades/lote');
+        break;
+      case 'Solicitar activación de caudal del lote':
+        navigate('/reportes-y-novedades/activar-caudal');
+        break;
+      case 'Solicitar cancelación de caudal del lote':
+        navigate('/reportes-y-novedades/cancelacion_caudal');
+        break;
+      default:
+        navigate('/reportes-y-novedades/lotes');
     }
   };
+
 
   // Estilo personalizado para centrar los botones en la columna de acciones
   const customStyles = {
