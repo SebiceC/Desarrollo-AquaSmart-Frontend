@@ -61,6 +61,8 @@ import ReportesYNovedadesLotesList from "../app/reportes_y_novedades/solicitud_c
 import ReportarFallosList from "../app/reportes_y_novedades/reportar_fallos/ReportarFallosList";
 import CancelacionCaudal from "../app/reportes_y_novedades/solicitud_caudal/CancelacionCaudal";
 
+import GestionSolicitudesReportes from "../app/reportes_y_novedades/atencion_solicitudes-reportes/GestionSolicitudes-Reportes";
+
 const AppRouter = () => {
     return (
         <Routes>
@@ -128,6 +130,7 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/cancelacion_caudal" element={<ProtectedRoute element={<CancelacionCaudal />} />} />
             <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />
             <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
+            <Route path="/reportes-y-novedades/atencion_solicitudes-reportes" element={<ProtectedRoute element={<GestionSolicitudesReportes />} />} />
         </Routes>
     );
 };

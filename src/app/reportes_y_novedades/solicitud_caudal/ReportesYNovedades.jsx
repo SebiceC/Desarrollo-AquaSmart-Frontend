@@ -40,7 +40,7 @@ const ReportesYNovedades = () => {
   const handleConsult = (item) => {
     switch (item.nombre) {
       case 'Solicitud para cambiar el caudal del lote':
-        navigate('/reportes-y-novedades/lote');
+        navigate('/reportes-y-novedades/lotes');
         break;
       case 'Solicitar activación de caudal del lote':
         navigate('/reportes-y-novedades/activar-caudal');
