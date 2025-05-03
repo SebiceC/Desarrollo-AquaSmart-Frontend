@@ -17,6 +17,67 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
     }
   };
 
+  // Función para extraer el mensaje de error del formato anidado
+  const extractErrorMessage = (errorObj) => {
+    try {
+      // Si es un string, intentar parsearlo
+      if (typeof errorObj === 'string') {
+        // Intentar extraer el mensaje usando regex
+        const match = errorObj.match(/ErrorDetail\(string='([^']+)'/);
+        if (match && match[1]) {
+          return match[1];
+        }
+        return errorObj;
+      }
+
+      // Si es un objeto con estructura anidada
+      if (errorObj.error && errorObj.error.message) {
+        // Extraer el mensaje del string anidado
+        const match = errorObj.error.message.match(/ErrorDetail\(string='([^']+)'/);
+        if (match && match[1]) {
+          return match[1];
+        }
+      }
+
+      // Si tiene la estructura error.error
+      if (errorObj.error && Array.isArray(errorObj.error) && errorObj.error.length > 0) {
+        return errorObj.error[0];
+      }
+
+      // Si es un objeto con mensaje directo
+      if (errorObj.message) {
+        return errorObj.message;
+      }
+
+      return "Error desconocido. Por favor, intente más tarde.";
+    } catch (e) {
+      console.error("Error al parsear mensaje de error:", e);
+      return "Error al procesar la solicitud.";
+    }
+  };
+
+  // Función para categorizar y personalizar mensajes de error
+  const categorizeErrorMessage = (message) => {
+    // Mapa de mensajes personalizados según el tipo de error
+    const errorMap = {
+      "solicitud de cambio de caudal en curso": "El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.",
+      "El caudal solicitado es el mismo": "El caudal solicitado es el mismo que se encuentra disponible. Intente con un valor diferente.",
+      "no tiene una válvula": "El lote no tiene una válvula asociada.",
+      "fuera del rango": "El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg.",
+      // Agrega más mapeos según necesites
+    };
+
+    // Buscar coincidencias en el mensaje
+    for (const [key, customMessage] of Object.entries(errorMap)) {
+      if (message.includes(key)) {
+        return customMessage;
+      }
+    }
+
+    // Si no se encuentra una coincidencia, devolver el mensaje original
+    return message;
+  };
+
   const handleSubmit = async () => {
     // Validar que el campo no esté vacío
     if (!requestedFlow) {
@@ -73,84 +134,18 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
     } catch (error) {
       console.error("Error al enviar la solicitud:", error);
       
-      // Manejo específico de errores que vienen del backend
+      // Inicializar mensaje de error
+      let errorMessage = "Error al procesar la solicitud. Por favor, intente más tarde.";
+
       if (error.response?.data) {
-        const responseData = error.response.data;
-        console.log("Datos de respuesta de error:", JSON.stringify(responseData)); // Agregado para depuración
+        // Extraer mensaje de error de la estructura compleja
+        errorMessage = extractErrorMessage(error.response.data);
         
-        // Verificar si hay errores en el campo error general
-        if (responseData.error && Array.isArray(responseData.error) && responseData.error.length > 0) {
-          const errorMessage = responseData.error[0];
-          console.log("Mensaje de error encontrado:", errorMessage); // Agregado para depuración
-          
-          if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
-            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
-          } else {
-            setError(errorMessage);
-          }
-        }
-        // Puede que el error venga como un objeto directo, no como array
-        else if (responseData.error && typeof responseData.error === 'string') {
-          const errorMessage = responseData.error;
-          
-          if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
-            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
-          } else {
-            setError(errorMessage);
-          }
-        }
-        // Verificar si hay errores específicos para el caudal solicitado
-        else if (responseData.requested_flow && responseData.requested_flow.length > 0) {
-          setError(responseData.requested_flow[0]);
-        }
-        // Verificar si hay errores específicos para el lote
-        else if (responseData.lot && responseData.lot.length > 0) {
-          // Manejar específicamente el error de válvula
-          const errorMessage = responseData.lot[0];
-          
-          // Aplicar validaciones específicas con mensajes personalizados
-          if (errorMessage.includes("válvula 4")) {
-            setError("El lote no tiene una válvula asociada.");
-          } else if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
-            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
-          } else {
-            // Para cualquier otro mensaje de error no reconocido
-            setError(errorMessage);
-          }
-        }
-        // Si la respuesta es un string con error (a veces ocurre en APIs)
-        else if (typeof responseData === 'string') {
-          if (responseData.includes("solicitud de cambio de caudal en curso")) {
-            setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
-          } else {
-            setError(responseData);
-          }
-        }
-        // Verificar si responseData es ya un string en formato JSON
-        else if (typeof responseData === 'string' && responseData.includes('"error"')) {
-          try {
-            const parsedError = JSON.parse(responseData);
-            if (parsedError.error && Array.isArray(parsedError.error) && parsedError.error.length > 0) {
-              const errorMessage = parsedError.error[0];
-              if (errorMessage.includes("solicitud de cambio de caudal en curso")) {
-                setError("El lote elegido ya cuenta con una solicitud de cambio de caudal en curso.");
-              } else {
-                setError(errorMessage);
-              }
-            }
-          } catch (e) {
-            setError(responseData);
-          }
-        }
-        // Si hay errores pero no se pueden categorizar
-        else {
-          setError("Error al procesar la solicitud. Verifique los datos e intente nuevamente.");
-        }
-      } else {
-        // Error genérico si no hay respuesta específica del servidor
-        setError("Error al enviar la solicitud. Por favor, intente más tarde.");
+        // Categorizar y personalizar el mensaje
+        errorMessage = categorizeErrorMessage(errorMessage);
       }
-      
+
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };
