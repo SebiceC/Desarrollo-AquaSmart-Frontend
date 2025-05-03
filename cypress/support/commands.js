@@ -60,6 +60,7 @@ export const navegarAFacturaGestion = () => {
   cy.contains("h1", "Gestión de Facturas").should("be.visible");
 };
 
+//NAVEGACION A HISTORIAL DE FACTURACION
 export const navegarAHistorialFacturacion = () => {
   cy.visit("http://localhost:5173/perfil");
   cy.contains("button", "Facturación").click();
@@ -67,6 +68,15 @@ export const navegarAHistorialFacturacion = () => {
   cy.visit("http://localhost:5173/facturacion/historial-facturas-lote");
   cy.url().should("include", "/facturacion/historial-facturas-lote");
   cy.contains("h1", "Historial de facturas").should("be.visible");
+};
+
+export const navegarAHistorialMisFacturas = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Facturación").click();
+  cy.contains("a", "Mis facturas").should("be.visible").click();
+  cy.visit("http://localhost:5173/mis-facturas");
+  cy.url().should("include", "/mis-facturas");
+  cy.contains("h1", "Mis facturas").should("be.visible");
 };
 
 //NAVEGACION SECCION DE NOVEDAD Y REPORTES
@@ -89,6 +99,7 @@ export const navegarARNsolicitarCaudal = () => {
   cy.contains("h1", "SOLICITUDES DE CAUDAL").should("be.visible");
 };
 
+//CLICKS EN BOTONES DE LA INTERFAZ
 export const clickAperturaTotal = () => {
   cy.contains("button", "Apertura Total").click();
   cy.wait(1000);
@@ -295,4 +306,16 @@ export const cambiarActivosInactivos = () => {
       cy.log("⚠️ Advertencia - No se detectó respuesta esperada.");
     }
   });
+};
+
+// verificvar que el PDF se visualiza correctamente
+export const verificarPDFenIframe = () => {
+  cy.get("iframe", { timeout: 10000 })
+    .should("exist")
+    .its("0.contentDocument.body")
+    .should("not.be.empty")
+    .then(cy.wrap)
+    .find('embed[type="application/pdf"]')
+    .should("have.attr", "src")
+    .and("not.include", "about:blank");
 };
