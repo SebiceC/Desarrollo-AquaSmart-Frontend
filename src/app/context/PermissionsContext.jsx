@@ -27,7 +27,6 @@ export const PermissionsProvider = ({ children }) => {
 
             // Asumiendo que la respuesta incluye el ID del usuario
             const document = response.data.document;
-            console.log("ID del usuario:", document);
             setDocument(document);
             return document;
 
@@ -55,9 +54,6 @@ export const PermissionsProvider = ({ children }) => {
             const response = await axios.get(`${API_URL}/admin/users/${document}/permissions`, {
                 headers: { Authorization: `Token ${token}` },
             });
-
-            console.log("Permisos del usuario:", response.data);
-
             const data = response.data;
 
             const permisosUsuario = data.Permisos_Usuario || [];
@@ -91,7 +87,6 @@ export const PermissionsProvider = ({ children }) => {
     const hasPermission = (codename) => {
         // Verificar si el permiso existe en la lista del usuario
         const hasUserPermission = permissions.some(p => p.codename === codename);
-        console.log(`Verificando permiso: ${codename}, Resultado: ${hasUserPermission}`);
         return hasUserPermission;
     };
 
