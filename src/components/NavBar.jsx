@@ -161,7 +161,7 @@ function NavBar() {
                         direction="/reportes-y-novedades"
                         text="Reportes y novedades"
                         subItems={[
-                            { direction: "/reportes-y-novedades/misReportes", text: "Mis reportes/solicitudes" },
+                            { direction: "/reportes-y-novedades/mis-reportes-solicitudes", text: "Ver mis reportes/solicitudes" },
                             { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
                             { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
                             { direction: "/reportes-y-novedades/misReportes", text: "Asignación de mantenimientos" },
@@ -244,7 +244,7 @@ function NavBar() {
                             direction="/reportes-y-novedades"
                             text="Reportes y novedades"
                             subItems={[
-                                { direction: "/reportes-y-novedades/misReportes", text: "Mis reportes/solicitudes" },
+                                { direction: "/reportes-y-novedades/mis-reportes-solicitudes", text: "Ver mis reportes/solicitudes" },
                                 { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
                                 { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
                                 { direction: "/reportes-y-novedades/misReportes", text: "Asignación de mantenimientos" },
