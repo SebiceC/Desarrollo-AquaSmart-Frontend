@@ -6,6 +6,7 @@ import Modal from '../../../components/Modal'
 
 const ReportesYNovedades = () => {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
   const [items, setItems] = useState([
     { id: 1, nombre: 'Solicitud para cambiar el caudal del lote', tipo: 'solicitud' },
     { id: 2, nombre: 'Solicitar activación de caudal del lote', tipo: 'solicitud' },
@@ -38,20 +39,25 @@ const ReportesYNovedades = () => {
 
   // Función para manejar la navegación según el tipo de elemento
   const handleConsult = (item) => {
-    switch (item.nombre) {
-      case 'Solicitud para cambiar el caudal del lote':
-        navigate('/reportes-y-novedades/lotes');
-        break;
-      case 'Solicitar activación de caudal del lote':
-        navigate('/reportes-y-novedades/activar-caudal');
-        break;
-      case 'Solicitar cancelación de caudal del lote':
-        navigate('/reportes-y-novedades/cancelacion_caudal');
-        break;
-      default:
-        navigate('/reportes-y-novedades/lotes');
+    try {
+      switch (item.nombre) {
+        case 'Solicitud para cambiar el caudal del lote':
+          navigate('/reportes-y-novedades/lotes');
+          break;
+        case 'Solicitar activación de caudal del lote':
+          navigate('/reportes-y-novedades/activar-caudal');
+          break;
+        case 'Solicitar cancelación de caudal del lote':
+          navigate('/reportes-y-novedades/cancelacion_caudal');
+          break;
+        default:
+          navigate('/reportes-y-novedades/lotes');
+      }
+    } catch (err) {
+      setShowModal(true)
     }
-  };
+  }
+
 
 
   // Estilo personalizado para centrar los botones en la columna de acciones
@@ -83,6 +89,15 @@ const ReportesYNovedades = () => {
           customStyles={customStyles}
         />
       </div>
+
+      <Modal
+        showModal={showModal}
+        onClose={() => setShowModal(false)}
+        title="ERROR"
+        btnMessage="Aceptar"
+      >
+        <p>Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico</p>
+      </Modal>
     </div>
   );
 };

@@ -83,7 +83,7 @@ const ReportFailureModal = ({ showModal, onClose, onSuccess, API_URL }) => {
           setError("Error al procesar la solicitud. Verifique los datos e intente nuevamente.");
         }
       } else {
-        setError("Error al enviar el reporte. Por favor, intente más tarde.");
+        setError("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico.");
       }
       
       setIsSubmitting(false);

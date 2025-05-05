@@ -3,26 +3,28 @@ import { useNavigate } from 'react-router-dom'
 import NavBar from '../../../components/NavBar'
 import DataTable from '../../../components/DataTable'
 import ReportFailureModal from './ReportFailureModal'
+import ReportSupplyModal from './ReportSupplyModal'
 import Modal from '../../../components/Modal'
 
 const ReportarFallosList = () => {
     const navigate = useNavigate();
     const [showReportModal, setShowReportModal] = useState(false);
+    const [showSupplyModal, setShowSupplyModal] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const API_URL = import.meta.env.VITE_APP_API_URL;
-    
+
     const [items, setItems] = useState([
         { id: 1, nombre: 'Reporte de fallos en el aplicativo', tipo: 'reporte' },
         { id: 2, nombre: 'Reporte de fallos en el suministro de agua', tipo: 'reporte' },
     ]);
-    
+
     // Función para mostrar mensajes de éxito usando el modal
     const handleRequestSuccess = (message) => {
         setModalMessage(message);
         setShowModal(true);
     };
-    
+
     const getColumns = () => [
         {
             key: "nombre",
@@ -51,8 +53,9 @@ const ReportarFallosList = () => {
             // Mostrar modal para reporte de fallos en aplicativo
             setShowReportModal(true);
         } else if (item.id === 2) {
-            // Navegar a la página de fallos en suministro de agua
-            navigate('/reporte-fallos-suministro');
+            // Mostrar modal para reporte de fallo en el suministro
+            setShowSupplyModal(true);
+
         }
     };
 
@@ -82,7 +85,7 @@ const ReportarFallosList = () => {
                     onReport={handleConsult}
                     customStyles={customStyles}
                 />
-                
+
                 {/* Modal de mensajes (éxito o error) */}
                 {showModal && (
                     <Modal
@@ -100,11 +103,17 @@ const ReportarFallosList = () => {
                         <p>{modalMessage}</p>
                     </Modal>
                 )}
-                
+
                 {/* Modal de reporte de fallos */}
-                <ReportFailureModal 
+                <ReportFailureModal
                     showModal={showReportModal}
                     onClose={() => setShowReportModal(false)}
+                    onSuccess={handleRequestSuccess}
+                    API_URL={API_URL}
+                />
+                 <ReportSupplyModal
+                    showModal={showSupplyModal}
+                    onClose={() => setShowSupplyModal(false)}
                     onSuccess={handleRequestSuccess}
                     API_URL={API_URL}
                 />

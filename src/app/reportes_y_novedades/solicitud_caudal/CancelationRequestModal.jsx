@@ -15,6 +15,7 @@ const CancelationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL 
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showConnectionErrorModal, setShowConnectionErrorModal] = useState(false); // Modal de conexión
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     useEffect(() => {
         const fetchIotDeviceAndFlow = async () => {
@@ -104,39 +105,46 @@ const CancelationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL 
 
             const loteId = lote.id_lot || lote.id;
 
-            // Enviamos la solicitud al backend
             await axios.post(
                 `${API_URL}/communication/flow-cancel-request`,
                 {
-                    cancel_type: cancelType.toLowerCase(),  // Convertir a minúsculas
+                    cancel_type: cancelType.toLowerCase(),
                     observations: observations.trim(),
                     lot: loteId,
                 },
                 { headers: { Authorization: `Token ${token}` } }
             );
 
-            // Si la solicitud es exitosa
             onSuccess("Solicitud de cancelación enviada correctamente.");
             onClose();
         } catch (error) {
             console.error("Error al enviar la solicitud de cancelación:", error);
+            setIsSubmitting(false);
 
-            if (error.response?.data) {
-                // Si el backend devuelve un error
-                const responseData = error.response.data;
+            const resp = error.response?.data;
+            let userMsg = "";
 
-                // Comprobamos si hay un array de errores y mostramos todos
-                if (responseData.error && Array.isArray(responseData.error)) {
-                    setError(responseData.error.join(", "));  // Unimos los mensajes de error con coma
-                } else {
-                    setError("Error al procesar la solicitud. Verifique los datos e intente nuevamente.");
+            if (resp?.error) {
+                const err = resp.error;
+
+                if (typeof err === "string") {
+                    userMsg = err;
+
+                } else if (err.message) {
+                    const regex = /ErrorDetail\(string='(.+?)'/;
+                    const match = err.message.match(regex);
+                    userMsg = match ? match[1] : err.message;
+
+                } else if (Array.isArray(err)) {
+                    userMsg = err.join(", ");
                 }
+
             } else {
-                // Si no hay respuesta de backend, mostrar un error general de conexión
-                setError("ERROR . Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.");
+                userMsg = "Fallo en la conexión, inténtalo de nuevo más tarde o contacta a soporte técnico.";
             }
 
-            setIsSubmitting(false);
+            setError(userMsg);
+            setShowErrorModal(true);
         }
     };
 
@@ -254,6 +262,20 @@ const CancelationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL 
             >
                 <p>Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.</p>
             </Modal>
+
+            {/* Modal de error genérico */}
+            <Modal
+                showModal={showErrorModal}
+                onClose={() => {
+                    setShowErrorModal(false);
+                    setError("");
+                }}
+                title="ERROR"
+                btnMessage="ACEPTAR"
+            >
+                <p>{error}</p>
+            </Modal>
+
         </>
     );
 };
