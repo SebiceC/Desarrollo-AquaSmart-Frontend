@@ -64,9 +64,15 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
           placeholder="Documento del propietario"
           className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
           value={filters.owner}
-          onChange={handleOwnerDocumentChange}
           maxLength={15}
+          onChange={handleOwnerDocumentChange}
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'e' || e.key === '+' || e.key === '.') {
+              e.preventDefault();
+            }
+          }}
         />
+
       </div>
 
       {/* Filtro por Estado (Activo/Inactivo) */}
