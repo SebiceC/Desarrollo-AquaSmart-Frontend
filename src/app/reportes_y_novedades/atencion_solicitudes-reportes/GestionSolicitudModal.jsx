@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Modal from "../../../components/Modal"; // Asegúrate de importar el componente Modal
 
 const GestionSolicitudModal = ({ 
   showModal, 
@@ -12,6 +13,7 @@ const GestionSolicitudModal = ({
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConnectionErrorModal, setShowConnectionErrorModal] = useState(false);
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
   // Función para mapear los tipos de solicitud a las rutas del API
@@ -30,6 +32,7 @@ const GestionSolicitudModal = ({
       setError("");
       setSuccessMessage("");
       setIsSubmitting(false);
+      setShowConnectionErrorModal(false);
     }
   }, [solicitudBasica, showModal]);
 
@@ -52,6 +55,11 @@ const GestionSolicitudModal = ({
             `${API_URL}/communication/flow-requests/${tipoRuta}/${solicitudBasica.id}`,
             { headers: { Authorization: `Token ${token}` } }
           );
+          
+          if (!response.ok) {
+            throw new Error("Error al obtener los detalles de la solicitud");
+          }
+          
           const data = await response.json();
           
           setSolicitud({
@@ -60,8 +68,14 @@ const GestionSolicitudModal = ({
           });
         } catch (error) {
           console.error("Error al obtener detalles de la solicitud:", error);
-          onError("Error al cargar los detalles de la solicitud.");
-          onClose();
+          
+          // Si es un error de red, mostrar el modal de error de conexión
+          if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            setShowConnectionErrorModal(true);
+          } else {
+            onError("Error al cargar los detalles de la solicitud.");
+            onClose();
+          }
         } finally {
           setLoading(false);
         }
@@ -121,11 +135,17 @@ const GestionSolicitudModal = ({
       setTimeout(() => {
         onSuccess("Solicitud aceptada exitosamente");
         onClose();
-      }, 1500);
+      }, 500);
       
     } catch (error) {
       console.error("Error al aceptar la solicitud:", error);
-      setError("Error al aceptar la solicitud. Por favor, intente más tarde.");
+      
+      // Si es un error de red, mostrar el modal de error de conexión
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        setShowConnectionErrorModal(true);
+      } else {
+        setError("Error al aceptar la solicitud. Por favor, intente más tarde.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +205,13 @@ const GestionSolicitudModal = ({
       
     } catch (error) {
       console.error("Error al rechazar la solicitud:", error);
-      setError("Error al rechazar la solicitud. Por favor, intente más tarde.");
+      
+      // Si es un error de red, mostrar el modal de error de conexión
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        setShowConnectionErrorModal(true);
+      } else {
+        setError("Error al rechazar la solicitud. Por favor, intente más tarde.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -327,78 +353,90 @@ const GestionSolicitudModal = ({
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
-      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg text-center w-full max-w-[700px] max-h-[90vh] overflow-y-auto">
-        {/* Título */}
-        <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">GESTIÓN DE SOLICITUD</h2>
+    <>
+      <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg text-center w-full max-w-[700px] max-h-[90vh] overflow-y-auto">
+          {/* Título */}
+          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">GESTIÓN DE SOLICITUD</h2>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-32 sm:h-64">
-            <div className="text-gray-500 text-xs sm:text-sm">Cargando información de la solicitud...</div>
-          </div>
-        ) : (
-          <>
-            {/* Campos del formulario */}
-            <div className="mb-4 sm:mb-6">
-              {renderFields()}
+          {loading ? (
+            <div className="flex justify-center items-center h-32 sm:h-64">
+              <div className="text-gray-500 text-xs sm:text-sm">Cargando información de la solicitud...</div>
             </div>
-
-            {/* Mensajes de error */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md mb-3 sm:mb-4 text-xs sm:text-sm text-left">
-                <p className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {error}
-                </p>
+          ) : (
+            <>
+              {/* Campos del formulario */}
+              <div className="mb-4 sm:mb-6">
+                {renderFields()}
               </div>
-            )}
 
-            {/* Mensajes de éxito */}
-            {successMessage && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md mb-3 sm:mb-4 text-xs sm:text-sm text-left">
-                <p className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  {successMessage}
-                </p>
-              </div>
-            )}
+              {/* Mensajes de error */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md mb-3 sm:mb-4 text-xs sm:text-sm text-left">
+                  <p className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {error}
+                  </p>
+                </div>
+              )}
 
-            {/* Botones */}
-            <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
-              <button
-                onClick={onClose}
-                className="bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base w-full sm:w-auto order-3 sm:order-1"
-                disabled={isSubmitting}
-              >
-                Volver a la lista
-              </button>
-              
-              <div className="flex gap-3 sm:gap-4 order-1 sm:order-2">
+              {/* Mensajes de éxito */}
+              {successMessage && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md mb-3 sm:mb-4 text-xs sm:text-sm text-left">
+                  <p className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    {successMessage}
+                  </p>
+                </div>
+              )}
+
+              {/* Botones */}
+              <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
                 <button
-                  onClick={handleReject}
-                  className="bg-red-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-600 disabled:bg-opacity-70 text-sm sm:text-base flex-1 sm:flex-none"
-                  disabled={isSubmitting || successMessage}
+                  onClick={onClose}
+                  className="bg-gray-300 text-gray-700 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base w-full sm:w-auto order-3 sm:order-1"
+                  disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Procesando..." : "Rechazar"}
+                  Volver a la lista
                 </button>
                 
-                <button
-                  onClick={handleAccept}
-                  className="bg-[#365486] text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-opacity-70 text-sm sm:text-base flex-1 sm:flex-none"
-                  disabled={isSubmitting || successMessage}
-                >
-                  {isSubmitting ? "Procesando..." : "Aceptar"}
-                </button>
+                <div className="flex gap-3 sm:gap-4 order-1 sm:order-2">
+                  <button
+                    onClick={handleReject}
+                    className="bg-red-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-600 disabled:bg-opacity-70 text-sm sm:text-base flex-1 sm:flex-none"
+                    disabled={isSubmitting || successMessage}
+                  >
+                    {isSubmitting ? "Procesando..." : "Rechazar"}
+                  </button>
+                  
+                  <button
+                    onClick={handleAccept}
+                    className="bg-[#365486] text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-opacity-70 text-sm sm:text-base flex-1 sm:flex-none"
+                    disabled={isSubmitting || successMessage}
+                  >
+                    {isSubmitting ? "Procesando..." : "Aceptar"}
+                  </button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+      
+      {/* Modal de error de conexión */}
+      <Modal
+        showModal={showConnectionErrorModal}
+        onClose={() => setShowConnectionErrorModal(false)}
+        title="ERROR"
+        btnMessage="Entendido"
+      >
+        <p>Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.</p>
+      </Modal>
+    </>
   );
 };
 

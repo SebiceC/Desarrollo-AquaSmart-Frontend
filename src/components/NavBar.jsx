@@ -213,6 +213,7 @@ function NavBar() {
             />
           )}
 
+<<<<<<< HEAD
           <NavItem
             direction="/seguridad/actualizar-contrasena"
             text="Seguridad"
@@ -256,6 +257,26 @@ function NavBar() {
             <NavItem direction="/permisos" text="Permisos" />
           )}
         </ul>
+=======
+                    <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
+                    <NavItem
+                        direction="/reportes-y-novedades"
+                        text="Reportes y novedades"
+                        subItems={[
+                            { direction: "/reportes-y-novedades/mis-reportes-solicitudes", text: "Ver mis reportes/solicitudes" },
+                            { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
+                            { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
+                            { direction: "/reportes-y-novedades/misReportes", text: "Asignación de mantenimientos" },
+                            { direction: "/reportes-y-novedades/misReportes", text: "Reportar informe" },
+                            { direction: "/reportes-y-novedades/misReportes", text: "Aprobación de mantenimiento" },
+                            { direction: "/reportes-y-novedades/atencion_solicitudes-reportes", text: "Atención de solicitudes y reportes" }
+                        ]}
+                    />
+                    {showPermisosSection && (
+                        <NavItem direction="/permisos" text="Permisos" />
+                    )}
+                </ul>
+>>>>>>> 5cfa0a0214d36914d6cd4eeb0dde19793a7d735a
 
         <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
           <Menu size={28} />
@@ -476,6 +497,7 @@ function NavBar() {
               />
             )}
 
+<<<<<<< HEAD
             {gestionDatosSubItems.length > 0 && (
               <NavItem
                 direction="/gestionDatos"
@@ -483,6 +505,21 @@ function NavBar() {
                 subItems={gestionDatosSubItems}
               />
             )}
+=======
+                        <NavItem direction="/seguridad/actualizar-contrasena" text="Seguridad" />
+                        <NavItem
+                            direction="/reportes-y-novedades"
+                            text="Reportes y novedades"
+                            subItems={[
+                                { direction: "/reportes-y-novedades/mis-reportes-solicitudes", text: "Ver mis reportes/solicitudes" },
+                                { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
+                                { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
+                                { direction: "/reportes-y-novedades/misReportes", text: "Asignación de mantenimientos" },
+                                { direction: "/reportes-y-novedades/misReportes", text: "Reportar informe" },
+                                { direction: "/reportes-y-novedades/misReportes", text: "Aprobación de mantenimiento" }
+                            ]}
+                        />
+>>>>>>> 5cfa0a0214d36914d6cd4eeb0dde19793a7d735a
 
             {gestionRegistrosSubItems.length > 0 && (
               <NavItem

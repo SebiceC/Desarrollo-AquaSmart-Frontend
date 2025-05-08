@@ -308,6 +308,36 @@ export const cambiarActivosInactivos = () => {
   });
 };
 
+const verificarResultadoDeFiltro = (estadoEsperado) => {
+  cy.get("body").then(($body) => {
+    if (
+      $body
+        .text()
+        .includes(
+          "No hay lotes para mostrar. Aplica filtros para ver resultados"
+        )
+    ) {
+      cy.log(
+        `✅ Se mostró el mensaje de que no hay lotes para el estado ${estadoEsperado}`
+      );
+    } else {
+      // Buscar si al menos un <td> contiene el estado esperado
+      cy.get("table")
+        .find("tbody tr")
+        .should("exist")
+        .then(($rows) => {
+          const encontrado = [...$rows].some((row) =>
+            row.innerText.includes(estadoEsperado)
+          );
+          expect(
+            encontrado,
+            `Debe haber al menos un registro con estado "${estadoEsperado}"`
+          ).to.be.true;
+        });
+    }
+  });
+};
+
 // verificvar que el PDF se visualiza correctamente
 export const verificarPDFenIframe = () => {
   cy.get("iframe", { timeout: 10000 })
@@ -318,4 +348,69 @@ export const verificarPDFenIframe = () => {
     .find('embed[type="application/pdf"]')
     .should("have.attr", "src")
     .and("not.include", "about:blank");
+};
+
+//VALIDACIÓN DE FILTROS EN GESTION DE REPORTES Y NOVEDADES
+
+export const validarFiltrosReportesNovedades = () => {
+  cy.get('input[placeholder="Filtrar por ID de predio"]')
+    .clear()
+    .type(" ||||||| ");
+  cy.contains("button", "Filtrar").click();
+  cy.wait(1000);
+  validarMensaje("El campo ID del predio contiene caracteres no válidos");
+  cerrarModal();
+  cy.visit("http://localhost:5173/reportes-y-novedades/lotes");
+  cy.wait(5000);
+  cy.get('input[placeholder="Filtrar por ID de lote"]')
+    .clear()
+    .type(" ||||||| ");
+  cy.contains("button", "Filtrar").click();
+  cy.wait(1000);
+  validarMensaje("El campo ID del lote contiene caracteres no válidos");
+  cerrarModal();
+  cy.visit("http://localhost:5173/reportes-y-novedades/lotes");
+  cy.wait(5000);
+};
+export const verificarEstadoTabla = (estadoEsperado) => {
+  cy.get("body").then(($body) => {
+    const sinResultados = $body
+      .text()
+      .includes(
+        "No hay lotes para mostrar. Aplica filtros para ver resultados."
+      );
+
+    if (sinResultados) {
+      cy.log(`✅ Mensaje de sin resultados para estado "${estadoEsperado}"`);
+    } else {
+      // Verifica que haya al menos un <td> con el estado esperado
+      cy.get("table").should("exist");
+      cy.contains("th", "Estado").should("exist");
+
+      cy.get("table tbody tr td").then(($tds) => {
+        const encontrado = [...$tds].some(
+          (td) => td.innerText.trim() === estadoEsperado
+        );
+        expect(
+          encontrado,
+          `Debe haber al menos un registro con estado "${estadoEsperado}"`
+        ).to.be.true;
+      });
+    }
+  });
+};
+
+//CERRAR MODAL DE ERROR
+
+export const validarYcerrarModalError = (mensajeEsperado) => {
+  cy.get("div.bg-white")
+    .should("be.visible")
+    .within(() => {
+      cy.contains("h2", "Error").should("be.visible");
+      cy.contains(mensajeEsperado).should("be.visible");
+      cy.contains("button", "Cerrar").click();
+    });
+
+  // Verifica que el modal ya no esté visible
+  cy.get("div.bg-white").should("not.exist");
 };

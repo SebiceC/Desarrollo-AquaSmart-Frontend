@@ -11,6 +11,7 @@ const DataTable = ({
   onDelete,
   onConsult,
   onViewFactura,
+  onViewReportesSolicitudes,
   onReport,
   onApplication,
   // Agregamos el nuevo prop onRequest
@@ -154,6 +155,15 @@ const DataTable = ({
                           aria-label="VER FACTURA"
                         >
                           <p className="font-bold text-white">VER FACTURA</p>
+                        </button>
+                      )}
+                      {onViewReportesSolicitudes && (
+                        <button
+                          className="bg-[#365486] hover:bg-blue-500 transition-colors p-1.5 rounded-md min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                          onClick={() => onViewReportesSolicitudes(item)}
+                          aria-label="VER FACTURA"
+                        >
+                          <p className="font-bold text-white">VER INFORMACIÓN</p>
                         </button>
                       )}
                     </div>
