@@ -12,12 +12,15 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasValve, setHasValve] = useState(true)
   const [loadingIot, setLoadingIot] = useState(true)
-  const [maxFlow, setMaxFlow] = useState(11.7) // Valor por defecto
+  const [maxFlow, setMaxFlow] = useState(11.7) // Valor máximo por defecto según requerimiento
 
   // Estados para los modales adicionales
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showConnectionErrorModal, setShowConnectionErrorModal] = useState(false) // Modal de conexión
+
+  // ID específico para Válvula 4"
+  const VALVE_4_ID = "06"
 
   useEffect(() => {
     const fetchIotDeviceAndValve = async () => {
@@ -36,7 +39,7 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
         })
 
         const devices = devicesResponse.data
-        const device = devices.find((dev) => dev.id_lot === loteId && dev.device_type === "06")
+        const device = devices.find((dev) => dev.id_lot === loteId && dev.device_type === VALVE_4_ID)
 
         if (!device) {
           setError("No se encontró un dispositivo IoT asociado al lote seleccionado.")
@@ -61,7 +64,7 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
     if (showModal) {
       fetchIotDeviceAndValve()
     }
-  }, [showModal, lote, API_URL])
+  }, [showModal, lote, API_URL, VALVE_4_ID])
 
   const validateAndProceed = () => {
     // Validar que el campo de caudal no esté vacío
@@ -72,8 +75,8 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
 
     // Validar que el caudal sea un número válido
     const caudalValue = Number.parseFloat(caudal)
-    if (isNaN(caudalValue) || caudalValue <= 0 || caudalValue > maxFlow) {
-      setError(`El valor ingresado no corresponde, el rango establecido es entre 1 y ${maxFlow}.`)
+    if (isNaN(caudalValue) || caudalValue < 1 || caudalValue > 11.7) {
+      setError("El valor ingresado no corresponde, el rango establecido es entre 1 y 11.7.")
       return
     }
 
@@ -93,7 +96,7 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
     setShowConfirmModal(true)
   }
 
-  // Modificar la función handleSubmit para usar el nombre de campo correcto
+  // Modificar la función handleSubmit para usar la URL correcta
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
@@ -106,13 +109,15 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
 
       const loteId = lote.id_lot || lote.id
 
-      // Enviamos la solicitud al backend con el nombre de campo correcto: requested_flow en lugar de flow_rate
+      // Enviamos la solicitud al backend con la URL correcta y el formato adecuado
       await axios.post(
-        `${API_URL}/communication/flow-activation-request`,
+        `${API_URL}/communication/flow-requests/activate/create`,
         {
+          type: "Solicitud",
+          lot: loteId,
+          flow_request_type: "Activación de Caudal",
           requested_flow: Number.parseFloat(caudal),
           observations: observations.trim(),
-          lot: loteId,
         },
         { headers: { Authorization: `Token ${token}` } },
       )
@@ -135,9 +140,7 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
 
             // Verificar si contiene el mensaje específico de solicitud en curso
             if (errorMessage.includes("ya cuenta con una solicitud de activación de caudal en curso")) {
-              setError(
-                "El lote ya cuenta con una solicitud de activación de caudal en curso. No se puede crear otra solicitud hasta que se resuelva la actual.",
-              )
+              setError("El lote elegido ya cuenta con una solicitud de activación de caudal en curso.")
               setIsSubmitting(false)
               return
             }
@@ -213,10 +216,10 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
                   value={caudal}
                   onChange={(e) => setCaudal(e.target.value)}
                   className={`w-full px-3 py-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-[#365486]`}
-                  placeholder={`Ingrese el caudal deseado (1-${maxFlow})`}
+                  placeholder="Ingrese el caudal deseado (1-11.7)"
                   step="0.1"
-                  min="0.1"
-                  max={maxFlow}
+                  min="1"
+                  max="11.7"
                 />
                 {error && error.includes("rango establecido") && <p className="text-red-500 text-xs mt-1">{error}</p>}
               </div>
@@ -280,7 +283,7 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
         title="Solicitud no permitida"
         btnMessage="Entendido"
       >
-        <p>El lote no cuenta con una válvula asignada, no se puede realizar la solicitud.</p>
+        <p>El lote no cuenta con una válvula 4" asignada, no se puede realizar la solicitud.</p>
       </Modal>
 
       {/* Modal de Confirmación */}
