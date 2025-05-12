@@ -164,7 +164,7 @@ function NavBar() {
                             { direction: "/reportes-y-novedades/mis-reportes-solicitudes", text: "Ver mis reportes/solicitudes" },
                             { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
                             { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
-                            { direction: "/reportes-y-novedades/misReportes", text: "Asignación de mantenimientos" },
+                            { direction: "/reportes-y-novedades/informe-mantenimiento", text: "Asignación de mantenimientos" },
                             { direction: "/reportes-y-novedades/misReportes", text: "Reportar informe" },
                             { direction: "/reportes-y-novedades/misReportes", text: "Aprobación de mantenimiento" },
                             { direction: "/reportes-y-novedades/atencion_solicitudes-reportes", text: "Atención de solicitudes y reportes" }
@@ -247,7 +247,7 @@ function NavBar() {
                                 { direction: "/reportes-y-novedades/mis-reportes-solicitudes", text: "Ver mis reportes/solicitudes" },
                                 { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
                                 { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
-                                { direction: "/reportes-y-novedades/misReportes", text: "Asignación de mantenimientos" },
+                                { direction: "/reportes-y-novedades/informe-mantenimiento", text: "Asignación de mantenimientos" },
                                 { direction: "/reportes-y-novedades/misReportes", text: "Reportar informe" },
                                 { direction: "/reportes-y-novedades/misReportes", text: "Aprobación de mantenimiento" }
                             ]}
