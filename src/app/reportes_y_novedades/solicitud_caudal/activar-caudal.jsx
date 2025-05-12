@@ -42,6 +42,9 @@ const ActivarCaudal = () => {
     2: "Agricultura",
   }
 
+  // ID específico para Válvula 4"
+  const VALVE_4_ID = "06"
+
   useEffect(() => {
     // Determinar si estamos en modo reporte o solicitud
     // Esto podría venir como un state desde la navegación o un query param
@@ -97,14 +100,14 @@ const ActivarCaudal = () => {
           // Buscar el predio correspondiente
           const predio = userPredios.find((p) => p.id_plot === lote.plot)
 
-          // Buscar si el lote tiene una válvula asignada
-          const hasValve = iotResponse.data.some(
-            (device) => device.id_lot === lote.id_lot && device.device_type === "06",
+          // Buscar si el lote tiene una válvula 4" asignada
+          const hasValve4 = iotResponse.data.some(
+            (device) => device.id_lot === lote.id_lot && device.device_type === VALVE_4_ID,
           )
 
           // Buscar el dispositivo IoT asociado al lote para obtener el caudal actual
           const iotDevice = iotResponse.data.find(
-            (device) => device.id_lot === lote.id_lot && device.device_type === "06",
+            (device) => device.id_lot === lote.id_lot && device.device_type === VALVE_4_ID,
           )
 
           // Determinar si el caudal está cancelado (0) o no
@@ -113,7 +116,7 @@ const ActivarCaudal = () => {
           return {
             ...lote,
             predioOwner: predio ? predio.owner : "No disponible",
-            hasValve: hasValve,
+            hasValve4: hasValve4,
             flowCanceled: flowCanceled,
             iotDevice: iotDevice,
           }
@@ -132,7 +135,7 @@ const ActivarCaudal = () => {
     }
 
     fetchUserAndLotes()
-  }, [API_URL, location.search])
+  }, [API_URL, location.search, VALVE_4_ID])
 
   const handleFilterChange = (name, value) => {
     setFilters({
@@ -298,9 +301,9 @@ const ActivarCaudal = () => {
     } else {
       // Lógica para solicitudes de activación
 
-      // Validar primero si el lote tiene una válvula asignada
-      if (!lote.hasValve) {
-        setModalMessage("El lote no cuenta con una válvula asignada, no se puede realizar la solicitud.")
+      // Validar primero si el lote tiene una válvula 4" asignada
+      if (!lote.hasValve4) {
+        setModalMessage('El lote no cuenta con una válvula 4" asignada, no se puede realizar la solicitud.')
         setShowModal(true)
         return
       }
@@ -328,8 +331,8 @@ const ActivarCaudal = () => {
   const canRequestActivation = (lote) => {
     // En modo reporte, permitimos siempre acciones
     if (isReportMode) return true
-    // En modo solicitud, solo si tiene válvula y el caudal está cancelado
-    return lote.hasValve && lote.flowCanceled
+    // En modo solicitud, solo si tiene válvula 4" y el caudal está cancelado
+    return lote.hasValve4 && lote.flowCanceled
   }
 
   // Configuración de columnas para DataTable
@@ -342,11 +345,11 @@ const ActivarCaudal = () => {
     },
     { key: "plot", label: "ID Predio" },
     {
-      key: "hasValve",
+      key: "hasValve4",
       label: "Estado válvula",
       render: (lote) => {
-        const statusText = lote.hasValve ? "Asignada" : "Sin válvula"
-        const statusClass = lote.hasValve
+        const statusText = lote.hasValve4 ? "Asignada" : "Sin válvula"
+        const statusClass = lote.hasValve4
           ? "bg-green-100 text-green-800 border border-green-200"
           : "bg-red-100 text-red-800 border border-red-200"
 
@@ -363,7 +366,7 @@ const ActivarCaudal = () => {
       key: "flowCanceled",
       label: "Estado caudal",
       render: (lote) => {
-        if (!lote.hasValve) {
+        if (!lote.hasValve4) {
           return (
             <span className="flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200 w-24">
               N/A
@@ -399,7 +402,7 @@ const ActivarCaudal = () => {
   // Mensaje para el tooltip en modo solicitud cuando está deshabilitado
   const disabledTooltip = isReportMode
     ? ""
-    : "No se puede solicitar activación. El lote no tiene válvula asignada o el caudal ya está activo."
+    : 'No se puede solicitar activación. El lote no tiene válvula 4" asignada o el caudal ya está activo.'
 
   return (
     <div>
