@@ -55,9 +55,11 @@ const ReportFailureModal = ({ showModal, onClose, onSuccess, API_URL }) => {
 
       // Realizar la petición POST
       await axios.post(
-        `${API_URL}/communication/application-failure-report`,
+        `${API_URL}/communication/reports/app-failure/create`,
         {
-          observations: observations.trim()
+          observations: observations.trim(),
+          type: "Reporte",
+          failure_type: "Fallo en el Aplicativo"
         },
         {
           headers: { Authorization: `Token ${token}` },
@@ -155,8 +157,11 @@ const ReportFailureModal = ({ showModal, onClose, onSuccess, API_URL }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-[#365486] text-white px-4 py-2 rounded-lg disabled:bg-opacity-70"
+              disabled={isSubmitting || charCount >= 200}
+              className={`px-4 py-2 rounded-lg 
+                ${isSubmitting || charCount >= 200 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-[#365486] text-white hover:bg-[#2b3a6a]'}`}
             >
               {isSubmitting ? "Enviando..." : "Enviar reporte"}
             </button>
