@@ -22,7 +22,7 @@ function ReportesSolicitudes() {
     const [modal, setModal] = useState({
         show: false,
         message: "",
-        type: "error", // "error", "success", "warning"
+        tipo_falla: "error", // "error", "success", "warning"
         reportFailure: false,
         reportSupply: false
     });
@@ -32,54 +32,18 @@ function ReportesSolicitudes() {
         id: "",
         startDate: "",
         endDate: "",
-        status: "",
+        estado: "",
     });
-
-    // Mock data for development
-    const MOCK_USER = {
-        document: "123456789",
-        name: "Usuario de Prueba"
-    };
-    
-    const MOCK_REPORTES_SOLICITUDES = [
-        {
-            id: 1,
-            id_reportes_solicitudes: "1001",
-            code: "SOL001",
-            type: "Fallo en Aplicativo",
-            status: "pendiente",
-            creation_date: "2025-05-01T10:00:00Z",
-            client_document: "123456789"
-        },
-        {
-            id: 2,
-            id_reportes_solicitudes: "1002",
-            code: "SOL002",
-            type: "Fallo en Suministro",
-            status: "En proceso",
-            creation_date: "2025-04-25T12:30:00Z",
-            client_document: "123456789"
-        },
-        {
-            id: 3,
-            id_reportes_solicitudes: "1003",
-            code: "SOL003",
-            type: "Otro tipo",
-            status: "A espera de aprobacion",
-            creation_date: "2024-03-15T09:15:00Z",
-            client_document: "987654321"
-        },
-    ];
     
     // Helper function to show modal messages
-    const showModalMessage = (message, type = "error") => {
+    const showModalMessage = useCallback((message, tipo_falla = "error") => {
         setModal(prev => ({
             ...prev,
             show: true,
             message,
-            type
+            tipo_falla
         }));
-    };
+    }, []);
     
     // Success handler for requests
     const handleRequestSuccess = (message) => {
@@ -91,45 +55,13 @@ function ReportesSolicitudes() {
         setModal({
             show: false,
             message: "",
-            type: "error",
+            tipo_falla: "error",
             reportFailure: false,
             reportSupply: false
         });
     };
 
-    // Fetch user and reports data
     useEffect(() => {
-        const fetchUserAndReportesSolicitudes = async () => {
-            try {
-                // Simular delay de carga
-                await new Promise((resolve) => setTimeout(resolve, 500));
-    
-                // Simular usuario autenticado
-                const userResponse = { data: MOCK_USER };
-                setCurrentUser(userResponse.data);
-    
-                // Simular datos de reportes/solicitudes
-                const reportesSolicitudesResponse = { data: MOCK_REPORTES_SOLICITUDES };
-    
-                const userReportesSolicitudes = reportesSolicitudesResponse.data.filter(
-                    (reportesSolicitudes) =>
-                        reportesSolicitudes.client_document === userResponse.data.document
-                );
-    
-                setReportesSolicitudes(userReportesSolicitudes);
-                console.log("Reportes/solicitudes del usuario (mock):", userReportesSolicitudes);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error al obtener la lista de Reportes/solicitudes:", error);
-                showModalMessage("Error al cargar. Por favor, intente de nuevo o contacte al soporte técnico");
-                setLoading(false);
-            }
-        };
-    
-        fetchUserAndReportesSolicitudes();
-        
-        // Uncomment below for real API implementation
-        /*
         const fetchUserAndReportesSolicitudes = async () => {
             try {
                 const token = localStorage.getItem("token");
@@ -138,37 +70,44 @@ function ReportesSolicitudes() {
                     setLoading(false);
                     return;
                 }
-                
-                // Obtener información del usuario actual
+
                 const userResponse = await axios.get(`${API_URL}/users/profile`, {
                     headers: { Authorization: `Token ${token}` },
                 });
-                
+
                 setCurrentUser(userResponse.data);
-                
-                // Obtener la lista de Reportes/solicitudes desde el endpoint
-                const reportesSolicitudesResponse = await axios.get(`${API_URL}/billing/bills`, {
+
+                const reportesSolicitudesResponse = await axios.get(`${API_URL}/communication/my/requests-and-reports`, {
                     headers: { Authorization: `Token ${token}` },
                 });
-                
-                // Filtrar las Reportes/solicitudes para mostrar solo las del usuario logueado
-                const userReportesSolicitudes = reportesSolicitudesResponse.data.filter(
-                    (reportesSolicitudes) => reportesSolicitudes.client_document === userResponse.data.document
-                );
-                
-                setReportesSolicitudes(userReportesSolicitudes);
-                console.log("Reportes/solicitudes del usuario:", userReportesSolicitudes);
+
+                // Combine mis_solicitudes and mis_reportes into a single array with unified keys
+                const combinedData = [
+                    ...reportesSolicitudesResponse.data.mis_solicitudes.map(solicitud => ({
+                        id: solicitud.id,
+                        tipo: solicitud.tipo,
+                        estado: solicitud.estado,
+                        fecha: solicitud.fecha
+                    })),
+                    ...reportesSolicitudesResponse.data.mis_reportes.map(reporte => ({
+                        id: reporte.id,
+                        tipo: reporte.tipo_falla,
+                        estado: reporte.estado,
+                        fecha: reporte.fecha
+                    }))
+                ];
+
+                setReportesSolicitudes(combinedData);
+                console.log("Reportes/solicitudes del usuario:", combinedData);
                 setLoading(false);
-            } catch (error) {
-                console.error("Error al obtener la lista de Reportes/solicitudes:", error);
+            } catch {
                 showModalMessage("Error al cargar. Por favor, intente de nuevo o contacte al soporte técnico");
                 setLoading(false);
             }
         };
-        
+
         fetchUserAndReportesSolicitudes();
-        */
-    }, []);
+    }, [API_URL, showModalMessage]);
 
     // Update filters
     const handleFilterChange = (name, value) => {
@@ -181,13 +120,6 @@ function ReportesSolicitudes() {
     // Apply filters function (memoized with useCallback to prevent unnecessary recreations)
     const applyFilters = useCallback(() => {
         try {
-            // Check if any filter is applied
-            const hasActiveFilters = 
-                filters.id.trim() !== "" || 
-                filters.startDate !== "" || 
-                filters.endDate !== "" || 
-                filters.status !== "";
-                
             // ID validation
             if (filters.id.trim() !== "" && !/^[A-Za-z0-9]+$/.test(filters.id.trim())) {
                 showModalMessage("El ID de reporte/solicitud contiene caracteres no válidos");
@@ -204,28 +136,24 @@ function ReportesSolicitudes() {
         
             // Filter reports
             const filtered = reportesSolicitudes.filter((reportesSolicitudes) => {
-                // Filter by report code
                 const matchesId = filters.id.trim() === "" ||
-                    (reportesSolicitudes.code?.toLowerCase().includes(filters.id.trim().toLowerCase()));
+                    reportesSolicitudes.id.toString().includes(filters.id.trim());
         
-                // Filter by status
                 const matchesStatus =
-                    filters.status === "" ||
-                    reportesSolicitudes.status?.toLowerCase() === filters.status.toLowerCase();
+                    filters.estado === "" ||
+                    reportesSolicitudes.estado?.toLowerCase() === filters.estado.toLowerCase();
                 
-                // Date filtering
                 let matchesDate = true;
         
                 if (filters.startDate || filters.endDate) {
                     try {
-                        const facturaDate = new Date(reportesSolicitudes.creation_date);
-                        const facturaDateOnly = new Date(
-                            facturaDate.getFullYear(), 
-                            facturaDate.getMonth(), 
-                            facturaDate.getDate()
+                        const reportDate = new Date(reportesSolicitudes.fecha);
+                        const reportDateOnly = new Date(
+                            reportDate.getFullYear(), 
+                            reportDate.getMonth(), 
+                            reportDate.getDate()
                         );
         
-                        // Start date filter
                         if (filters.startDate) {
                             const startDate = new Date(filters.startDate);
                             const startDateOnly = new Date(
@@ -234,12 +162,11 @@ function ReportesSolicitudes() {
                                 startDate.getDate()
                             );
                             
-                            if (facturaDateOnly < startDateOnly) {
+                            if (reportDateOnly < startDateOnly) {
                                 matchesDate = false;
                             }
                         }
         
-                        // End date filter
                         if (matchesDate && filters.endDate) {
                             const endDate = new Date(filters.endDate);
                             const endDateOnly = new Date(
@@ -248,12 +175,11 @@ function ReportesSolicitudes() {
                                 endDate.getDate()
                             );
                             
-                            if (facturaDateOnly > endDateOnly) {
+                            if (reportDateOnly > endDateOnly) {
                                 matchesDate = false;
                             }
                         }
-                    } catch (error) {
-                        console.error("Error al procesar fechas:", error, "para reportesSolicitudes:", reportesSolicitudes.code);
+                    } catch {
                         matchesDate = false;
                     }
                 }
@@ -261,7 +187,6 @@ function ReportesSolicitudes() {
                 return matchesId && matchesDate && matchesStatus;
             });
             
-            // Show specific messages for no results
             if (filters.id.trim() !== "" && filtered.length === 0) {
                 showModalMessage("El ID de reporte/solicitud no se encuentra.");
                 setFilteredReporteSolicitudes([]);
@@ -274,18 +199,18 @@ function ReportesSolicitudes() {
                 return;
             }
         
-            if (filters.status !== "" && filtered.length === 0) {
+            if (filters.estado !== "" && filtered.length === 0) {
                 showModalMessage("No hay reportes o solicitudes con el estado seleccionado.");
                 setFilteredReporteSolicitudes([]);
                 return;
             }
         
             setFilteredReporteSolicitudes(filtered);
-        } catch (error) {
+        } catch {
             showModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.");
             setFilteredReporteSolicitudes([]);
         }
-    }, [filters, reportesSolicitudes]);
+    }, [filters, reportesSolicitudes, showModalMessage]);
 
     // DataTable configuration
     const customStyles = {
@@ -299,49 +224,44 @@ function ReportesSolicitudes() {
 
     const columns = [
         { key: "id", label: "ID de la petición" },
-        { key: "type", label: "Tipo de reporte/solicitud"},
         {
-            key: "status",
+            key: "tipo",
+            label: "Tipo de reporte/solicitud",
+            render: (item) => item.tipo || item.tipo_falla || "N/A"
+        },
+        {
+            key: "estado",
             label: "Estado de la petición",
-            render: (reportesSolicitudes) => {
-                const status = reportesSolicitudes.status?.toLowerCase();
-            
+            render: (item) => {
+                const estado = item.estado?.toLowerCase();
+
                 const statusStyles = {
                     "pendiente": "bg-yellow-100 text-yellow-800 border border-yellow-300",
                     "en proceso": "bg-blue-100 text-blue-800 border border-blue-300",
                     "a espera de aprobacion": "bg-orange-100 text-orange-800 border border-orange-300",
                     "finalizado": "bg-green-100 text-green-800 border border-green-300",
                 };
-            
-                const statusClass = statusStyles[status] || "bg-gray-100 text-gray-800 border border-gray-300";
-            
+
+                const statusClass = statusStyles[estado] || "bg-gray-100 text-gray-800 border border-gray-300";
+
                 return (
                     <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18 text-center`}>
-                        {reportesSolicitudes.status?.charAt(0).toUpperCase() + reportesSolicitudes.status?.slice(1)}
+                        {item.estado?.charAt(0).toUpperCase() + item.estado?.slice(1)}
                     </span>
                 );
-            }          
+            }
         },
         {
-            key: "creation_date",
+            key: "fecha",
             label: "Fecha Creación",
             responsive: "hidden sm:table-cell",
-            render: (reportesSolicitudes) => new Date(reportesSolicitudes.creation_date).toLocaleDateString('es-CO')
+            render: (item) => new Date(item.fecha).toLocaleDateString('es-CO')
         },
     ];
 
     // Navigate to detail view
-    const handleViewReporteSolicitudes = (reportesSolicitudes) => {
-        navigate(`/reportes-y-novedades/mis-reportes-solicitudes/detalle/${reportesSolicitudes.id_reportes_solicitudes}`);
-    };
-
-    // Open report modals
-    const openReportFailureModal = () => {
-        setModal(prev => ({ ...prev, reportFailure: true }));
-    };
-
-    const openReportSupplyModal = () => {
-        setModal(prev => ({ ...prev, reportSupply: true }));
+    const handleViewReporteSolicitudes = (item) => {
+        navigate(`/reportes-y-novedades/mis-reportes-solicitudes/detalle/${item.id}`);
     };
 
     return (
@@ -391,8 +311,8 @@ function ReportesSolicitudes() {
                         showModal={modal.show}
                         onClose={() => setModal(prev => ({ ...prev, show: false }))}
                         title={
-                            modal.type === "success" ? "Éxito" : 
-                            modal.type === "warning" ? "Advertencia" : "Error"
+                            modal.tipo_falla === "success" ? "Éxito" : 
+                            modal.tipo_falla === "warning" ? "Advertencia" : "Error"
                         }
                         btnMessage="Cerrar"
                     >
