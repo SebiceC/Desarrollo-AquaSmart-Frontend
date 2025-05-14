@@ -118,12 +118,14 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
       // Obtener el ID correcto del lote
       const loteId = lote.id_lot || lote.id;
 
-      // Realizar la petición POST
+      // Realizar la petición POST incluyendo los campos requeridos
       await axios.post(
-        `${API_URL}/communication/flow-change-request`,
+        `${API_URL}/communication/flow-requests/create`,
         {
           requested_flow: flow,
-          lot: loteId
+          lot: loteId,
+          type: "Solicitud", // Valor fijo para type según el modelo
+          flow_request_type: "Cambio de Caudal" // Valor fijo para flow_request_type según FlowRequestType
         },
         {
           headers: { Authorization: `Token ${token}` },
@@ -140,7 +142,7 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
         // Error de conexión - mostrar modal en lugar de alerta
         setShowConnectionErrorModal(true);
       } else {
-        // Inicializar la variable errorMessage (¡FALTABA ESTA INICIALIZACIÓN!)
+        // Inicializar la variable errorMessage
         let errorMessage = "Error al procesar la solicitud. Por favor, intente más tarde.";
 
         if (error.response?.data) {
