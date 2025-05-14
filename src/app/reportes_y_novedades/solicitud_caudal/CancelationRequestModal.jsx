@@ -105,14 +105,26 @@ const CancelationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL 
 
             const loteId = lote.id_lot || lote.id;
 
+            // Mapear el cancelType a flow_request_type
+            const flow_request_type =
+                cancelType === "Temporal"
+                    ? "Cancelación Temporal de Caudal"
+                    : "Cancelación Definitiva de Caudal";
+
             await axios.post(
-                `${API_URL}/communication/flow-cancel-request`,
+                `${API_URL}/communication/flow-requests/cancel/create`,
                 {
-                    cancel_type: cancelType.toLowerCase(),
-                    observations: observations.trim(),
                     lot: loteId,
+                    observations: observations.trim(),
+                    type: "Solicitud",
+                    flow_request_type,
                 },
-                { headers: { Authorization: `Token ${token}` } }
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Token ${token}`,
+                    },
+                }
             );
 
             onSuccess("Solicitud de cancelación enviada correctamente.");
@@ -126,21 +138,18 @@ const CancelationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL 
 
             if (resp?.error) {
                 const err = resp.error;
-
                 if (typeof err === "string") {
                     userMsg = err;
-
                 } else if (err.message) {
                     const regex = /ErrorDetail\(string='(.+?)'/;
                     const match = err.message.match(regex);
                     userMsg = match ? match[1] : err.message;
-
                 } else if (Array.isArray(err)) {
                     userMsg = err.join(", ");
                 }
-
             } else {
-                userMsg = "Fallo en la conexión, inténtalo de nuevo más tarde o contacta a soporte técnico.";
+                userMsg =
+                    "Fallo en la conexión, inténtalo de nuevo más tarde o contacta a soporte técnico.";
             }
 
             setError(userMsg);
