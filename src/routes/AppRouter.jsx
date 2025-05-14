@@ -134,6 +134,7 @@ const AppRouter = () => {
             <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
             <Route path="/reportes-y-novedades/solicitud_caudal" element={<ProtectedRoute element={<ReportesYNovedades />} />} />
+            <Route path="/reportes-y-novedades/lote" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
             <Route path="/reportes-y-novedades/cancelacion_caudal" element={<ProtectedRoute element={<CancelacionCaudal />} />} />
             <Route path="/reportes-y-novedades/activar-caudal" element={<ProtectedRoute element={<ActivacionCaudal />} />} />
             <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />

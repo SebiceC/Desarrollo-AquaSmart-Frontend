@@ -6,14 +6,13 @@ const InputFilterGestionSolRep = ({
   onFilterChange, 
   onApplyFilters, 
   showStatusFilter = true,
-  showPersonTypeFilter = true // Este ya no se usa pero lo dejamos por compatibilidad
 }) => {
   const handleIdChange = (e) => {
     onFilterChange("id", e.target.value);
   };
 
-  const handleUserIdChange = (e) => {
-    onFilterChange("userId", e.target.value);
+  const handleCreatedByChange = (e) => {
+    onFilterChange("createdBy", e.target.value);
   };
 
   const handleTypeChange = (e) => {
@@ -39,8 +38,8 @@ const InputFilterGestionSolRep = ({
           type="text"
           placeholder="ID de usuario"
           className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
-          value={filters.userId}
-          onChange={handleUserIdChange}
+          value={filters.createdBy}
+          onChange={handleCreatedByChange}
           maxLength={15}
         />
       </div>
@@ -96,7 +95,9 @@ const InputFilterGestionSolRep = ({
           >
             <option value="">ESTADO</option>
             <option value="pendiente">Pendiente</option>
-            <option value="aprobada">Aprobada</option>
+            <option value="en proceso">En Proceso</option>
+            <option value="a espera de aprobacion">A Espera de Aprobación</option>
+            <option value="finalizado">Finalizado</option>
             <option value="rechazada">Rechazada</option>
           </select>
           <span className="absolute top-3 right-4 text-gray-400">
