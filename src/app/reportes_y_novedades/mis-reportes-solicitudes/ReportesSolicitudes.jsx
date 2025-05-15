@@ -101,7 +101,7 @@ function ReportesSolicitudes() {
                 console.log("Reportes/solicitudes del usuario:", combinedData);
                 setLoading(false);
             } catch {
-                showModalMessage("Error al cargar. Por favor, intente de nuevo o contacte al soporte técnico");
+                showModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico");
                 setLoading(false);
             }
         };
