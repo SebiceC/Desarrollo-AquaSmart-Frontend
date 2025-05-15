@@ -98,7 +98,7 @@ function ReportesSolicitudes() {
                 ];
 
                 setReportesSolicitudes(combinedData);
-                console.log("Reportes/solicitudes del usuario:", combinedData);
+                // console.log("Reportes/solicitudes del usuario:", combinedData);
                 setLoading(false);
             } catch {
                 showModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico");
