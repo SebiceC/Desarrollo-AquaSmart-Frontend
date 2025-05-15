@@ -457,7 +457,7 @@ const GestionSolicitudes = () => {
     setShowModal(true);
   };
 
-  // Función para recargar datos - Modificada para obtener todos los tipos
+  // Función para recargar datos - MODIFICADA para usar el nuevo endpoint unificado
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -468,65 +468,75 @@ const GestionSolicitudes = () => {
         return;
       }
       
-      // Lista de todos los endpoints a consultar
-      const endpoints = [
-        // Solicitudes
-        { url: `${API_URL}/communication/flow-requests/list`, type: 'solicitud', subtype: 'cambio_caudal' },
-        { url: `${API_URL}/communication/flow-requests/cancel/list`, type: 'solicitud', subtype: 'cancelacion definitiva de caudal' },
-        { url: `${API_URL}/communication/flow-requests/cancel/list`, type: 'solicitud', subtype: 'cancelacion temporal de caudal' },
-        { url: `${API_URL}/communication/flow-requests/activate/list`, type: 'solicitud', subtype: 'activacion' },
-        
-        // Reportes
-        { url: `${API_URL}/communication/reports/water-supply/list`, type: 'reporte', subtype: 'falla_suministro' },
-        { url: `${API_URL}/communication/reports/app-failure/list`, type: 'reporte', subtype: 'falla_aplicativo' }
-      ];
-      
-      // Opciones para las solicitudes HTTP
+      // Opciones para la solicitud HTTP
       const options = {
         headers: { Authorization: `Token ${token}` }
       };
       
-      // Realizar todas las solicitudes en paralelo
-      const responses = await Promise.all(
-        endpoints.map(endpoint => 
-          axios.get(endpoint.url, options)
-            .then(response => ({
-              data: response.data.map(item => {
-                // Agregar campos según el tipo
-                const mappedItem = {
-                  ...item,
-                  reportType: endpoint.type  // solicitud o reporte
-                };
-                
-                // Agregar campo específico según el tipo
-                if (endpoint.type === 'solicitud') {
-                  mappedItem.flow_request_type = endpoint.subtype;
-                } else if (endpoint.type === 'reporte') {
-                  mappedItem.failure_type = endpoint.subtype;
-                }
-                
-                return mappedItem;
-              })
-            }))
-            .catch(error => {
-              console.error(`Error al obtener datos de ${endpoint.url}:`, error);
-              return { data: [] }; // Devolver array vacío en caso de error
-            })
-        )
-      );
+      // Realizar una única solicitud al nuevo endpoint unificado
+      const response = await axios.get(`${API_URL}/communication/admin/requests-and-reports`, options);
       
-      // Combinar todos los datos
-      const allDataCombined = responses.flatMap(response => response.data);
-      
-      // Actualizar estados
-      setSolicitudes(allDataCombined.filter(item => item.reportType === 'solicitud'));
-      setReportes(allDataCombined.filter(item => item.reportType === 'reporte'));
-      setAllData(allDataCombined);
-      
-      // IMPORTANTE: Mantener filteredData como null para que la tabla esté vacía inicialmente
-      // Solo se actualizan los datos filtrados si ya había un filtro aplicado anteriormente
-      if (filteredData !== null) {
-        applyFiltersToData(allDataCombined);
+      // Procesar los datos recibidos
+      if (response.data) {
+        // Procesamos las solicitudes (flow_requests)
+        const solicitudesData = response.data.flow_requests ? response.data.flow_requests.map(item => {
+          // Normalizar el subtipo
+          let specificType = item.flow_request_type;
+          // Convertir "Cancelación Temporal de Caudal" a "cancelacion temporal de caudal"
+          if (specificType === "Cancelación Temporal de Caudal") {
+            specificType = "cancelacion temporal de caudal";
+          } else if (specificType === "Cambio de Caudal") {
+            specificType = "cambio_caudal";
+          } else if (specificType === "Cancelación Definitiva de Caudal") {
+            specificType = "cancelacion definitiva de caudal";
+          } else if (specificType === "Activación de Caudal") {
+            specificType = "activacion";
+          }
+          
+          return {
+            ...item,
+            reportType: 'solicitud',
+            // Asegurarnos de que se guarda el tipo normalizado para la lógica de filtros
+            flow_request_type: specificType,
+            // Normalizamos el estado para que coincida con la lógica existente
+            status: item.status ? item.status.toLowerCase() : "",
+          };
+        }) : [];
+        
+        // Procesamos los reportes (failure_reports)
+        const reportesData = response.data.failure_reports ? response.data.failure_reports.map(item => {
+          // Normalizar el subtipo
+          let specificType = item.failure_type;
+          // Convertir "Fallo en el Suministro del Agua" a "falla_suministro"
+          if (specificType === "Fallo en el Suministro del Agua") {
+            specificType = "falla_suministro";
+          } else if (specificType === "Fallo en el Aplicativo") {
+            specificType = "falla_aplicativo";
+          }
+          
+          return {
+            ...item,
+            reportType: 'reporte',
+            // Asegurarnos de que se guarda el tipo normalizado para la lógica de filtros
+            failure_type: specificType,
+            // Normalizamos el estado para que coincida con la lógica existente
+            status: item.status ? item.status.toLowerCase() : "",
+          };
+        }) : [];
+        
+        // Combinamos ambos arrays
+        const allDataCombined = [...solicitudesData, ...reportesData];
+        
+        // Actualizar estados
+        setSolicitudes(solicitudesData);
+        setReportes(reportesData);
+        setAllData(allDataCombined);
+        
+        // IMPORTANTE: Mantener filteredData como null para que la tabla esté vacía inicialmente
+        // Solo se actualizan los datos filtrados si ya había un filtro aplicado anteriormente
+        if (filteredData !== null) {
+          applyFiltersToData(allDataCombined);
+        }
       }
     } catch (error) {
       console.error("Error al obtener los datos:", error);
