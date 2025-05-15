@@ -14,8 +14,8 @@ const InputFilterReporteSolicitudes = ({ filters, onFilterChange, onApplyFilters
     onFilterChange(e.target.name, e.target.value);
   };
 
-  const handleStatusChange = (e) => {
-    onFilterChange("status", e.target.value);
+  const handleEstadoChange = (e) => {
+    onFilterChange("estado", e.target.value);
   };
 
   return (
@@ -39,13 +39,13 @@ const InputFilterReporteSolicitudes = ({ filters, onFilterChange, onApplyFilters
       <div className="relative w-full lg:w-[22%] xl:w-1/5">
         <select
           className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
-          value={filters.status}
-          onChange={handleStatusChange}
+          value={filters.estado}
+          onChange={handleEstadoChange}
         >
           <option value="">Estado</option>
           <option value="Pendiente">Pendiente</option>
           <option value="En proceso">En proceso</option>
-          <option value="A espera de aprobacion">A espera de aprobacion</option>
+          <option value="A espera de aprobación">A espera de aprobación</option>
           <option value="Finalizado">Finalizado</option>
         </select>
         <span className="absolute top-3 right-4 text-gray-400">
