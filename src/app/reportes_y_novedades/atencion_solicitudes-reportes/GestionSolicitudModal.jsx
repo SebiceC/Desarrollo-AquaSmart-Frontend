@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Modal from "../../../components/Modal"; // Asegúrate de importar el componente Modal
 
 const GestionSolicitudModal = ({ 
@@ -14,17 +15,10 @@ const GestionSolicitudModal = ({
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConnectionErrorModal, setShowConnectionErrorModal] = useState(false);
+  const [showRejectConfirmation, setShowRejectConfirmation] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectReasonError, setRejectReasonError] = useState("");
   const API_URL = import.meta.env.VITE_APP_API_URL;
-
-  // Función para mapear los tipos de solicitud a las rutas del API
-  const mapTipoSolicitudToRoute = (tipo) => {
-    const mapping = {
-      "cambio": "change",
-      "cancelación": "cancel",
-      "activación": "activate"
-    };
-    return mapping[tipo.toLowerCase()] || null;
-  };
 
   // Limpiar mensajes cuando cambia la solicitud o se cierra el modal
   useEffect(() => {
@@ -33,6 +27,9 @@ const GestionSolicitudModal = ({
       setSuccessMessage("");
       setIsSubmitting(false);
       setShowConnectionErrorModal(false);
+      setShowRejectConfirmation(false);
+      setRejectReason("");
+      setRejectReasonError("");
     }
   }, [solicitudBasica, showModal]);
 
@@ -43,34 +40,21 @@ const GestionSolicitudModal = ({
           setLoading(true);
           const token = localStorage.getItem("token");
           
-          // Mapear tipo de solicitud a la ruta correcta
-          const tipoRuta = mapTipoSolicitudToRoute(solicitudBasica.type);
-          
-          if (!tipoRuta) {
-            throw new Error("Tipo de solicitud no reconocido");
-          }
-          
-          // Obtener información detallada de la solicitud
-          const response = await fetch(
-            `${API_URL}/communication/flow-requests/${tipoRuta}/${solicitudBasica.id}`,
+          // Usar el nuevo endpoint para obtener detalles de solicitud usando axios
+          const response = await axios.get(
+            `${API_URL}/communication/admin/requests-and-reports/${solicitudBasica.id}`,
             { headers: { Authorization: `Token ${token}` } }
           );
           
-          if (!response.ok) {
-            throw new Error("Error al obtener los detalles de la solicitud");
-          }
-          
-          const data = await response.json();
-          
           setSolicitud({
-            ...data,
+            ...response.data,
             type: solicitudBasica.type // Preservar el tipo de la solicitud básica
           });
         } catch (error) {
           console.error("Error al obtener detalles de la solicitud:", error);
           
           // Si es un error de red, mostrar el modal de error de conexión
-          if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+          if (axios.isAxiosError(error) && !error.response) {
             setShowConnectionErrorModal(true);
           } else {
             onError("Error al cargar los detalles de la solicitud.");
@@ -83,7 +67,7 @@ const GestionSolicitudModal = ({
     };
 
     fetchSolicitudDetails();
-  }, [solicitudBasica, showModal, API_URL]);
+  }, [solicitudBasica, showModal, API_URL, onError, onClose]);
 
   const handleAccept = async () => {
     try {
@@ -92,42 +76,21 @@ const GestionSolicitudModal = ({
       setSuccessMessage("");
       
       const token = localStorage.getItem("token");
-      let endpoint = "";
-
-      const tipoSolicitud = solicitudBasica?.type || solicitud?.type;
-
-      if (!tipoSolicitud) {
-        throw new Error("No se pudo determinar el tipo de solicitud");
-      }
       
-      // Determinar el endpoint según el tipo de solicitud
-      switch (solicitud.type.toLowerCase()) {
-        case "cambio":
-          endpoint = `${API_URL}/communication/flow-change-request/${solicitud.id}`;
-          break;
-        case "cancelación":
-          endpoint = `${API_URL}/communication/flow-cancel-request/${solicitud.id}`;
-          break;
-        case "activación":
-          endpoint = `${API_URL}/communication/flow-activation-request/${solicitud.id}`;
-          break;
-        default:
-          throw new Error("Tipo de solicitud no reconocido");
-      }
+      // Usar el nuevo endpoint de aprobación con axios
+      const endpoint = `${API_URL}/communication/flow-request/${solicitud.id}/approve`;
       
-      // Enviar solicitud para aceptar
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: "aprobada" })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error en la solicitud');
-      }
+      // Enviar solicitud para aceptar usando axios
+      await axios.post(
+        endpoint, 
+        {}, // Cuerpo vacío
+        {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       
       setSuccessMessage("Solicitud aceptada exitosamente");
       
@@ -141,7 +104,7 @@ const GestionSolicitudModal = ({
       console.error("Error al aceptar la solicitud:", error);
       
       // Si es un error de red, mostrar el modal de error de conexión
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      if (axios.isAxiosError(error) && !error.response) {
         setShowConnectionErrorModal(true);
       } else {
         setError("Error al aceptar la solicitud. Por favor, intente más tarde.");
@@ -151,63 +114,54 @@ const GestionSolicitudModal = ({
     }
   };
 
-  const handleReject = async () => {
+  const handleRejectClick = () => {
+    setShowRejectConfirmation(true);
+  };
+
+  const handleRejectConfirmation = async () => {
+    // Validar que el motivo del rechazo tenga al menos 5 caracteres
+    if (rejectReason.trim().length < 5) {
+      setRejectReasonError("El motivo del rechazo debe tener al menos 5 caracteres.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError("");
+      setRejectReasonError("");
       setSuccessMessage("");
       
       const token = localStorage.getItem("token");
-      let endpoint = "";
-
-      const tipoSolicitud = solicitudBasica?.type || solicitud?.type;
-    
-      if (!tipoSolicitud) {
-        throw new Error("No se pudo determinar el tipo de solicitud");
-      }
       
-      // Determinar el endpoint según el tipo de solicitud
-      switch (solicitud.type.toLowerCase()) {
-        case "cambio":
-          endpoint = `${API_URL}/communication/flow-change-request/${solicitud.id}`;
-          break;
-        case "cancelación":
-          endpoint = `${API_URL}/communication/flow-cancel-request/${solicitud.id}`;
-          break;
-        case "activación":
-          endpoint = `${API_URL}/communication/flow-activation-request/${solicitud.id}`;
-          break;
-        default:
-          throw new Error("Tipo de solicitud no reconocido");
-      }
+      // Usar el nuevo endpoint de rechazo con axios
+      const endpoint = `${API_URL}/communication/flow-request/${solicitud.id}/reject`;
       
-      // Enviar solicitud para rechazar
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: "rechazada" })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error en la solicitud');
-      }
+      // Enviar solicitud para rechazar con el motivo usando axios
+      await axios.post(
+        endpoint,
+        { observations: rejectReason },
+        {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       
       setSuccessMessage("Solicitud rechazada exitosamente");
+      setShowRejectConfirmation(false);
       
       // Esperar un momento para mostrar el mensaje antes de cerrar
       setTimeout(() => {
         onSuccess("Solicitud rechazada exitosamente");
         onClose();
-      }, 1500);
+      }, 500);
       
     } catch (error) {
       console.error("Error al rechazar la solicitud:", error);
       
       // Si es un error de red, mostrar el modal de error de conexión
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      if (axios.isAxiosError(error) && !error.response) {
         setShowConnectionErrorModal(true);
       } else {
         setError("Error al rechazar la solicitud. Por favor, intente más tarde.");
@@ -240,7 +194,7 @@ const GestionSolicitudModal = ({
           </label>
           <input
             type="text"
-            value={solicitud.user}
+            value={solicitud.created_by}
             disabled
             className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md bg-gray-100"
           />
@@ -252,7 +206,7 @@ const GestionSolicitudModal = ({
           </label>
           <input
             type="text"
-            value={solicitudBasica?.type || solicitud.type}
+            value={solicitud.flow_request_type}
             disabled
             className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md bg-gray-100"
           />
@@ -270,19 +224,7 @@ const GestionSolicitudModal = ({
           />
         </div>
 
-        {(tipoSolicitud === "Cambio" || tipoSolicitud === "Activación") && (
-          <div className="text-left">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Caudal solicitado (l/s):
-            </label>
-            <input
-              type="text"
-              value={solicitud.requested_flow || "-"}
-              disabled
-              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md bg-gray-100"
-            />
-          </div>
-        )}
+
       </div>
     );
 
@@ -300,17 +242,6 @@ const GestionSolicitudModal = ({
           />
         </div>
 
-        <div className="text-left">
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            ID del predio:
-          </label>
-          <input
-            type="text"
-            value={solicitud.plot}
-            disabled
-            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md bg-gray-100"
-          />
-        </div>
 
         <div className="text-left">
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -323,11 +254,29 @@ const GestionSolicitudModal = ({
             className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md bg-gray-100"
           />
         </div>
+
+        
+        {(tipoSolicitud === "cambio_caudal" || tipoSolicitud === "activacion") && (
+          <div className="text-left">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              Caudal solicitado (l/s):
+            </label>
+            <input
+              type="text"
+              value={solicitud.requested_flow || "-"}
+              disabled
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md bg-gray-100"
+            />
+          </div>
+        )}
+
+        
       </div>
+
     );
 
     // Campo de observaciones que ocupa todo el ancho
-    const observationsField = (tipoSolicitud === "Activación" || tipoSolicitud === "Cancelación") && (
+    const observationsField = (tipoSolicitud === "activacion" || tipoSolicitud === "cancelacion") && (
       <div className="mt-4 text-left col-span-1 sm:col-span-2">
         <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
           Observaciones:
@@ -406,7 +355,7 @@ const GestionSolicitudModal = ({
                 
                 <div className="flex gap-3 sm:gap-4 order-1 sm:order-2">
                   <button
-                    onClick={handleReject}
+                    onClick={handleRejectClick}
                     className="bg-red-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-600 disabled:bg-opacity-70 text-sm sm:text-base flex-1 sm:flex-none"
                     disabled={isSubmitting || successMessage}
                   >
@@ -426,6 +375,48 @@ const GestionSolicitudModal = ({
           )}
         </div>
       </div>
+      
+      {/* Modal de rechazo */}
+      {showRejectConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-[60] p-4">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-[500px]">
+            <h3 className="text-lg font-bold mb-4 text-center">Rechazar Solicitud</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1 text-left">
+                Motivo del rechazo:
+              </label>
+              <textarea 
+                className={`w-full px-3 py-2 border ${rejectReasonError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                rows={4}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Escribe aquí el motivo del rechazo (mínimo 5 caracteres)..."
+              />
+              {rejectReasonError && (
+                <p className="mt-1 text-red-500 text-xs">{rejectReasonError}</p>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowRejectConfirmation(false)}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm"
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleRejectConfirmation}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Procesando..." : "Confirmar rechazo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Modal de error de conexión */}
       <Modal
