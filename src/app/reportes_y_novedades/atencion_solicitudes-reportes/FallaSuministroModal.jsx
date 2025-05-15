@@ -32,129 +32,81 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
   // Función para extraer el mensaje de error del formato anidado
   const extractErrorMessage = (errorObj) => {
     try {
-      // Caso especial: Mensaje con formato 'non_field_errors' y quiero extraer hasta el primer punto
-      if (typeof errorObj === 'string' && errorObj.includes('non_field_errors') && errorObj.includes('ErrorDetail(string=')) {
-        // Extraer el contenido dentro de string="..."
-        const stringMatch = errorObj.match(/string=["']([^"']+)["']/);
-        if (stringMatch && stringMatch[1]) {
-          // Extraer hasta el primer punto
-          const firstSentence = stringMatch[1].split('.')[0] + '.';
-          return firstSentence;
-        }
+      // Caso especial para el error específico que estás encontrando
+      if (typeof errorObj === 'string' && 
+          errorObj.includes('Solo se puede asignar a usuarios del grupo')) {
+        return "Solo se puede asignar a usuarios del grupo 'Técnico' o 'Operador'.";
       }
-      
-      // Caso 1: String con formato ErrorDetail
+  
+      // Si tenemos un string, intentar extraer el mensaje usando un patrón muy permisivo
       if (typeof errorObj === 'string') {
-        const match = errorObj.match(/ErrorDetail\(string=["']([^"']+)["']/);
+        // Intento de extraer cualquier cosa entre string= y ", code=
+        const fullPattern = /string=\\?"?([^"\\,]+?(?:'[^']*?'[^"\\,]*?)*)\\?"?, code=/;
+        const match = fullPattern.exec(errorObj);
         if (match && match[1]) {
-          // Extraer hasta el primer punto
-          const firstSentence = match[1].split('.')[0] + '.';
-          return firstSentence;
+          return match[1];
         }
         
-        // Intentar parsear como JSON si no es un ErrorDetail directo
+        // Si lo anterior falla, intentar parsearlo como JSON
         try {
           const parsed = JSON.parse(errorObj);
           return extractErrorMessage(parsed);
         } catch (e) {
-          // Si no es JSON, devolver el string tal cual
-          return errorObj;
+          // No es JSON - devolver como está si es menos de 100 caracteres
+          if (errorObj.length < 100) return errorObj;
+          return "Error en el servidor. Por favor, intente más tarde.";
         }
       }
       
-      // Caso 2: Error con estructura anidada error.message
+      // Si es un objeto con error anidado
       if (errorObj.error && errorObj.error.message) {
-        // Si el mensaje es un string, puede contener JSON o ErrorDetail
         if (typeof errorObj.error.message === 'string') {
-          // Buscar si contiene 'non_field_errors' y 'ErrorDetail'
-          if (errorObj.error.message.includes('non_field_errors') && errorObj.error.message.includes('ErrorDetail(string=')) {
-            // Extraer el contenido dentro de string="..."
-            const stringMatch = errorObj.error.message.match(/string=["']([^"']+)["']/);
-            if (stringMatch && stringMatch[1]) {
-              // Extraer hasta el primer punto
-              const firstSentence = stringMatch[1].split('.')[0] + '.';
-              return firstSentence;
-            }
+          // Primero comprobar si contiene el mensaje específico
+          if (errorObj.error.message.includes("Solo se puede asignar a usuarios del grupo")) {
+            return "Solo se puede asignar a usuarios del grupo 'Técnico' o 'Operador'.";
           }
           
-          // Buscar patrón ErrorDetail en el string
-          const match = errorObj.error.message.match(/ErrorDetail\(string=["']([^"']+)["']/);
+          // Intentar extraer usando regex
+          const fullPattern = /string=\\?"?([^"\\,]+?(?:'[^']*?'[^"\\,]*?)*)\\?"?, code=/;
+          const match = fullPattern.exec(errorObj.error.message);
           if (match && match[1]) {
-            // Extraer hasta el primer punto
-            const firstSentence = match[1].split('.')[0] + '.';
-            return firstSentence;
+            return match[1];
           }
           
           // Intentar parsear como JSON
           try {
-            // Reemplazar comillas simples por dobles para parsear correctamente
             const innerError = JSON.parse(errorObj.error.message.replace(/'/g, '"'));
-            if (innerError.non_field_errors && Array.isArray(innerError.non_field_errors)) {
-              const errorMessage = innerError.non_field_errors[0];
-              // Si es un string, extraer hasta el primer punto
-              if (typeof errorMessage === 'string') {
-                return errorMessage.split('.')[0] + '.';
-              }
-              return errorMessage;
-            }
-            // Si hay otros campos, extraer el primero
-            const firstKey = Object.keys(innerError)[0];
-            if (firstKey && Array.isArray(innerError[firstKey])) {
-              const errorMessage = innerError[firstKey][0];
-              // Si es un string, extraer hasta el primer punto
-              if (typeof errorMessage === 'string') {
-                return errorMessage.split('.')[0] + '.';
-              }
-              return errorMessage;
+            if (innerError.non_field_errors && innerError.non_field_errors.length > 0) {
+              return innerError.non_field_errors[0];
             }
           } catch (e) {
-            // Si no se puede parsear, devolver el mensaje como está
+            // No es JSON, devolver el mensaje tal cual
             return errorObj.error.message;
           }
         }
-        
         return errorObj.error.message;
       }
       
-      // Caso 3: Errores con non_field_errors directo
+      // Errores con estructura non_field_errors
       if (errorObj.non_field_errors && Array.isArray(errorObj.non_field_errors)) {
-        const errorMessage = errorObj.non_field_errors[0];
-        // Si es un string, extraer hasta el primer punto
-        if (typeof errorMessage === 'string') {
-          return errorMessage.split('.')[0] + '.';
-        }
-        return errorMessage;
+        return errorObj.non_field_errors[0];
       }
       
-      // Caso 4: Mensaje directo
+      // Mensaje directo
       if (errorObj.message) {
-        // Si es un string, extraer hasta el primer punto
-        if (typeof errorObj.message === 'string') {
-          return errorObj.message.split('.')[0] + '.';
-        }
         return errorObj.message;
       }
       
-      // Caso 5: Array de errores
+      // Si es un array
       if (Array.isArray(errorObj) && errorObj.length > 0) {
-        const errorMessage = errorObj[0];
-        // Si es un string, extraer hasta el primer punto
-        if (typeof errorMessage === 'string') {
-          return errorMessage.split('.')[0] + '.';
-        }
-        return errorMessage;
+        return errorObj[0];
       }
       
-      // Caso 6: Campos específicos (buscar el primer campo con errores)
+      // Campos específicos
       const errorKeys = Object.keys(errorObj);
       for (const key of errorKeys) {
         if (Array.isArray(errorObj[key]) && errorObj[key].length > 0) {
-          const errorMessage = errorObj[key][0];
-          // Si es un string, extraer hasta el primer punto
-          if (typeof errorMessage === 'string') {
-            return `${key}: ${errorMessage.split('.')[0]}.`;
-          }
-          return `${key}: ${errorMessage}`;
+          return `${key}: ${errorObj[key][0]}`;
         }
       }
   

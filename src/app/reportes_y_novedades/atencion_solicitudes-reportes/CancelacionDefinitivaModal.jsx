@@ -32,20 +32,84 @@ const CancelacionDefinitivaModal = ({ showModal, onClose, solicitudBasica, onSuc
   // Función para extraer el mensaje de error del formato anidado
   const extractErrorMessage = (errorObj) => {
     try {
-      // Caso especial: Mensaje con formato 'non_field_errors' y quiero extraer hasta el primer punto
-      if (typeof errorObj === 'string' && errorObj.includes('non_field_errors') && errorObj.includes('ErrorDetail(string=')) {
-        // Extraer el contenido dentro de string="..."
-        const stringMatch = errorObj.match(/string=["']([^"']+)["']/);
-        if (stringMatch && stringMatch[1]) {
-          // Extraer hasta el primer punto
-          const firstSentence = stringMatch[1].split('.')[0] + '.';
-          return firstSentence;
+      // Caso especial para el error específico que estás encontrando
+      if (typeof errorObj === 'string' && 
+          errorObj.includes('Solo se puede asignar a usuarios del grupo')) {
+        return "Solo se puede asignar a usuarios del grupo 'Técnico' o 'Operador'.";
+      }
+  
+      // Si tenemos un string, intentar extraer el mensaje usando un patrón muy permisivo
+      if (typeof errorObj === 'string') {
+        // Intento de extraer cualquier cosa entre string= y ", code=
+        const fullPattern = /string=\\?"?([^"\\,]+?(?:'[^']*?'[^"\\,]*?)*)\\?"?, code=/;
+        const match = fullPattern.exec(errorObj);
+        if (match && match[1]) {
+          return match[1];
+        }
+        
+        // Si lo anterior falla, intentar parsearlo como JSON
+        try {
+          const parsed = JSON.parse(errorObj);
+          return extractErrorMessage(parsed);
+        } catch (e) {
+          // No es JSON - devolver como está si es menos de 100 caracteres
+          if (errorObj.length < 100) return errorObj;
+          return "Error en el servidor. Por favor, intente más tarde.";
         }
       }
       
-      // Resto de la función extractErrorMessage permanece igual...
-      // [código omitido por brevedad]
+      // Si es un objeto con error anidado
+      if (errorObj.error && errorObj.error.message) {
+        if (typeof errorObj.error.message === 'string') {
+          // Primero comprobar si contiene el mensaje específico
+          if (errorObj.error.message.includes("Solo se puede asignar a usuarios del grupo")) {
+            return "Solo se puede asignar a usuarios del grupo 'Técnico' o 'Operador'.";
+          }
+          
+          // Intentar extraer usando regex
+          const fullPattern = /string=\\?"?([^"\\,]+?(?:'[^']*?'[^"\\,]*?)*)\\?"?, code=/;
+          const match = fullPattern.exec(errorObj.error.message);
+          if (match && match[1]) {
+            return match[1];
+          }
+          
+          // Intentar parsear como JSON
+          try {
+            const innerError = JSON.parse(errorObj.error.message.replace(/'/g, '"'));
+            if (innerError.non_field_errors && innerError.non_field_errors.length > 0) {
+              return innerError.non_field_errors[0];
+            }
+          } catch (e) {
+            // No es JSON, devolver el mensaje tal cual
+            return errorObj.error.message;
+          }
+        }
+        return errorObj.error.message;
+      }
       
+      // Errores con estructura non_field_errors
+      if (errorObj.non_field_errors && Array.isArray(errorObj.non_field_errors)) {
+        return errorObj.non_field_errors[0];
+      }
+      
+      // Mensaje directo
+      if (errorObj.message) {
+        return errorObj.message;
+      }
+      
+      // Si es un array
+      if (Array.isArray(errorObj) && errorObj.length > 0) {
+        return errorObj[0];
+      }
+      
+      // Campos específicos
+      const errorKeys = Object.keys(errorObj);
+      for (const key of errorKeys) {
+        if (Array.isArray(errorObj[key]) && errorObj[key].length > 0) {
+          return `${key}: ${errorObj[key][0]}`;
+        }
+      }
+  
       return "Error desconocido. Por favor, intente más tarde.";
     } catch (e) {
       console.error("Error al parsear mensaje de error:", e);
