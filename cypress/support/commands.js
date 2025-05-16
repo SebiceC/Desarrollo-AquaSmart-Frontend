@@ -372,29 +372,65 @@ export const validarFiltrosReportesNovedades = () => {
   cy.visit("http://localhost:5173/reportes-y-novedades/lotes");
   cy.wait(5000);
 };
-export const verificarEstadoTabla = (estadoEsperado) => {
-  cy.get("body").then(($body) => {
-    const sinResultados = $body
-      .text()
-      .includes(
-        "No hay lotes para mostrar. Aplica filtros para ver resultados."
-      );
 
-    if (sinResultados) {
-      cy.log(`✅ Mensaje de sin resultados para estado "${estadoEsperado}"`);
+//VALIDAR FILTRO POR ESTADO EN TABLAS
+export const verificarEstadoTabla = () => {
+  const estados = [
+    { label: "ESTADO", value: "" },
+    { label: "Activo", value: "true" },
+    { label: "Inactivo", value: "false" },
+  ];
+
+  estados.forEach(({ label, value }) => {
+    // Selecciona el valor y verifica que fue seleccionado correctamente
+    cy.get("select").first().select(value).should("have.value", value);
+
+    cy.contains("button", "Filtrar").click();
+    cy.wait(1000); // Puedes reemplazar esto por intercept si aplicas red
+
+    if (label === "ESTADO") {
+      // Validación general para sin filtro
+      cy.get("body").then(($body) => {
+        if (
+          !$body
+            .text()
+            .includes(
+              "No hay lotes para mostrar. Aplica filtros para ver resultados."
+            )
+        ) {
+          cy.get("table").should("exist");
+          cy.contains("th", "Estado").should("exist");
+        } else {
+          cy.log("✅ Mensaje mostrado para ESTADO (sin filtro)");
+        }
+      });
     } else {
-      // Verifica que haya al menos un <td> con el estado esperado
-      cy.get("table").should("exist");
-      cy.contains("th", "Estado").should("exist");
-
-      cy.get("table tbody tr td").then(($tds) => {
-        const encontrado = [...$tds].some(
-          (td) => td.innerText.trim() === estadoEsperado
-        );
-        expect(
-          encontrado,
-          `Debe haber al menos un registro con estado "${estadoEsperado}"`
-        ).to.be.true;
+      // Validar que al menos un registro tenga el estado esperado
+      cy.get("body").then(($body) => {
+        if (
+          $body
+            .text()
+            .includes(
+              "No hay lotes para mostrar. Aplica filtros para ver resultados."
+            )
+        ) {
+          cy.log(
+            `✅ Se mostró el mensaje de que no hay lotes para el estado ${label}`
+          );
+        } else {
+          cy.get("table")
+            .find("tbody tr")
+            .should("exist")
+            .then(($rows) => {
+              const encontrado = [...$rows].some((row) =>
+                row.innerText.includes(label)
+              );
+              expect(
+                encontrado,
+                `Debe haber al menos un registro con estado "${label}"`
+              ).to.be.true;
+            });
+        }
       });
     }
   });

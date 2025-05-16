@@ -423,7 +423,7 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
           <div className="bg-white rounded-lg shadow-lg w-[90%] sm:w-[700px] md:w-[800px] lg:w-[900px] z-50 max-h-[90vh] flex flex-col">
             {/* Encabezado del modal */}
             <div className="flex justify-between items-center border-b border-gray-200 px-6 py-4">
-              <h2 className="text-xl font-bold text-[#365486]">Asignación de Solicitud</h2>
+              <h2 className="text-xl font-bold text-[#365486]">Asignación de Reporte</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600"
@@ -442,7 +442,7 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
               {/* Sección de información de la solicitud */}
               <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold mb-3 text-blue-800 border-b border-gray-200 pb-2">
-                  Información de la Solicitud
+                  Información del Reporte
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-1">
@@ -451,31 +451,31 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
                       <span className="text-gray-800">{solicitudBasica.id}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Usuario:</span>
+                      <span className="font-medium text-gray-600 w-16">Usuario:</span>
                       <span className="text-gray-800">{solicitudBasica.created_by || "No especificado"}</span>
                     </div>
 
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Tipo de solicitud:</span>
+                      <span className="font-medium text-gray-600 w-30">Tipo de reporte:</span>
                       <span className="text-gray-800">{solicitudBasica.failure_type || "No especificado"}</span>
                     </div>
                     
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Estado:</span>
+                      <span className="font-medium text-gray-600 w-14">Estado:</span>
                       <span className="text-gray-800">{solicitudBasica.status || "No especificado"}</span>
                     </div>
                   </div>
                   <div className="flex flex-col space-y-1">
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Fecha de envío:</span>
+                      <span className="font-medium text-gray-600 w-30">Fecha de envío:</span>
                       <span className="text-gray-800">{solicitudBasica.created_at || "No especificada"}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">ID del predio:</span>
+                      <span className="font-medium text-gray-600 w-26">ID del predio:</span>
                       <span className="text-gray-800">{detalleSolicitud?.plot || "No especificado"}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">ID del lote:</span>
+                      <span className="font-medium text-gray-600 w-21">ID del lote:</span>
                       <span className="text-gray-800">{detalleSolicitud?.lot || "No especificado"}</span>
                     </div>
                   </div>

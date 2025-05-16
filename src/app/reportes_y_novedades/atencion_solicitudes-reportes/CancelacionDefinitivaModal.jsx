@@ -446,15 +446,15 @@ const CancelacionDefinitivaModal = ({ showModal, onClose, solicitudBasica, onSuc
                       <span className="text-gray-800">{solicitudBasica.id}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Usuario:</span>
+                      <span className="font-medium text-gray-600 w-16">Usuario:</span>
                       <span className="text-gray-800">{solicitudBasica.created_by || "No especificado"}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Tipo solicitud:</span>
+                      <span className="font-medium text-gray-600 w-27">Tipo solicitud:</span>
                       <span className="text-gray-800">{solicitudBasica.flow_request_type || "No especificado"}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">Estado:</span>
+                      <span className="font-medium text-gray-600 w-14">Estado:</span>
                       <span className="text-gray-800">{solicitudBasica.status || "No especificado"}</span>
                     </div>
                   </div>
@@ -464,7 +464,7 @@ const CancelacionDefinitivaModal = ({ showModal, onClose, solicitudBasica, onSuc
                       <span className="text-gray-800">{solicitudBasica.created_at || "No especificada"}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium text-gray-600 w-32">ID del lote:</span>
+                      <span className="font-medium text-gray-600 w-21">ID del lote:</span>
                       <span className="text-gray-800">{detalleSolicitud?.lot || "No especificado"}</span>
                     </div>
                   </div>

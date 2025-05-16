@@ -18,6 +18,7 @@ const CrearInforme = () => {
   const [modalMessage, setModalMessage] = useState("")
   const [modalTitle, setModalTitle] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [informeExistente, setInformeExistente] = useState(false)
 
   // Estados para el formulario
   const [formData, setFormData] = useState({
@@ -50,6 +51,26 @@ const CrearInforme = () => {
           setShowModal(true)
           setLoading(false)
           return
+        }
+
+        // Verificar si ya existe un informe para esta asignación
+        try {
+          const informesResponse = await axios.get(`${API_URL}/communication/maintenance-reports/list`, {
+            headers: { Authorization: `Token ${token}` },
+          })
+
+          const informeParaAsignacion = informesResponse.data.find(
+            (informe) => informe.assignment === Number.parseInt(id),
+          )
+
+          if (informeParaAsignacion) {
+            setInformeExistente(true)
+            setModalTitle("Información")
+            setModalMessage("Ya existe un informe para esta asignación. No se puede crear otro informe.")
+            setShowModal(true)
+          }
+        } catch (error) {
+          console.error("Error al verificar informes existentes:", error)
         }
 
         // Obtener los detalles de la asignación usando el endpoint correcto
@@ -219,10 +240,57 @@ const CrearInforme = () => {
     return isValid
   }
 
+  // Función para extraer el mensaje de error real de la respuesta del backend
+  const extractErrorMessage = (errorResponse) => {
+    if (!errorResponse) return "Error desconocido. Por favor, intente de nuevo."
+
+    // Caso específico para el formato de error que nos interesa
+    if (errorResponse.error && errorResponse.error.message) {
+      try {
+        // Intentar extraer el mensaje de error de la estructura anidada
+        const errorMessage = errorResponse.error.message
+
+        // Verificar si es un string JSON
+        if (errorMessage.includes("non_field_errors") && errorMessage.includes("ErrorDetail")) {
+          // Extraer el mensaje usando expresiones regulares
+          const match = errorMessage.match(/string='([^']+)'/)
+          if (match && match[1]) {
+            return match[1]
+          }
+        }
+
+        // Si no es el formato específico, devolver el mensaje completo
+        return errorMessage
+      } catch (e) {
+        console.error("Error al parsear el mensaje de error:", e)
+      }
+    }
+
+    // Verificar otros formatos comunes de error
+    if (errorResponse.detail) {
+      return errorResponse.detail
+    }
+
+    if (errorResponse.non_field_errors && Array.isArray(errorResponse.non_field_errors)) {
+      return errorResponse.non_field_errors.join(", ")
+    }
+
+    // Si no podemos extraer un mensaje específico, devolver un mensaje genérico
+    return "Error al procesar la solicitud. Por favor, intente de nuevo."
+  }
+
   // Modificar la función handleSubmit para implementar el cambio de estado a "A espera de aprobación"
   // y mejorar las alertas de éxito y error (RF70-HU22 y RF70-HU23)
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Si ya existe un informe, no permitir crear otro
+    if (informeExistente) {
+      setModalTitle("Información")
+      setModalMessage("Ya existe un informe para esta asignación. No se puede crear otro informe.")
+      setShowModal(true)
+      return
+    }
 
     // Validar formulario
     if (!validateForm()) {
@@ -288,27 +356,8 @@ const CrearInforme = () => {
       let errorMessage = "Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico."
 
       if (error.response) {
-        // Verificar si es el error específico de informe ya existente
-        if (error.response.status === 400 && error.response.data?.error?.message) {
-          const errorMsg = error.response.data.error.message
-
-          // Verificar si contiene el mensaje específico sobre informe existente
-          if (errorMsg.includes("Ya existe un informe de mantenimiento para esta asignación")) {
-            errorMessage =
-              "Ya existe un informe de mantenimiento para esta asignación. No se puede crear otro informe para la misma asignación."
-          } else if (error.response.data.error.type === "ValidationError") {
-            // Otros errores de validación
-            errorMessage = errorMsg
-          }
-        } else if (error.response.data.detail) {
-          errorMessage = error.response.data.detail
-        } else if (error.response.data) {
-          // Formatear errores de validación del backend
-          const backendErrors = error.response.data
-          errorMessage = Object.keys(backendErrors)
-            .map((key) => `${key}: ${backendErrors[key].join(", ")}`)
-            .join("\n")
-        }
+        // Extraer el mensaje de error real
+        errorMessage = extractErrorMessage(error.response.data)
       }
 
       setModalTitle("Error")
@@ -397,7 +446,9 @@ const CrearInforme = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
             <p className="text-sm font-medium text-gray-500">Asignado A</p>
-            <p className="font-medium">{asignacion.assigned_to || "No disponible"}</p>
+            <p className="font-medium">
+              {asignacion.technician_name || asignacion.technician || asignacion.assigned_to || "No disponible"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Fecha de solicitud</p>
@@ -477,6 +528,28 @@ const CrearInforme = () => {
             <form onSubmit={handleSubmit}>
               <h2 className="text-md font-medium text-[#365486] mb-4">Informe de Intervención</h2>
 
+              {informeExistente && (
+                <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-center text-amber-700">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <p className="font-medium">
+                      Ya existe un informe para esta asignación. No se puede crear otro informe.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Fecha de intervención - Mejorada */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -492,6 +565,7 @@ const CrearInforme = () => {
                       errors.interventionDate ? "border-red-500 bg-red-50" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-[#365486] transition-colors`}
                     max={new Date().toISOString().split("T")[0]}
+                    disabled={informeExistente}
                   />
                   {errors.interventionDate && (
                     <div className="mt-1 flex items-center">
@@ -526,6 +600,7 @@ const CrearInforme = () => {
                     className={`w-full px-3 py-2 border ${
                       errors.status ? "border-red-500 bg-red-50" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-[#365486] appearance-none transition-colors`}
+                    disabled={informeExistente}
                   >
                     <option value="">Seleccione un estado</option>
                     <option value="Finalizado">Finalizado</option>
@@ -569,7 +644,9 @@ const CrearInforme = () => {
                 </label>
                 <div className="flex items-center justify-center w-full">
                   <label
-                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg ${
+                      informeExistente ? "cursor-not-allowed bg-gray-100" : "cursor-pointer"
+                    } ${
                       errors.images ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"
                     } hover:bg-gray-100 transition-colors`}
                   >
@@ -601,6 +678,7 @@ const CrearInforme = () => {
                       accept="image/jpeg, image/png"
                       multiple
                       onChange={handleImageChange}
+                      disabled={informeExistente}
                     />
                   </label>
                 </div>
@@ -650,6 +728,7 @@ const CrearInforme = () => {
                               setImagePreview(newPreviews)
                             }}
                             title="Eliminar imagen"
+                            disabled={informeExistente}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -688,6 +767,7 @@ const CrearInforme = () => {
                     errors.description ? "border-red-500 bg-red-50" : "border-gray-300"
                   } rounded-md focus:outline-none focus:ring-2 focus:ring-[#365486] transition-colors`}
                   placeholder="Describa detalladamente la intervención realizada..."
+                  disabled={informeExistente}
                 ></textarea>
                 <div className="flex justify-between mt-1">
                   {errors.description ? (
@@ -722,9 +802,9 @@ const CrearInforme = () => {
                 <BackButton to="/reportes-y-novedades/informe-mantenimiento" text="Volver" />
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || informeExistente}
                   className={`px-6 py-2 ${
-                    isSubmitting ? "bg-gray-400" : "bg-[#365486] hover:bg-[#2A4374] hover:scale-105"
+                    isSubmitting || informeExistente ? "bg-gray-400" : "bg-[#365486] hover:bg-[#2A4374] hover:scale-105"
                   } text-white rounded-full focus:outline-none focus:ring-2 focus:ring-[#365486] disabled:bg-gray-400 transition-all flex items-center`}
                 >
                   {isSubmitting ? (
@@ -751,8 +831,10 @@ const CrearInforme = () => {
                       </svg>
                       Enviando...
                     </>
+                  ) : informeExistente ? (
+                    "Ya solucionado"
                   ) : (
-                    <>Enviar Informe</>
+                    "Enviar Informe"
                   )}
                 </button>
               </div>

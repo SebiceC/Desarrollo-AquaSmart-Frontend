@@ -55,12 +55,12 @@ const ReportesSolicitudesDetails = () => {
 
       setReporteSolicitud(response.data);
     } catch (err) {
-      console.error("Error al obtener los datos del reporte/solicitud:", err);
+      // console.error("Error al obtener los datos del reporte/solicitud:", err);
       if (err.response?.status === 401) {
         showError('Las credenciales de autenticación no se proveyeron. Por favor, inicie sesión.', 'Error de autenticación');
         navigate('/login');
       } else {
-        showError("Error al obtener los datos del reporte/solicitud.");
+        showError("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico");
       }
       setReporteSolicitud(null);
     }

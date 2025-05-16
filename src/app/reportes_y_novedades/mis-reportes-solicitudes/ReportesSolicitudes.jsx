@@ -98,10 +98,10 @@ function ReportesSolicitudes() {
                 ];
 
                 setReportesSolicitudes(combinedData);
-                console.log("Reportes/solicitudes del usuario:", combinedData);
+                // console.log("Reportes/solicitudes del usuario:", combinedData);
                 setLoading(false);
             } catch {
-                showModalMessage("Error al cargar. Por favor, intente de nuevo o contacte al soporte técnico");
+                showModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico");
                 setLoading(false);
             }
         };
@@ -238,14 +238,14 @@ function ReportesSolicitudes() {
                 const statusStyles = {
                     "pendiente": "bg-yellow-100 text-yellow-800 border border-yellow-300",
                     "en proceso": "bg-blue-100 text-blue-800 border border-blue-300",
-                    "a espera de aprobacion": "bg-orange-100 text-orange-800 border border-orange-300",
+                    "a espera de aprobación": "bg-orange-100 text-orange-800 border border-orange-300",
                     "finalizado": "bg-green-100 text-green-800 border border-green-300",
                 };
 
                 const statusClass = statusStyles[estado] || "bg-gray-100 text-gray-800 border border-gray-300";
 
                 return (
-                    <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18 text-center`}>
+                    <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-40 text-center`}>
                         {item.estado?.charAt(0).toUpperCase() + item.estado?.slice(1)}
                     </span>
                 );

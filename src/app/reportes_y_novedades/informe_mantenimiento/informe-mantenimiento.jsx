@@ -5,37 +5,129 @@ import { useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import axios from "axios"
-import { Search, Filter, User, Calendar } from "lucide-react"
+import { Search, Filter, User, Calendar, AlertCircle } from "lucide-react"
 import DataTable from "../../../components/DataTable"
 
 const InformeMantenimiento = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [asignaciones, setAsignaciones] = useState([])
   const [filteredAsignaciones, setFilteredAsignaciones] = useState(null) // Inicialmente null para indicar que no se ha aplicado filtro
   const [showModal, setShowModal] = useState(false)
   const [modalMessage, setModalMessage] = useState("")
   const [modalTitle, setModalTitle] = useState("Error")
+  const [asignacionesCompletas, setAsignacionesCompletas] = useState([]) // Para almacenar asignaciones con detalles completos
+  const [informesMantenimiento, setInformesMantenimiento] = useState([]) // Para almacenar los informes de mantenimiento
 
   // Estados para los filtros
   const [filters, setFilters] = useState({
     id: "",
     startDate: "",
     endDate: "",
-    reportType: "",
+    requestType: "", // Cambiado de reportType a requestType para mayor claridad
     assignedBy: "",
-    assignedTo: "",
+    status: "", // Nuevo filtro para estado de solución
   })
 
   const API_URL = import.meta.env.VITE_APP_API_URL
 
-  // Tipos de reportes para el filtro
-  const reportTypes = [
+  // Tipos de solicitudes para el filtro - Ordenados alfabéticamente
+  const requestTypes = [
     { value: "", label: "Todos los tipos" },
-    { value: "water_supply", label: "Fallo en el suministro del agua" },
-    { value: "flow_definitive_cancel", label: "Cancelación definitiva de caudal" },
     { value: "app_failure", label: "Fallo en el aplicativo" },
+    { value: "water_supply", label: "Fallo en el suministro del agua" },
+    { value: "flow_definitive_cancel", label: "Cancelación Definitiva de Caudal" },
   ]
+
+  // Estados de solución para el filtro
+  const solutionStates = [
+    { value: "", label: "Todos los estados" },
+    { value: "pending", label: "Pendiente de solución" },
+    { value: "solved", label: "Solucionado" },
+  ]
+
+  const handleFilterChange = (name, value) => {
+    setFilters({
+      ...filters,
+      [name]: value,
+    })
+  }
+
+  // Función para obtener los informes de mantenimiento
+  const fetchInformesMantenimiento = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) return []
+
+      const response = await axios.get(`${API_URL}/communication/maintenance-reports/list`, {
+        headers: { Authorization: `Token ${token}` },
+      })
+
+      console.log("Informes de mantenimiento obtenidos:", response.data)
+      setInformesMantenimiento(response.data)
+      return response.data
+    } catch (error) {
+      console.error("Error al obtener los informes de mantenimiento:", error)
+      return []
+    }
+  }, [API_URL])
+
+  // Cargar informes de mantenimiento al iniciar
+  useEffect(() => {
+    fetchInformesMantenimiento()
+  }, [fetchInformesMantenimiento])
+
+  // Función para verificar si una asignación ya tiene informe de mantenimiento
+  const tieneInformeMantenimiento = (asignacionId) => {
+    return informesMantenimiento.some((informe) => informe.assignment === asignacionId)
+  }
+
+  // Función para obtener el estado de solución de una asignación
+  const obtenerEstadoSolucion = (asignacionId) => {
+    const informe = informesMantenimiento.find((informe) => informe.assignment === asignacionId)
+    if (!informe) return "pending"
+
+    if (informe.is_approved) return "approved"
+    return "solved"
+  }
+
+  // Función para obtener los detalles completos de una asignación
+  const obtenerDetallesCompletos = async (asignacion, token) => {
+    const asignacionCompleta = { ...asignacion }
+
+    try {
+      // Si hay una solicitud de caudal, obtener sus detalles completos
+      if (asignacionCompleta.flow_request && typeof asignacionCompleta.flow_request !== "object") {
+        try {
+          const flowResponse = await axios.get(
+            `${API_URL}/communication/assignments/flow-request/${asignacionCompleta.flow_request}`,
+            { headers: { Authorization: `Token ${token}` } },
+          )
+          asignacionCompleta.flow_request = flowResponse.data
+          console.log("Detalles de solicitud de caudal:", flowResponse.data)
+        } catch (error) {
+          console.error("Error al obtener detalles de la solicitud de caudal:", error)
+        }
+      }
+
+      // Si hay un reporte de fallo, obtener sus detalles completos
+      if (asignacionCompleta.failure_report && typeof asignacionCompleta.failure_report !== "object") {
+        try {
+          const failureResponse = await axios.get(
+            `${API_URL}/communication/assignments/failure-report/${asignacionCompleta.failure_report}`,
+            { headers: { Authorization: `Token ${token}` } },
+          )
+          asignacionCompleta.failure_report = failureResponse.data
+          console.log("Detalles de reporte de fallo:", failureResponse.data)
+        } catch (error) {
+          console.error("Error al obtener detalles del reporte de fallo:", error)
+        }
+      }
+    } catch (error) {
+      console.error("Error general al obtener detalles:", error)
+    }
+
+    return asignacionCompleta
+  }
 
   const fetchAsignaciones = useCallback(async () => {
     try {
@@ -49,15 +141,24 @@ const InformeMantenimiento = () => {
         return []
       }
 
-      // Usar el endpoint que muestra todas las asignaciones
-      const response = await axios.get(`${API_URL}/communication/assignments/list`, {
+      // Usar el endpoint que muestra solo las asignaciones del técnico actual
+      const response = await axios.get(`${API_URL}/communication/technician/assignments`, {
         headers: { Authorization: `Token ${token}` },
       })
 
       console.log("Asignaciones obtenidas:", response.data)
-      setAsignaciones(response.data)
+
+      // Obtener detalles completos para cada asignación
+      const asignacionesConDetalles = await Promise.all(
+        response.data.map(async (asignacion) => {
+          return await obtenerDetallesCompletos(asignacion, token)
+        }),
+      )
+
+      console.log("Asignaciones con detalles completos:", asignacionesConDetalles)
+      setAsignacionesCompletas(asignacionesConDetalles)
       setLoading(false)
-      return response.data
+      return asignacionesConDetalles
     } catch (error) {
       console.error("Error al obtener las asignaciones:", error)
       setModalTitle("Error")
@@ -68,16 +169,23 @@ const InformeMantenimiento = () => {
     }
   }, [API_URL])
 
-  // Cargar datos al montar el componente
-  useEffect(() => {
-    fetchAsignaciones()
-  }, [fetchAsignaciones])
+  // Función para determinar el tipo de fallo o solicitud
+  const determinarTipoSolicitud = (asignacion) => {
+    // Para solicitudes de caudal
+    if (asignacion.flow_request && typeof asignacion.flow_request === "object") {
+      return asignacion.flow_request.flow_request_type || "Solicitud de caudal"
+    }
 
-  const handleFilterChange = (name, value) => {
-    setFilters({
-      ...filters,
-      [name]: value,
-    })
+    // Para reportes de fallo
+    if (asignacion.failure_report && typeof asignacion.failure_report === "object") {
+      return asignacion.failure_report.failure_type || "Reporte de fallo"
+    }
+
+    // Si solo tenemos IDs
+    if (asignacion.flow_request) return "Solicitud de caudal"
+    if (asignacion.failure_report) return "Reporte de fallo"
+
+    return "No especificado"
   }
 
   const applyFilters = useCallback(async () => {
@@ -97,13 +205,18 @@ const InformeMantenimiento = () => {
       return
     }
 
-    // Obtener los datos - siempre traemos todos los registros
-    const dataToFilter = await fetchAsignaciones()
+    // Obtener las asignaciones del usuario actual con detalles completos
+    let asignaciones = []
+    if (asignacionesCompletas.length === 0) {
+      asignaciones = await fetchAsignaciones()
+    } else {
+      asignaciones = asignacionesCompletas
+    }
 
     // Si no hay datos, mostramos un mensaje
-    if (!dataToFilter || dataToFilter.length === 0) {
+    if (!asignaciones || asignaciones.length === 0) {
       setModalTitle("Información")
-      setModalMessage("No se encontraron asignaciones en el sistema.")
+      setModalMessage("No se encontraron asignaciones asignadas a tu usuario.")
       setShowModal(true)
       setFilteredAsignaciones([])
       return
@@ -114,51 +227,53 @@ const InformeMantenimiento = () => {
       filters.id.trim() !== "" ||
       filters.startDate !== "" ||
       filters.endDate !== "" ||
-      filters.reportType !== "" ||
+      filters.requestType !== "" ||
       filters.assignedBy.trim() !== "" ||
-      filters.assignedTo.trim() !== ""
+      filters.status !== ""
 
-    // Si no hay filtros específicos, mostramos todos los registros
+    // Si no hay filtros específicos, mostramos todas las asignaciones del usuario
     if (!hasSpecificFilters) {
-      setFilteredAsignaciones(dataToFilter)
+      setFilteredAsignaciones(asignaciones)
       return
     }
 
     // Aplicar filtros específicos
-    let filtered = dataToFilter
+    let filtered = asignaciones
 
     // Filtro por ID
     if (filters.id) {
       filtered = filtered.filter((asignacion) => asignacion.id.toString().includes(filters.id))
     }
 
-    // Filtro por tipo de reporte
-    if (filters.reportType) {
-      if (filters.reportType === "water_supply") {
-        filtered = filtered.filter(
-          (asignacion) =>
-            asignacion.failure_report &&
-            (typeof asignacion.failure_report === "object"
-              ? asignacion.failure_report.failure_type === "Fallo en el suministro del agua"
-              : true),
-        )
-      } else if (filters.reportType === "flow_definitive_cancel") {
-        filtered = filtered.filter(
-          (asignacion) =>
-            asignacion.flow_request &&
-            (typeof asignacion.flow_request === "object"
-              ? asignacion.flow_request.flow_request_type === "Cancelación Definitiva de Caudal"
-              : true),
-        )
-      } else if (filters.reportType === "app_failure") {
-        filtered = filtered.filter(
-          (asignacion) =>
-            asignacion.failure_report &&
-            (typeof asignacion.failure_report === "object"
-              ? asignacion.failure_report.failure_type === "Fallo en el aplicativo"
-              : true),
-        )
-      }
+    // Filtro por tipo de solicitud (mejorado con los detalles completos)
+    if (filters.requestType) {
+      filtered = filtered.filter((asignacion) => {
+        const tipoSolicitud = determinarTipoSolicitud(asignacion)
+        console.log(`Asignación ${asignacion.id}, tipo: ${tipoSolicitud}`)
+
+        if (filters.requestType === "water_supply") {
+          return (
+            tipoSolicitud.includes("Fallo en el suministro del agua") ||
+            tipoSolicitud.includes("Fallo en el Suministro del Agua")
+          )
+        } else if (filters.requestType === "app_failure") {
+          return tipoSolicitud.includes("Fallo en el aplicativo") || tipoSolicitud.includes("Fallo en el Aplicativo")
+        } else if (filters.requestType === "flow_definitive_cancel") {
+          return tipoSolicitud.includes("Cancelación Definitiva de Caudal")
+        }
+
+        return false
+      })
+    }
+
+    // Filtro por estado de solución
+    if (filters.status) {
+      filtered = filtered.filter((asignacion) => {
+        const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
+        if (filters.status === "pending") return !tieneSolucion
+        if (filters.status === "solved") return tieneSolucion
+        return true
+      })
     }
 
     // Filtro por usuario que asigna (documento o nombre)
@@ -171,22 +286,6 @@ const InformeMantenimiento = () => {
         }
         // Buscar en el nombre si está disponible
         if (asignacion.assigned_by_name && asignacion.assigned_by_name.toString().toLowerCase().includes(searchTerm)) {
-          return true
-        }
-        return false
-      })
-    }
-
-    // Filtro por usuario asignado (documento o nombre)
-    if (filters.assignedTo.trim()) {
-      const searchTerm = filters.assignedTo.trim().toLowerCase()
-      filtered = filtered.filter((asignacion) => {
-        // Buscar en el documento
-        if (asignacion.assigned_to && asignacion.assigned_to.toString().toLowerCase().includes(searchTerm)) {
-          return true
-        }
-        // Buscar en el nombre si está disponible
-        if (asignacion.assigned_to_name && asignacion.assigned_to_name.toString().toLowerCase().includes(searchTerm)) {
           return true
         }
         return false
@@ -225,7 +324,7 @@ const InformeMantenimiento = () => {
     }
 
     setFilteredAsignaciones(filtered)
-  }, [filters, fetchAsignaciones])
+  }, [filters, fetchAsignaciones, asignacionesCompletas])
 
   const handleSolucionar = (asignacion) => {
     // Navegar a la página de crear informe con el ID de la asignación
@@ -247,35 +346,42 @@ const InformeMantenimiento = () => {
     },
     {
       key: "assigned_to",
-      label: "Asignado A",
-      render: (asignacion) => asignacion.assigned_to_name || asignacion.assigned_to || "No disponible",
+      label: "Asignado a",
+      render: (asignacion) =>
+        asignacion.assigned_to_name || asignacion.technician || asignacion.assigned_to || "No disponible",
     },
     {
-      key: "report_type",
-      label: "Tipo de Reporte",
-      render: (asignacion) => {
-        return typeof asignacion.flow_request === "object" && asignacion.flow_request?.flow_request_type
-          ? asignacion.flow_request.flow_request_type
-          : typeof asignacion.failure_report === "object" && asignacion.failure_report?.failure_type
-            ? asignacion.failure_report.failure_type
-            : asignacion.flow_request
-              ? "Solicitud de caudal"
-              : asignacion.failure_report
-                ? "Reporte de fallo"
-                : "No especificado"
-      },
+      key: "request_type",
+      label: "Tipo de Solicitud",
+      render: (asignacion) => determinarTipoSolicitud(asignacion),
     },
     {
       key: "action",
       label: "Acción",
-      render: (asignacion) => (
-        <button
-          onClick={() => handleSolucionar(asignacion)}
-          className="bg-[#365486] hover:bg-[#344663] text-white px-4 py-2 rounded-lg w-full"
-        >
-          Solucionar
-        </button>
-      ),
+      render: (asignacion) => {
+        const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
+
+        if (tieneSolucion) {
+          return (
+            <button
+              disabled
+              className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg w-full cursor-not-allowed"
+              title="Esta asignación ya ha sido solucionada"
+            >
+              Solucionado
+            </button>
+          )
+        }
+
+        return (
+          <button
+            onClick={() => handleSolucionar(asignacion)}
+            className="bg-[#365486] hover:bg-[#344663] text-white px-4 py-2 rounded-lg w-full"
+          >
+            Solucionar
+          </button>
+        )
+      },
     },
   ]
 
@@ -283,9 +389,7 @@ const InformeMantenimiento = () => {
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
-        <h1 className="text-center my-15 text-lg md:text-xl font-semibold mb-6">
-          Asignación de mantenimientos
-        </h1>
+        <h1 className="text-center my-15 text-lg md:text-xl font-semibold mb-6">Asignación de mantenimientos</h1>
 
         {/* Sección de filtros */}
         <div className="mb-8 bg-white p-5 rounded-lg shadow-sm border border-gray-100">
@@ -307,19 +411,48 @@ const InformeMantenimiento = () => {
                 />
               </div>
 
-              {/* Filtro por tipo de reporte */}
+              {/* Filtro por tipo de solicitud */}
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-gray-400">
                   <Filter size={16} />
                 </span>
                 <select
                   className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] appearance-none text-sm"
-                  value={filters.reportType}
-                  onChange={(e) => handleFilterChange("reportType", e.target.value)}
+                  value={filters.requestType}
+                  onChange={(e) => handleFilterChange("requestType", e.target.value)}
                 >
-                  {reportTypes.map((type) => (
+                  {requestTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute top-3 right-3 text-gray-400 pointer-events-none">
+                  <svg
+                    className="w-4 h-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+
+              {/* Filtro por estado de solución */}
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-gray-400">
+                  <AlertCircle size={16} />
+                </span>
+                <select
+                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] appearance-none text-sm"
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                >
+                  {solutionStates.map((state) => (
+                    <option key={state.value} value={state.value}>
+                      {state.label}
                     </option>
                   ))}
                 </select>
@@ -343,24 +476,10 @@ const InformeMantenimiento = () => {
                 </span>
                 <input
                   type="text"
-                  placeholder="Asignador"
+                  placeholder="Asignador (documento o nombre)"
                   className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
                   value={filters.assignedBy}
                   onChange={(e) => handleFilterChange("assignedBy", e.target.value)}
-                />
-              </div>
-
-              {/* Filtro por usuario asignado */}
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <User size={16} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Asignado a"
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                  value={filters.assignedTo}
-                  onChange={(e) => handleFilterChange("assignedTo", e.target.value)}
                 />
               </div>
             </div>
