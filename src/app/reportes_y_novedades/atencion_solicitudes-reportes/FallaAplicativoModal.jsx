@@ -423,7 +423,7 @@ const FallaAplicativoModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
           <div className="bg-white rounded-lg shadow-lg w-[90%] sm:w-[700px] md:w-[800px] lg:w-[900px] z-50 max-h-[90vh] flex flex-col">
             {/* Encabezado del modal */}
             <div className="flex justify-between items-center border-b border-gray-200 px-6 py-4">
-              <h2 className="text-xl font-bold text-[#365486]">Asignación de Reporte</h2>
+              <h2 className="text-xl font-bold text-[#365486]">Asignación de Reporte de fallo en el aplicativo</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600"
