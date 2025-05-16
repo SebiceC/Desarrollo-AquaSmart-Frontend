@@ -211,38 +211,48 @@ const PreRegister = () => {
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
       setIsLoading(false);
-      if (error.response && error.response.status === 400) {
-        // Para errores 400 de Axios
-        const errorData = error.response.data;
-
-        // Si el error viene como string JSON, intentamos parsearlo
-        let parsedError = errorData;
-        if (typeof errorData === 'string') {
-          try {
-            parsedError = JSON.parse(errorData);
-          } catch (e) {
-            // Si no se puede parsear, mantenemos el error original
-          }
+      
+      // Extraer los datos de error
+      let errorData = null;
+      
+      // Obtener el objeto de error del response
+      if (error.response && error.response.data) {
+        errorData = error.response.data;
+      }
+      
+      // Si errorData es una cadena, intentar parsearla como JSON
+      if (typeof errorData === 'string') {
+        try {
+          errorData = JSON.parse(errorData);
+        } catch (e) {
+          // Si no se puede parsear, usar un objeto de error predeterminado
+          errorData = null;
         }
-
-        // Verificar los casos específicos
-        if (parsedError.email && parsedError.email.includes("Este correo ya está registrado.")) {
-          // Caso específico: Correo ya registrado
-          setShowEmailErrorModal(true);
-        } else if (parsedError.document && parsedError.document.includes("El usuario ya pasó el pre-registro.")) {
-          // Caso específico: Usuario ya pasó el pre-registro
+      }
+      
+      // Verificar si tenemos el formato esperado
+      if (errorData && errorData.status === "error" && errorData.errors) {
+        const errors = errorData.errors;
+        
+        // Priorizar los mensajes de error (en caso de que haya múltiples)
+        if (errors.document && errors.document.includes("El usuario ya pasó el pre-registro.")) {
           setShowPreRegistroCompletadoModal(true);
-        } else if (parsedError.document && parsedError.document.includes("Ya tienes un pre-registro activo.")) {
-          // Caso específico: Usuario ya pasó el pre-registro
+        } else if (errors.document && errors.document.includes("Ya tienes un pre-registro activo.")) {
           setShowPreRegistroActivoModal(true);
+        } else if (errors.email && errors.email.includes("Este correo ya está registrado.")) {
+          setShowEmailErrorModal(true);
+        } else {
+          // Si hay errores pero no coinciden con nuestros casos conocidos
+          setShowErrorModal(true);
         }
       } else {
-        // Otros errores (no 400)
+        // Para cualquier otro formato de error
         setShowErrorModal(true);
       }
     }
+    
   };
-  console.log(documentTypes);
+
 
   return (
     <div className="w-full h-full min-h-screen bg-white">

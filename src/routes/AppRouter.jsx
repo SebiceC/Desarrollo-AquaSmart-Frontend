@@ -56,6 +56,19 @@ import FacturaLoteDetails from "../app/facturacion/FacturaLoteDetails";
 import MisFacturasDetails from "../app/misFacturas/MisFacturasDetails";
 import PagarFactura from "../app/misFacturas/PagarFactura";
 
+import ReportesYNovedades from "../app/reportes_y_novedades/solicitud_caudal/ReportesYNovedades";
+import ReportesYNovedadesLotesList from "../app/reportes_y_novedades/solicitud_caudal/ReportesYNovedadesLotesList";
+import ReportarFallosList from "../app/reportes_y_novedades/reportar_fallos/ReportarFallosList";
+import CancelacionCaudal from "../app/reportes_y_novedades/solicitud_caudal/CancelacionCaudal";
+import ActivacionCaudal from "../app/reportes_y_novedades/solicitud_caudal/activar-caudal";
+
+import GestionSolicitudesReportes from "../app/reportes_y_novedades/atencion_solicitudes-reportes/GestionSolicitudes-Reportes";
+import ReportesSolicitudes from "../app/reportes_y_novedades/mis-reportes-solicitudes/ReportesSolicitudes";
+import ReportesSolicitudesDetails from "../app/reportes_y_novedades/mis-reportes-solicitudes/ReportesSolicitudesDetails";
+import InformeMantenimiento from "../app/reportes_y_novedades/informe_mantenimiento/informe-mantenimiento";
+import CrearMantenimiento from "../app/reportes_y_novedades/informe_mantenimiento/crear-informe";
+import ControlReportesIntervenciones from "../app/reportes_y_novedades/gestion_gerencia_informe/control-reportes-intervenciones";
+import GestionarInforme from "../app/reportes_y_novedades/gestion_gerencia_informe/gestionar-informe";
 
 const AppRouter = () => {
     return (
@@ -120,6 +133,19 @@ const AppRouter = () => {
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
             <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
+            <Route path="/reportes-y-novedades/solicitud_caudal" element={<ProtectedRoute element={<ReportesYNovedades />} />} />
+            <Route path="/reportes-y-novedades/lote" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
+            <Route path="/reportes-y-novedades/cancelacion_caudal" element={<ProtectedRoute element={<CancelacionCaudal />} />} />
+            <Route path="/reportes-y-novedades/activar-caudal" element={<ProtectedRoute element={<ActivacionCaudal />} />} />
+            <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />
+            <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
+            <Route path="/reportes-y-novedades/atencion_solicitudes-reportes" element={<ProtectedRoute element={<GestionSolicitudesReportes />} />} />
+            <Route path="/reportes-y-novedades/mis-reportes-solicitudes" element={<ProtectedRoute element={<ReportesSolicitudes/>} />} />
+            <Route path="/reportes-y-novedades/mis-reportes-solicitudes/detalle/:id_reportes_solicitudes" element={<ProtectedRoute element={<ReportesSolicitudesDetails/>} />} />
+            <Route path="/reportes-y-novedades/informe-mantenimiento" element={<ProtectedRoute element={<InformeMantenimiento/>} />} />
+            <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento/>} />} />
+            <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
+            <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
         </Routes>
     );
 };
