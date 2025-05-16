@@ -120,6 +120,14 @@ function ReportesSolicitudes() {
     // Apply filters function (memoized with useCallback to prevent unnecessary recreations)
     const applyFilters = useCallback(() => {
         try {
+
+            // Verificar si no llegaron datos del backend
+            if (!reportesSolicitudes || reportesSolicitudes.length === 0) {
+                showModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico");
+                setFilteredReporteSolicitudes([]);
+                return;
+            }
+
             // ID validation
             if (filters.id.trim() !== "" && !/^[A-Za-z0-9]+$/.test(filters.id.trim())) {
                 showModalMessage("El ID de reporte/solicitud contiene caracteres no válidos");
