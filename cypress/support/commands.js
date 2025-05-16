@@ -161,6 +161,11 @@ export const clickActualizar = () => {
   cy.contains("button", "ACTUALIZAR").click();
   cy.wait(1000);
 };
+export const clickEnviarReporte = () => {
+  cy.contains("button", "Enviar reporte").click();
+  cy.wait(1000);
+};
+
 export const limpiarCampos = () => {
   cy.get('input[placeholder="ID de válvula"]').clear();
   cy.get('input[placeholder="Nombre de válvula"]').clear();
@@ -449,4 +454,20 @@ export const validarYcerrarModalError = (mensajeEsperado) => {
 
   // Verifica que el modal ya no esté visible
   cy.get("div.bg-white").should("not.exist");
+};
+
+//SELECCIONAR VALORES EN UN SELECT
+export const selectRandomValidOption = (selector) => {
+  cy.get(selector).then(($select) => {
+    const validOptions = $select.find('option:not([value=""])');
+    expect(validOptions.length).to.be.gt(
+      0,
+      `Select ${selector} sin opciones válidas`
+    );
+
+    const randomOption = Cypress._.sample(validOptions.toArray());
+    cy.wrap($select)
+      .select(randomOption.value)
+      .should("have.value", randomOption.value);
+  });
 };
