@@ -80,6 +80,57 @@ export const navegarAHistorialMisFacturas = () => {
 };
 
 //NAVEGACION SECCION DE NOVEDAD Y REPORTES
+export const navegarARNcontrolReportes = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Reportes y novedades").click();
+  cy.contains("a", "Control de reportes de intervenciones");
+  cy.visit(
+    "http://localhost:5173/reportes-y-novedades/control-reportes-intervenciones"
+  );
+  cy.url().should(
+    "include",
+    "/reportes-y-novedades/control-reportes-intervenciones"
+  );
+  cy.contains("h1", "Control de reportes de intervenciones").should(
+    "be.visible"
+  );
+};
+
+export const navegarARNmissolicitudes = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Reportes y novedades").click();
+  cy.contains("a", "Ver mis reportes/solicitudes").should("be.visible").click();
+  cy.visit(
+    "http://localhost:5173/reportes-y-novedades/mis-reportes-solicitudes"
+  );
+  cy.url().should("include", "/reportes-y-novedades/mis-reportes-solicitudes");
+  cy.contains("h1", "MIS REPORTES Y SOLICITUDES").should("be.visible");
+};
+
+export const navegarARNasignacion = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Reportes y novedades").click();
+  cy.contains("a", "Asignación de mantenimientos").should("be.visible").click();
+  cy.visit("http://localhost:5173/reportes-y-novedades/informe-mantenimiento");
+  cy.url().should("include", "/reportes-y-novedades/informe-mantenimiento");
+  cy.contains("h1", "Asignación de mantenimientos").should("be.visible");
+};
+
+export const navegarARNatencionSr = () => {
+  cy.visit("http://localhost:5173/perfil");
+  cy.contains("button", "Reportes y novedades").click();
+  cy.contains("a", "Atención de solicitudes y reportes")
+    .should("be.visible")
+    .click();
+  cy.visit(
+    "http://localhost:5173/reportes-y-novedades/atencion_solicitudes-reportes"
+  );
+  cy.url().should(
+    "include",
+    "/reportes-y-novedades/atencion_solicitudes-reportes"
+  );
+  cy.contains("h1", "Atención de solicitudes y reportes").should("be.visible");
+};
 
 export const navegarARNreportarFalla = () => {
   cy.visit("http://localhost:5173/perfil");
@@ -165,12 +216,21 @@ export const clickEnviarReporte = () => {
   cy.contains("button", "Enviar reporte").click();
   cy.wait(1000);
 };
+export const clickEnviarSolicitud = () => {
+  cy.contains("button", "Enviar solicitud").click();
+  cy.wait(1000);
+};
 
 export const limpiarCampos = () => {
   cy.get('input[placeholder="ID de válvula"]').clear();
   cy.get('input[placeholder="Nombre de válvula"]').clear();
   cy.get('input[placeholder="ID de ubicación"]').clear();
 };
+export const limpiarCamposRn = () => {
+  cy.get('input[placeholder="ID de usuario"]').clear();
+  cy.get('input[placeholder="ID de reporte/solicitud"]').clear();
+};
+
 export const limpiarCAmposFactura = () => {
   cy.wait(1000);
   cy.get('input[placeholder="Tarifa fija piscicultura"]')
