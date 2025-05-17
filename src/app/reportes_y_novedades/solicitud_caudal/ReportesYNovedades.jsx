@@ -11,7 +11,6 @@ const ReportesYNovedades = () => {
     { id: 1, nombre: "Solicitud para cambiar el caudal del lote", tipo: "solicitud" },
     { id: 2, nombre: "Solicitar activación de caudal del lote", tipo: "solicitud" },
     { id: 3, nombre: "Solicitar cancelación de caudal del lote", tipo: "solicitud" },
-    { id: 4, nombre: "Informe de solicitud/reporte asignada", tipo: "informe" },
   ])
 
   // Configuración de columnas para DataTable
@@ -58,9 +57,6 @@ const ReportesYNovedades = () => {
         break
       case "Solicitar cancelación de caudal del lote":
         navigate("/reportes-y-novedades/cancelacion_caudal")
-        break
-      case "Informe de solicitud/reporte asignada":
-        navigate("/reportes-y-novedades/informe-mantenimiento")
         break
       default:
         navigate("/reportes-y-novedades/lotes")

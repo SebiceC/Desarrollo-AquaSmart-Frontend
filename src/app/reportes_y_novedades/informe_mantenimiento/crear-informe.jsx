@@ -344,11 +344,6 @@ const CrearInforme = () => {
       setModalTitle("Éxito")
       setModalMessage("¡Envío del formulario realizado con éxito!")
       setShowModal(true)
-
-      // Redirigir al listado de asignaciones después de cerrar el modal
-      setTimeout(() => {
-        navigate("/reportes-y-novedades/informe-mantenimiento")
-      }, 2000)
     } catch (error) {
       console.error("Error al enviar el informe:", error)
 
