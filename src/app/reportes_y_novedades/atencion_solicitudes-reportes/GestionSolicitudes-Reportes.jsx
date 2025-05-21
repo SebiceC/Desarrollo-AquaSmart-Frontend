@@ -26,6 +26,7 @@ const GestionSolicitudes = () => {
     createdBy: "",  // Campo para filtrar por ID de usuario (created_by)
     solicitudType: "", // 'solicitud' o 'reporte'
     subType: "",       // Tipo específico de solicitud o reporte
+    specification: "", // Nuevo filtro de especificación
     status: "", // 'pendiente', 'en proceso', 'a espera de aprobacion', 'finalizado', 'rechazada'
     startDate: "",
     endDate: "",
@@ -107,9 +108,18 @@ const GestionSolicitudes = () => {
   // Función para obtener el tipo específico del item según si es solicitud o reporte
   const getItemSpecificType = (item) => {
     if (item.reportType === 'solicitud') {
-      return item.flow_request_type;
+      // Normalizar para que coincida con las keys de typeMap
+      let specificType = item.flow_request_type;
+      if (specificType === "Cancelación Temporal de Caudal") return "cancelacion temporal de caudal";
+      if (specificType === "Cambio de Caudal") return "cambio_caudal";
+      if (specificType === "Cancelación Definitiva de Caudal") return "cancelacion definitiva de caudal";
+      if (specificType === "Activación de Caudal") return "activacion";
+      return specificType;
     } else if (item.reportType === 'reporte') {
-      return item.failure_type;
+      let specificType = item.failure_type;
+      if (specificType === "Fallo en el Suministro del Agua") return "falla_suministro";
+      if (specificType === "Fallo en el Aplicativo") return "falla_aplicativo";
+      return specificType;
     }
     return "";
   };
@@ -117,66 +127,47 @@ const GestionSolicitudes = () => {
   // Función para aplicar filtros a datos específicos
   const applyFiltersToData = (dataToFilter) => {
     try {
-      // Verificamos si hay al menos un filtro aplicado
       const hasActiveFilters = 
         filters.id.trim() !== "" || 
         filters.createdBy.trim() !== "" || 
         filters.solicitudType !== "" || 
         filters.subType !== "" ||
+        filters.specification !== "" ||
         filters.status !== "" ||
         filters.startDate !== "" || 
         filters.endDate !== "";
 
-      // Si no hay filtros activos, mostramos todos los datos
       if (!hasActiveFilters) {
         setFilteredData(dataToFilter);
         return;
       }
 
-      // Preparar el estado del filtro normalizado
       const filterStatusNormalized = normalizeStatus(filters.status);
 
-      // Filtrado de datos
       const filtered = dataToFilter.filter((item) => {
-        // Filtro por ID de reporte/solicitud
         const matchesId = filters.id.trim() === "" ||
           (item.id && item.id.toString().includes(filters.id.trim()));
-
-        // Filtro por ID de usuario (created_by)
         const matchesCreatedBy = filters.createdBy.trim() === "" ||
           (item.created_by && item.created_by.toString().includes(filters.createdBy.trim()));
-
-        // Filtro por tipo de solicitud/reporte
         const matchesSolicitudType = filters.solicitudType === "" ||
           item.reportType === filters.solicitudType;
-          
-        // Obtener el tipo específico según si es solicitud o reporte
         const specificType = getItemSpecificType(item);
-          
-        // Filtro por subtipo específico
         const matchesSubType = filters.subType === "" || specificType === filters.subType;
-
-        // Filtro por estado - normalizar para hacer la comparación más robusta
+        // Filtrado por especificación usando la key normalizada
+        const matchesSpecification = filters.specification === "" || specificType === filters.specification;
         const itemStatusNormalized = normalizeStatus(item.status);
-        
-        // Verificar si el estado del item coincide con el filtro de estado
         const matchesStatus = filterStatusNormalized === "" || 
                              itemStatusNormalized === filterStatusNormalized;
-
-        // Manejo de fechas
         let matchesDate = true;
-        
         if (filters.startDate !== "" || filters.endDate !== "") {
           const itemDate = new Date(item.created_at);
           const itemDateStr = itemDate.toISOString().split('T')[0];
-          
           if (filters.startDate !== "") {
             const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
             if (itemDateStr < startDateStr) {
               matchesDate = false;
             }
           }
-          
           if (matchesDate && filters.endDate !== "") {
             const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
             if (itemDateStr > endDateStr) {
@@ -184,51 +175,41 @@ const GestionSolicitudes = () => {
             }
           }
         }
-
-        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesStatus && matchesDate;
+        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesSpecification && matchesStatus && matchesDate;
       });
-
       setFilteredData(filtered);
-    } catch (error) {
-      console.error("Error al aplicar filtros:", error);
+    } catch {
       setFilteredData([]);
     }
   };
 
   const applyFilters = () => {
     try {
-      // Verificamos si hay al menos un filtro aplicado
       const hasActiveFilters = 
         filters.id.trim() !== "" || 
         filters.createdBy.trim() !== "" || 
         filters.solicitudType !== "" || 
         filters.subType !== "" ||
+        filters.specification !== "" ||
         filters.status !== "" ||
         filters.startDate !== "" || 
         filters.endDate !== "";
-
-      // Si no hay filtros activos, mostramos todos los datos
       if (!hasActiveFilters) {
         setFilteredData(allData);
         return;
       }
-
-      // Validación: solo números en ID de usuario y de solicitud
       if (filters.id.trim() !== "" && !/^\d+$/.test(filters.id.trim())) {
         setModalMessage("El campo de filtrado de ID de reporte/solicitud contiene caracteres no válidos.");
         setModalType("error");
         setShowModal(true);
         return;
       }
-
       if (filters.createdBy.trim() !== "" && !/^\d+$/.test(filters.createdBy.trim())) {
         setModalMessage("El campo de filtrado por ID de usuario contiene caracteres no válidos.");
         setModalType("error");
         setShowModal(true);
         return;
       }
-
-      // Validación de fechas
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
         setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
         setModalType("error");
@@ -236,51 +217,31 @@ const GestionSolicitudes = () => {
         setFilteredData([]);
         return;
       }
-
-      // Preparar el estado del filtro normalizado
       const filterStatusNormalized = normalizeStatus(filters.status);
-
-      // Filtrado de datos
       const filtered = allData.filter((item) => {
-        // Filtro por ID de reporte/solicitud
         const matchesId = filters.id.trim() === "" ||
           (item.id && item.id.toString().includes(filters.id.trim()));
-
-        // Filtro por ID de usuario (created_by)
         const matchesCreatedBy = filters.createdBy.trim() === "" ||
           (item.created_by && item.created_by.toString().includes(filters.createdBy.trim()));
-
-        // Filtro por tipo de solicitud/reporte
         const matchesSolicitudType = filters.solicitudType === "" ||
           item.reportType === filters.solicitudType;
-          
-        // Obtener el tipo específico según si es solicitud o reporte
         const specificType = getItemSpecificType(item);
-          
-        // Filtro por subtipo específico
         const matchesSubType = filters.subType === "" || specificType === filters.subType;
-
-        // Filtro por estado - normalizar para hacer la comparación más robusta
+        // Filtrado por especificación usando la key normalizada
+        const matchesSpecification = filters.specification === "" || specificType === filters.specification;
         const itemStatusNormalized = normalizeStatus(item.status);
-        
-        // Verificar si el estado del item coincide con el filtro de estado
         const matchesStatus = filterStatusNormalized === "" || 
                              itemStatusNormalized === filterStatusNormalized;
-
-        // Manejo de fechas
         let matchesDate = true;
-        
         if (filters.startDate !== "" || filters.endDate !== "") {
           const itemDate = new Date(item.created_at);
           const itemDateStr = itemDate.toISOString().split('T')[0];
-          
           if (filters.startDate !== "") {
             const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
             if (itemDateStr < startDateStr) {
               matchesDate = false;
             }
           }
-          
           if (matchesDate && filters.endDate !== "") {
             const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
             if (itemDateStr > endDateStr) {
@@ -288,21 +249,17 @@ const GestionSolicitudes = () => {
             }
           }
         }
-
-        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesStatus && matchesDate;
+        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesSpecification && matchesStatus && matchesDate;
       });
-
       if (filtered.length === 0) {
-        // Mostrar siempre un mensaje genérico cuando no hay resultados
         setModalMessage("No se encontraron solicitudes/reportes con los filtros aplicados.");
         setModalType("error");
         setShowModal(true);
         setFilteredData([]);
         return;
       }
-
       setFilteredData(filtered);
-    } catch (error) {
+    } catch {
       setModalMessage("Error al aplicar filtros. Por favor, intente más tarde.");
       setModalType("error");
       setShowModal(true);
@@ -559,25 +516,6 @@ const GestionSolicitudes = () => {
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
           showStatusFilter={true}
-          solicitudTypes={[
-            { value: "", label: "Todos" },
-            { value: "solicitud", label: "Solicitud" },
-            { value: "reporte", label: "Reporte" }
-          ]}
-          subTypes={{
-            solicitud: [
-              { value: "", label: "Todos" },
-              { value: "cambio_caudal", label: "Cambio de Caudal" },
-              { value: "cancelacion definitiva de caudal", label: "Cancelación Definitiva" },
-              { value: "cancelacion temporal de caudal", label: "Cancelación Temporal" },
-              { value: "activacion", label: "Activación" }
-            ],
-            reporte: [
-              { value: "", label: "Todos" },
-              { value: "falla_suministro", label: "Falla en Suministro" },
-              { value: "falla_aplicativo", label: "Falla en Aplicativo" }
-            ]
-          }}
         />
 
         {/* Modal de mensajes (error o éxito) */}
