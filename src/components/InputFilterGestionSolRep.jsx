@@ -124,7 +124,6 @@ const InputFilterGestionSolRep = ({
             <option value="en proceso">En Proceso</option>
             <option value="a espera de aprobacion">A Espera de Aprobación</option>
             <option value="finalizado">Finalizado</option>
-            <option value="rechazada">Rechazada</option>
           </select>
           <span className="absolute top-3 right-4 text-gray-400">
             <svg

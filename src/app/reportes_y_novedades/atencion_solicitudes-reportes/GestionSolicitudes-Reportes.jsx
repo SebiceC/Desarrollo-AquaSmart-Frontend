@@ -6,11 +6,19 @@ import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
 import { Eye } from "lucide-react";
 import InputFilterGestionSolRep from "../../../components/InputFilterGestionSolRep";
-import GestionSolicitudModal from "./GestionSolicitudModal";
 // Importar los nuevos modales
-import CancelacionDefinitivaModal from "./CancelacionDefinitivaModal";
-import FallaSuministroModal from "./FallaSuministroModal";
-import FallaAplicativoModal from "./FallaAplicativoModal";
+
+import SolicitudInfoModal from "./SolicitudInfoModal";
+//para cancelacion definitiva
+import CancelacionDefinitivaF from "./Cancelacion_definitiva/CancelacionDefinitivaF";
+import CancelacionDefinitivaP from "./Cancelacion_definitiva/CancelacionDefinitivaP";
+import CancelacionDefinitivaE from "./Cancelacion_definitiva/CancelacionDefinitivaE";
+//para falla aplicativo
+import FallaAplicativoF from "./Falla_aplicativo/FallaAplicativoF";
+import FallaAplicativoP from "./Falla_aplicativo/FallaAplicativoP";
+import FallaAplicativoE from "./Falla_aplicativo/FallaAplicativoE";
+
+import GestionSolicitudModal from "./GestionSolicitudModal";
 
 const GestionSolicitudes = () => {
   const navigate = useNavigate();
@@ -37,10 +45,13 @@ const GestionSolicitudes = () => {
   
   // Estados para controlar la visibilidad de cada modal
   const [showGestionModal, setShowGestionModal] = useState(false);
-  const [showCancelacionDefinitivaModal, setShowCancelacionDefinitivaModal] = useState(false);
-  const [showFallaSuministroModal, setShowFallaSuministroModal] = useState(false);
-  const [showFallaAplicativoModal, setShowFallaAplicativoModal] = useState(false);
-
+  const [showCancelacionDefinitivaFModal, setShowCancelacionDefinitivaFModal] = useState(false);
+  const [showCancelacionDefinitivaPModal, setShowCancelacionDefinitivaPModal] = useState(false);
+  const [showCancelacionDefinitivaEModal, setShowCancelacionDefinitivaEModal] = useState(false);
+  const [showFallaAplicativoFModal, setShowFallaAplicativoFModal] = useState(false);
+  const [showFallaAplicativoPModal, setShowFallaAplicativoPModal] = useState(false);
+  const [showFallaAplicativoEModal, setShowFallaAplicativoEModal] = useState(false);
+  const [showSolicitudInfoModal, setShowSolicitudInfoModal] = useState(false);
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
   // Mapa de estados aceptados para normalización
@@ -50,7 +61,6 @@ const GestionSolicitudes = () => {
     "a espera de aprobacion": "a espera de aprobacion",
     "a espera de aprobación": "a espera de aprobacion", // Variante con tilde
     "finalizado": "finalizado",
-    "rechazada": "rechazada"
   };
 
   // Estados aceptados y sus correspondientes visualizaciones
@@ -59,7 +69,6 @@ const GestionSolicitudes = () => {
     'en proceso': 'En Proceso',
     'a espera de aprobacion': 'A Espera de Aprobación',
     'finalizado': 'Finalizado',
-    'rechazada': 'Rechazada'
   };
 
   // Colores para los estados
@@ -68,7 +77,6 @@ const GestionSolicitudes = () => {
     "en proceso": "bg-blue-100 text-blue-800 border border-blue-300",
     "a espera de aprobacion": "bg-orange-100 text-orange-800 border border-orange-300",
     "finalizado": "bg-green-100 text-green-800 border border-green-300",
-    "rechazada": "bg-red-100 text-red-800 border border-red-200"
   };
 
   // Mapa de tipos de solicitud/reporte para visualización
@@ -339,19 +347,45 @@ const GestionSolicitudes = () => {
       render: (item) => {
         // Normalizar el estado para hacer la comparación más robusta
         const normalizedStatus = normalizeStatus(item.status);
-        const isPendiente = ['pendiente', 'en proceso', 'a espera de aprobacion'].includes(normalizedStatus);
+        
+        let buttonLabel = "";
+        
+        if (item.reportType === 'solicitud') {
+          if (['cambio_caudal', 'cancelacion temporal de caudal', 'cancelacion definitiva de caudal'].includes(item.flow_request_type)) {
+            if (normalizedStatus === 'finalizado') {
+              buttonLabel = "Ver Información";
+            } else if (normalizedStatus === 'pendiente') {
+              buttonLabel = "Gestionar";
+            } else if (normalizedStatus === 'a espera de aprobacion') {
+              buttonLabel = "Gestionar";
+            } else if (normalizedStatus === 'en proceso') {
+              buttonLabel = "Ver Información";
+            }
+          } else if (['activacion'].includes(item.flow_request_type)) {
+            if (normalizedStatus === 'finalizado') {
+              buttonLabel = "Ver Información";
+            } else {
+              buttonLabel = "Gestionar";
+            }
+          } else {
+            buttonLabel = "Ver Información";
+          }
+        } else if (item.reportType === 'reporte') {
+          if (normalizedStatus === 'pendiente') {
+            buttonLabel = "Gestionar";
+          } else if (normalizedStatus === 'a espera de aprobacion') {
+            buttonLabel = "Gestionar";
+          } else {
+            buttonLabel = "Ver Información";
+          }
+        }
         
         return (
           <button
             onClick={() => handleGestionar(item)}
-            className={`font-bold py-2 px-4 rounded transition-colors ${
-              isPendiente 
-                ? 'bg-[#365486] hover:bg-blue-700 text-white'
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-            }`}
-            disabled={!isPendiente}
+            className="font-bold py-2 px-4 rounded transition-colors bg-[#365486] hover:bg-blue-700 text-white"
           >
-            Gestionar
+            {buttonLabel}
           </button>
         );
       }
@@ -362,31 +396,70 @@ const GestionSolicitudes = () => {
   const handleGestionar = (item) => {
     // Normalizar el estado para hacer la comparación más robusta
     const normalizedStatus = normalizeStatus(item.status);
-    const isPendiente = ['pendiente', 'en proceso', 'a espera de aprobacion'].includes(normalizedStatus);
     
-    if (isPendiente) {
-      // Pasar el objeto completo incluyendo el tipo como se muestra en la tabla
-      const solicitudConTipo = {
-        ...item,
-        displayType: item.reportType === 'solicitud' ? item.flow_request_type : item.failure_type
-      };
-      setSelectedSolicitud(solicitudConTipo);
-      
-      // AQUÍ ES LA LÓGICA PRINCIPAL DEL CAMBIO:
-      // Determinar qué modal mostrar basado en el tipo de solicitud o reporte
-      if (item.reportType === 'solicitud') {
-        // Para solicitudes
-        if (['cambio_caudal', 'cancelacion temporal de caudal', 'activacion'].includes(item.flow_request_type)) {
+    // Pasar el objeto completo incluyendo el tipo como se muestra en la tabla
+    const solicitudConTipo = {
+      ...item,
+      displayType: item.reportType === 'solicitud' ? item.flow_request_type : item.failure_type
+    };
+    setSelectedSolicitud(solicitudConTipo);
+    
+    // Determinar qué modal mostrar basado en el tipo de solicitud o reporte
+    if (item.reportType === 'solicitud') {
+      // Para solicitudes
+      if (['cambio_caudal', 'cancelacion temporal de caudal', 'activacion'].includes(item.flow_request_type)) {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowSolicitudInfoModal(true);
+        } else {
           setShowGestionModal(true);
-        } else if (item.flow_request_type === 'cancelacion definitiva de caudal') {
-          setShowCancelacionDefinitivaModal(true);
+          // Mostrar modal con datos de la solicitud
+
+        } 
+      } else if (item.flow_request_type === 'cancelacion definitiva de caudal') {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowCancelacionDefinitivaFModal(true);
+        } else if (normalizedStatus === 'pendiente') {
+          // Mostrar modal con datos de la solicitud
+          setShowCancelacionDefinitivaPModal(true);
+        } else if (normalizedStatus === 'a espera de aprobacion') {
+          // Redirigir a la página de aprobación
+          navigate('/reportes-y-novedades/control-reportes-intervenciones');
+        } else if (normalizedStatus === 'en proceso') {
+          // Mostrar modal con información y técnico asignado
+          setShowCancelacionDefinitivaEModal(true);
         }
-      } else if (item.reportType === 'reporte') {
-        // Para reportes
-        if (item.failure_type === 'falla_suministro') {
-          setShowFallaSuministroModal(true);
-        } else if (item.failure_type === 'falla_aplicativo') {
-          setShowFallaAplicativoModal(true);
+      }
+    } else if (item.reportType === 'reporte') {
+      // Para reportes
+      if (item.failure_type === 'falla_suministro') {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowFallaAplicativoFModal(true);
+        } else if (normalizedStatus === 'pendiente') {
+          // Mostrar modal con datos del reporte
+          setShowFallaAplicativoPModal(true);
+        } else if (normalizedStatus === 'a espera de aprobacion') {
+          // Redirigir a la página de aprobación
+          navigate('/reportes-y-novedades/control-reportes-intervenciones');
+        } else if (normalizedStatus === 'en proceso') {
+          // Mostrar modal con información y técnico asignado
+          setShowFallaAplicativoEModal(true);
+        }
+      } else if (item.failure_type === 'falla_aplicativo') {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowFallaAplicativoFModal(true);
+        } else if (normalizedStatus === 'pendiente') {
+          // Mostrar modal con datos del reporte
+          setShowFallaAplicativoPModal(true);
+        } else if (normalizedStatus === 'a espera de aprobacion') {
+          // Redirigir a la página de aprobación
+          navigate('/reportes-y-novedades/control-reportes-intervenciones');
+        } else if (normalizedStatus === 'en proceso') {
+          // Mostrar modal con información y técnico asignado
+          setShowFallaAplicativoEModal(true);
         }
       }
     }
@@ -400,10 +473,13 @@ const GestionSolicitudes = () => {
     
     // Cerrar todos los modales de gestión
     setShowGestionModal(false);
-    setShowCancelacionDefinitivaModal(false);
-    setShowFallaSuministroModal(false);
-    setShowFallaAplicativoModal(false);
-    
+    setShowCancelacionDefinitivaFModal(false);
+    setShowCancelacionDefinitivaPModal(false);
+    setShowCancelacionDefinitivaEModal(false);
+    setShowFallaAplicativoFModal(false);
+    setShowFallaAplicativoPModal(false);
+    setShowFallaAplicativoEModal(false);
+    setShowSolicitudInfoModal(false);
     setSelectedSolicitud(null);
     // No llamamos fetchData aquí, lo haremos al cerrar el modal
   };
@@ -538,7 +614,8 @@ const GestionSolicitudes = () => {
           </Modal>
         )}
 
-        {/* Modal de Gestión de Solicitud (para cambio_caudal, cancelacion temporal de caudal, activacion) */}
+
+        {/* Modal de Gestión de Solicitud - CORREGIDO */}
         <GestionSolicitudModal
           showModal={showGestionModal}
           onClose={() => {
@@ -550,41 +627,93 @@ const GestionSolicitudes = () => {
           onError={handleModalError}
         />
 
-        {/* Modal para Cancelación Definitiva */}
-        <CancelacionDefinitivaModal
-          showModal={showCancelacionDefinitivaModal}
-          onClose={() => {
-            setShowCancelacionDefinitivaModal(false);
-            setSelectedSolicitud(null);
-          }}
-          solicitudBasica={selectedSolicitud}
-          onSuccess={handleModalSuccess}
-          onError={handleModalError}
-        />
 
-        {/* Modal para Falla en Suministro */}
-        <FallaSuministroModal
-          showModal={showFallaSuministroModal}
-          onClose={() => {
-            setShowFallaSuministroModal(false);
-            setSelectedSolicitud(null);
-          }}
-          solicitudBasica={selectedSolicitud}
-          onSuccess={handleModalSuccess}
-          onError={handleModalError}
-        />
 
-        {/* Modal para Falla en Aplicativo */}
-        <FallaAplicativoModal
-          showModal={showFallaAplicativoModal}
-          onClose={() => {
-            setShowFallaAplicativoModal(false);
-            setSelectedSolicitud(null);
-          }}
-          solicitudBasica={selectedSolicitud}
-          onSuccess={handleModalSuccess}
-          onError={handleModalError}
-        />
+       {/* Modal para Cancelación Definitiva */}
+       <CancelacionDefinitivaF
+        showModal={showCancelacionDefinitivaFModal}
+        onClose={() => {
+          setShowCancelacionDefinitivaFModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Cancelación Definitiva */}
+      <CancelacionDefinitivaP
+        showModal={showCancelacionDefinitivaPModal}
+        onClose={() => {
+          setShowCancelacionDefinitivaPModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Cancelación Definitiva */}
+      <CancelacionDefinitivaE
+        showModal={showCancelacionDefinitivaEModal}
+        onClose={() => {
+          setShowCancelacionDefinitivaEModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Falla en Aplicativo */}
+      <FallaAplicativoF
+        showModal={showFallaAplicativoFModal}
+        onClose={() => {
+          setShowFallaAplicativoFModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Falla en Aplicativo */}
+      <FallaAplicativoP
+        showModal={showFallaAplicativoPModal}
+        onClose={() => {
+          setShowFallaAplicativoPModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+
+      {/* Modal para Falla en Aplicativo */}
+      <FallaAplicativoE
+        showModal={showFallaAplicativoEModal}
+        onClose={() => {
+          setShowFallaAplicativoEModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+
+      {/* Modal para Solicitud Info */}
+      <SolicitudInfoModal
+        showModal={showSolicitudInfoModal}
+        onClose={() => {
+          setShowSolicitudInfoModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
 
         {/* Uso del componente DataTable */}
         {filteredData !== null && (
