@@ -41,8 +41,9 @@ const InformeMantenimiento = () => {
   // Estados de solución para el filtro
   const solutionStates = [
     { value: "", label: "ESTADO" },
-    { value: "pending", label: "Pendiente de solución" },
-    { value: "solved", label: "Solucionado" },
+    { value: "pending", label: "Pendiente de informe" },
+    { value: "solved", label: "Con informe" },
+    { value: "reassigned", label: "Reasignado" },
   ]
 
   const handleFilterChange = (name, value) => {
@@ -266,12 +267,13 @@ const InformeMantenimiento = () => {
       })
     }
 
-    // Filtro por estado de solución
+    // Filtro por estado de informe
     if (filters.status) {
       filtered = filtered.filter((asignacion) => {
-        const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
-        if (filters.status === "pending") return !tieneSolucion
-        if (filters.status === "solved") return tieneSolucion
+        const tieneInforme = tieneInformeMantenimiento(asignacion.id)
+        if (filters.status === "pending") return !tieneInforme
+        if (filters.status === "solved") return tieneInforme
+        if (filters.status === "reassigned") return asignacion.reassigned
         return true
       })
     }
@@ -326,12 +328,26 @@ const InformeMantenimiento = () => {
     setFilteredAsignaciones(filtered)
   }, [filters, fetchAsignaciones, asignacionesCompletas])
 
+  // Modificar la función handleSolucionar para adaptarse al nuevo estilo
   const handleSolucionar = (asignacion) => {
-    // Navegar a la página de crear informe con el ID de la asignación
+    // Verificar si la asignación ya tiene un informe
+    const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
+
+    if (tieneSolucion) {
+      // Buscar el ID del informe correspondiente a esta asignación
+      const informe = informesMantenimiento.find((inf) => inf.assignment === asignacion.id)
+      if (informe) {
+        // Navegar a la página de gestionar informe con el ID del informe
+        navigate(`/reportes-y-novedades/gestionar-informe/${informe.id}`)
+        return
+      }
+    }
+
+    // Si no tiene informe o no se encontró el informe, navegar a crear informe
     navigate(`/reportes-y-novedades/crear-informe/${asignacion.id}`)
   }
 
-  // Configuración de columnas para DataTable
+  // Actualizar la definición de columnas para usar el nuevo estilo de botón
   const columns = [
     { key: "id", label: "ID Asignación" },
     {
@@ -356,29 +372,42 @@ const InformeMantenimiento = () => {
       render: (asignacion) => determinarTipoSolicitud(asignacion),
     },
     {
+      key: "reassigned",
+      label: "Estado",
+      render: (asignacion) => {
+        return (
+          <div className="flex items-center">
+            {asignacion.reassigned && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mr-2">
+                Reasignado
+              </span>
+            )}
+            {tieneInformeMantenimiento(asignacion.id) && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Con informe
+              </span>
+            )}
+            {!tieneInformeMantenimiento(asignacion.id) && !asignacion.reassigned && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Pendiente
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
       key: "action",
       label: "Acción",
       render: (asignacion) => {
         const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
 
-        if (tieneSolucion) {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg w-full cursor-not-allowed"
-              title="Esta asignación ya ha sido solucionada"
-            >
-              Solucionado
-            </button>
-          )
-        }
-
         return (
           <button
             onClick={() => handleSolucionar(asignacion)}
-            className="bg-[#365486] hover:bg-[#344663] text-white px-4 py-2 rounded-lg w-full"
+            className="bg-[#365486] hover:bg-[#42A5F5] text-white text-xs px-4 py-1 h-8 rounded-lg w-24"
           >
-            Solucionar
+            {tieneSolucion ? "Ver" : "Solucionar"}
           </button>
         )
       },

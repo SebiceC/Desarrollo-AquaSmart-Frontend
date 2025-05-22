@@ -348,12 +348,13 @@ const ControlReportesIntervenciones = () => {
     setFilteredInformes(filtered)
   }, [filters, fetchInformes, informesCompletos])
 
+  // Actualizar la función handleGestionar para mantener la consistencia
   const handleGestionar = (informe) => {
     // Navegar a la página de gestionar informe con el ID del informe
     navigate(`/reportes-y-novedades/gestionar-informe/${informe.id}`)
   }
 
-  // Actualizar las columnas para adaptarse a la estructura de datos del backend
+  // Actualizar las columnas para adaptarse a la estructura de datos del backend y usar el nuevo estilo de botón
   const columns = [
     {
       key: "assignment",
@@ -392,24 +393,12 @@ const ControlReportesIntervenciones = () => {
       render: (informe) => {
         const estadoGestion = determinarEstadoGestion(informe)
 
-        if (estadoGestion === "approved") {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg w-full cursor-not-allowed"
-              title="Este informe ya ha sido aprobado"
-            >
-              Aprobado
-            </button>
-          )
-        }
-
         return (
           <button
             onClick={() => handleGestionar(informe)}
-            className="bg-[#365486] hover:bg-[#344663] text-white px-4 py-2 rounded-lg w-full"
+            className="bg-[#365486] hover:bg-[#42A5F5] text-white text-xs px-4 py-1 h-8 rounded-lg w-24"
           >
-            Gestionar
+            {estadoGestion === "approved" ? "Ver" : "Gestionar"}
           </button>
         )
       },
