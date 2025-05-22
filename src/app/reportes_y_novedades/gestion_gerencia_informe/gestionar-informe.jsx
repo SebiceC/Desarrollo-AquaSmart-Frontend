@@ -1080,6 +1080,7 @@ const ReasignarModal = ({ showModal, onClose, informeId, API_URL, onSuccess }) =
             )}
 
             {/* Estado de la asignación (fijo en "En proceso") */}
+            {/*
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Estado de la solicitud/reporte <span className="text-red-500">*</span>
@@ -1093,6 +1094,7 @@ const ReasignarModal = ({ showModal, onClose, informeId, API_URL, onSuccess }) =
               </select>
               <p className="text-xs text-gray-500 mt-1">Este campo es obligatorio y no se puede modificar</p>
             </div>
+            */}
 
             {/* Mensaje de error */}
             {error && <div className="mt-3 text-red-500 text-sm">{error}</div>}
