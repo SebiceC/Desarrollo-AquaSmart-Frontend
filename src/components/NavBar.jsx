@@ -271,13 +271,6 @@ function NavBar() {
                             <span>Cerrar sesión</span>
                         </button>
                         <Minus className="w-full h-[2px] bg-gray-400" />
-                        <Link
-                            to="/"
-                            className="flex items-center space-x-2 text-sm text-gray-600 pb-5 px-2"
-                        >
-                            <HelpCircle size={20} />
-                            <span>Manual de usuario y soporte</span>
-                        </Link>
                     </div>
                 </div>
             </nav>
