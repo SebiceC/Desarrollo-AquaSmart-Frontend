@@ -1,14 +1,15 @@
 import React from "react";
-import BaseAsignacionModal from "../../../components/BaseAsignacionModal";
+import BaseInfoModalR from "../../../../components/BaseInfoModalR";
+
 /**
- * Modal para la asignación de reportes de Falla en el Suministro
+ * Modal para la asignación de solicitudes de Cancelación Definitiva de Caudal
  */
-const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, onError }) => {
-  // Función para renderizar los detalles específicos del reporte
-  const renderDetallesFallaSuministro = (solicitudBasica, detalleSolicitud) => (
+const FallaAplicativoE = ({ showModal, onClose, solicitudBasica, onSuccess, onError }) => {
+  // Función para renderizar los detalles específicos de la solicitud
+  const renderDetallesCancelacion = (solicitudBasica, detalleSolicitud) => (
     <>
       <h3 className="text-lg font-semibold mb-3 text-blue-800 border-b border-gray-200 pb-2">
-        Información del Reporte
+        Información del reporte de falla aplicativo
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col space-y-1">
@@ -21,7 +22,7 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
             <span className="text-gray-800">{solicitudBasica.created_by || "No especificado"}</span>
           </div>
           <div className="flex items-center">
-            <span className="font-medium text-gray-600 w-30">Tipo de reporte:</span>
+            <span className="font-medium text-gray-600 w-27">Tipo solicitud:</span>
             <span className="text-gray-800">{solicitudBasica.failure_type || "No especificado"}</span>
           </div>
           <div className="flex items-center">
@@ -31,12 +32,8 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
         </div>
         <div className="flex flex-col space-y-1">
           <div className="flex items-center">
-            <span className="font-medium text-gray-600 w-30">Fecha de envío:</span>
+            <span className="font-medium text-gray-600 w-32">Fecha de envío:</span>
             <span className="text-gray-800">{solicitudBasica.created_at || "No especificada"}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="font-medium text-gray-600 w-26">ID del predio:</span>
-            <span className="text-gray-800">{detalleSolicitud?.plot || "No especificado"}</span>
           </div>
           <div className="flex items-center">
             <span className="font-medium text-gray-600 w-21">ID del lote:</span>
@@ -58,35 +55,25 @@ const FallaSuministroModal = ({ showModal, onClose, solicitudBasica, onSuccess, 
 
   // Función para obtener el endpoint de detalles
   const getEndpointDetalle = (solicitudBasica, API_URL) => {
-    return solicitudBasica.type === "flow_request" 
-      ? `${API_URL}/communication/assignments/flow-request/${solicitudBasica.id}`
-      : `${API_URL}/communication/assignments/failure-report/${solicitudBasica.id}`;
+    return `${API_URL}/communication/admin/requests-and-reports/${solicitudBasica.id}`;
   };
 
-  // Función para crear los datos de asignación
-  const crearDataAsignacion = (solicitudId, tecnicoId) => {
-    return {
-      failure_report: solicitudId,
-      assigned_to: tecnicoId,
-      reassigned: false // Agregamos este campo para manejar casos de reasignación
-    };
-  };
+
 
   return (
-    <BaseAsignacionModal
+    <BaseInfoModalR
       showModal={showModal}
       onClose={onClose}
       solicitudBasica={solicitudBasica}
       onSuccess={onSuccess}
       onError={onError}
-      titulo="Asignación de Reporte de falla en el suministro"
+      titulo="Falla Aplicativo"
       tipoAsignacion="failure_report"
-      renderDetallesSolicitud={renderDetallesFallaSuministro}
+      renderDetallesSolicitud={renderDetallesCancelacion}
       getEndpointDetalle={getEndpointDetalle}
-      dataAsignacion={crearDataAsignacion}
-      mensajeExito="Solicitud asignada correctamente"
+      mensajeExito="Falla aplicativo asignada correctamente"
     />
   );
 };
 
-export default FallaSuministroModal;
+export default FallaAplicativoE;
