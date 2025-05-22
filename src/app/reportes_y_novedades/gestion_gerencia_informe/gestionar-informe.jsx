@@ -6,25 +6,27 @@ import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import axios from "axios"
 import BackButton from "../../../components/BackButton"
-import { CheckCircle, RefreshCw, Search, X, AlertCircle, Info, ChevronDown } from "lucide-react"
+import { CheckCircle, RefreshCw, Search, X, AlertCircle, Info, ChevronDown, Eye } from "lucide-react"
 
 const GestionarInforme = () => {
   const { id } = useParams()
   const navigate = useNavigate()
 
+  // Eliminar el estado hasPermission
   const [loading, setLoading] = useState(true)
   const [informe, setInforme] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [modalMessage, setModalMessage] = useState("")
   const [modalTitle, setModalTitle] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isReadOnly, setIsReadOnly] = useState(false) // Estado para modo solo lectura
 
   // Estado para mostrar el modal de reasignación
   const [showReasignModal, setShowReasignModal] = useState(false)
 
   const API_URL = import.meta.env.VITE_APP_API_URL
 
-  // Update the fetchInforme function to get the assignment_status field
+  // Modificar la función fetchInforme para establecer correctamente el modo solo lectura
   const fetchInforme = async () => {
     try {
       setLoading(true)
@@ -43,6 +45,11 @@ const GestionarInforme = () => {
       })
 
       console.log("Detalles del informe:", response.data)
+
+      // Verificar si el informe está aprobado para establecer modo solo lectura
+      if (response.data.is_approved === true) {
+        setIsReadOnly(true)
+      }
 
       // Obtener detalles adicionales si es necesario
       const informeData = response.data
@@ -90,6 +97,8 @@ const GestionarInforme = () => {
       setLoading(false)
     }
   }
+
+  // Eliminar la función checkUserPermissions
 
   useEffect(() => {
     fetchInforme()
@@ -167,6 +176,8 @@ const GestionarInforme = () => {
             "Error interno del servidor. Por favor contacte al equipo de desarrollo con el ID del informe: " + id
         } else if (error.response.status === 405) {
           errorMessage = "Método no permitido. Por favor contacte al equipo de desarrollo."
+        } else if (error.response.status === 403) {
+          errorMessage = "No tienes permisos para realizar esta acción."
         }
       }
 
@@ -392,11 +403,14 @@ const GestionarInforme = () => {
 
   const [reasignInforme, setReasignInforme] = useState(null)
 
+  // Modificar el return para eliminar la condición que muestra la pantalla de acceso denegado
   return (
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20 mt-[70px] md:mt-[80px]">
-        <h1 className="text-center text-xl font-semibold text-[#365486]">Gestionar Informe de Mantenimiento</h1>
+        <h1 className="text-center text-xl font-semibold text-[#365486]">
+          {isReadOnly ? "Ver Informe de Mantenimiento" : "Gestionar Informe de Mantenimiento"}
+        </h1>
 
         {loading ? (
           <div className="flex justify-center items-center h-40">
@@ -404,6 +418,16 @@ const GestionarInforme = () => {
           </div>
         ) : (
           <div className="bg-white p-6 rounded-lg shadow-md">
+            {/* Indicador de modo solo lectura */}
+            {isReadOnly && (
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center text-blue-700">
+                  <Eye size={18} className="mr-2" />
+                  <p className="font-medium">Estás viendo un informe aprobado. No se pueden realizar cambios.</p>
+                </div>
+              </div>
+            )}
+
             {/* Información del reporte/solicitud */}
             <div className="mb-8 bg-gray-50 p-5 rounded-lg border border-gray-100">{renderReportInfo()}</div>
 
@@ -414,53 +438,55 @@ const GestionarInforme = () => {
             <div className="flex flex-col md:flex-row justify-between gap-4 mt-8">
               <BackButton to="/reportes-y-novedades/control-reportes-intervenciones" text="Volver" />
 
-              <div className="flex flex-col md:flex-row gap-4">
-                <button
-                  onClick={handleReasignar}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-[#4B77BE] hover:bg-[#3A5F9E] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B77BE] disabled:bg-gray-400 transition-all flex items-center justify-center"
-                >
-                  <RefreshCw size={18} className="mr-2" />
-                  Reasignar
-                </button>
+              {!isReadOnly && (
+                <div className="flex flex-col md:flex-row gap-4">
+                  <button
+                    onClick={handleReasignar}
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-[#4B77BE] hover:bg-[#3A5F9E] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4B77BE] disabled:bg-gray-400 transition-all flex items-center justify-center"
+                  >
+                    <RefreshCw size={18} className="mr-2" />
+                    Reasignar
+                  </button>
 
-                <button
-                  onClick={handleAceptar}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-[#365486] hover:bg-[#2A4374] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#365486] disabled:bg-gray-400 transition-all flex items-center justify-center"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Procesando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={18} className="mr-2" />
-                      Aceptar
-                    </>
-                  )}
-                </button>
-              </div>
+                  <button
+                    onClick={handleAceptar}
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-[#365486] hover:bg-[#2A4374] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#365486] disabled:bg-gray-400 transition-all flex items-center justify-center"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Procesando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={18} className="mr-2" />
+                        Aceptar
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -901,7 +927,7 @@ const ReasignarModal = ({ showModal, onClose, informeId, API_URL, onSuccess }) =
   if (!showModal) return null
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-50">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl mx-4 overflow-hidden">
         <div className="p-6">
           <h2 className="text-xl font-semibold text-[#365486] mb-4">Reasignar Informe</h2>
@@ -1054,6 +1080,7 @@ const ReasignarModal = ({ showModal, onClose, informeId, API_URL, onSuccess }) =
             )}
 
             {/* Estado de la asignación (fijo en "En proceso") */}
+            {/*
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Estado de la solicitud/reporte <span className="text-red-500">*</span>
@@ -1067,6 +1094,7 @@ const ReasignarModal = ({ showModal, onClose, informeId, API_URL, onSuccess }) =
               </select>
               <p className="text-xs text-gray-500 mt-1">Este campo es obligatorio y no se puede modificar</p>
             </div>
+            */}
 
             {/* Mensaje de error */}
             {error && <div className="mt-3 text-red-500 text-sm">{error}</div>}
