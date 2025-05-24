@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Calendar, FileText, Package, Activity, Info } from 'lucide-react';
 import NavBar from '../../components/NavBar';
 import InputFilterIncidencias from '../../components/InputFilterIncidencias';
 import Modal from '../../components/Modal';
@@ -23,11 +23,16 @@ function HistorialIncidencias() {
         previousUrl: null
     });
 
-    // Modal states consolidated into a single object
+    // Modal states - Separamos modal de detalles del modal de mensajes
     const [modal, setModal] = useState({
         show: false,
         message: "",
-        tipo_falla: "error", // "error", "success", "warning"
+        tipo_falla: "error",
+    });
+
+    const [detailModal, setDetailModal] = useState({
+        show: false,
+        incidencia: null
     });
 
     // Filter states
@@ -70,7 +75,7 @@ function HistorialIncidencias() {
             // Build query parameters
             const params = new URLSearchParams();
             params.append('page', page.toString());
-            params.append('ordering', '-timestamp'); // Ordenar por fecha descendente
+            params.append('ordering', '-timestamp');
 
             // Apply filters only when explicitly requested
             if (applyFilters) {
@@ -84,7 +89,6 @@ function HistorialIncidencias() {
                     params.append('end_date', filters.endDate);
                 }
                 if (filters.accion) {
-                    // Mapear las acciones del filtro a los valores del API
                     const actionMap = {
                         'Crear': 'create',
                         'Actualizar': 'update', 
@@ -95,8 +99,6 @@ function HistorialIncidencias() {
                 }
             }
 
-            console.log("Token usado:", token);
-            console.log("URL final:", `${API_URL}/auditlog/logs?${params.toString()}`);
             const response = await axios.get(`${API_URL}/auditlog/logs?${params.toString()}`, {
                 headers: { Authorization: `Token ${token}` },
             });
@@ -110,8 +112,9 @@ function HistorialIncidencias() {
                 accion: item.action,
                 content_type: item.content_type,
                 object_repr: item.object_repr,
-                fecha: item.created || item.timestamp, // Usar created o timestamp según disponibilidad
-                changes_summary: item.changes_summary || []
+                fecha: item.created || item.timestamp,
+                changes_summary: item.changes_summary || [],
+                remote_addr: item.remote_addr
             }));
 
             setIncidencias(transformedData);
@@ -119,7 +122,7 @@ function HistorialIncidencias() {
             // Update pagination info
             setPagination({
                 currentPage: page,
-                totalPages: Math.ceil(data.count / 40), // 40 registros por página
+                totalPages: Math.ceil(data.count / 40),
                 totalCount: data.count,
                 hasNext: !!data.next,
                 hasPrevious: !!data.previous,
@@ -207,7 +210,7 @@ function HistorialIncidencias() {
     };
 
     const columns = [
-        { key: "id", label: "ID de la incidencia" },
+        // { key: "id", label: "ID de la incidencia" },
         {
             key: "actor",
             label: "Usuario",
@@ -257,6 +260,16 @@ function HistorialIncidencias() {
             )
         },
         {
+            key: "remote_addr",
+            label: "Direccion IP",
+            responsive: "hidden md:table-cell",
+            render: (item) => (
+                <span className="truncate max-w-xs" title={item.remote_addr}>
+                    {item.remote_addr || "N/A"}
+                </span>
+            )
+        },
+        {
             key: "fecha",
             label: "Fecha",
             responsive: "hidden sm:table-cell",
@@ -270,16 +283,228 @@ function HistorialIncidencias() {
         },
     ];
 
-    // Show detailed view (could navigate to detail page)
+    // Show detailed view with improved modal
     const handleViewIncidencia = (item) => {
-        // For now, show details in modal
-        const changesText = item.changes_summary.length > 0 
-            ? item.changes_summary.map(change => `${change.field}: ${change.old} → ${change.new}`).join('\n')
-            : 'No hay cambios registrados';
-            
-        showModalMessage(
-            `Detalles de la incidencia:\n\nID: ${item.id}\nUsuario: ${item.actor}\nAcción: ${item.accion}\nObjeto: ${item.object_repr}\nFecha: ${new Date(item.fecha).toLocaleString('es-CO')}\n\nCambios:\n${changesText}`,
-            "success"
+        setDetailModal({
+            show: true,
+            incidencia: item
+        });
+    };
+
+    // Componente para el modal de detalles mejorado
+    const DetailModal = ({ incidencia, onClose }) => {
+        if (!incidencia) return null;
+
+        const getActionColor = (action) => {
+            const colors = {
+                "create": "text-green-600 bg-green-50 border-green-200",
+                "update": "text-blue-600 bg-blue-50 border-blue-200", 
+                "delete": "text-red-600 bg-red-50 border-red-200"
+            };
+            return colors[action?.toLowerCase()] || "text-gray-600 bg-gray-50 border-gray-200";
+        };
+
+        const getActionLabel = (action) => {
+            const labels = {
+                "create": "Crear",
+                "update": "Actualizar",
+                "delete": "Eliminar"
+            };
+            return labels[action?.toLowerCase()] || action;
+        };
+
+        const getFieldDisplayName = (field) => {
+            const fieldNames = {
+                "event": "Evento",
+                "timestamp": "Marca de tiempo",
+                "ip_address": "Dirección IP interna",
+                "user_agent": "Navegador/Cliente"
+            };
+            return fieldNames[field] || field;
+        };
+
+        const formatDate = (dateString) => {
+            return new Date(dateString).toLocaleString('es-CO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        };
+
+        return (
+            <div className="fixed inset-0  bg-white/10 backdrop-blur-sm bg-opacity-20 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-[#365486] to-[#344663] text-white p-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <Info className="w-6 h-6" />
+                                <h2 className="text-xl font-bold">Detalles de Incidencia</h2>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                className="text-white hover:text-gray-200 transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                        {/* ID Badge */}
+                        <div className="mb-6">
+                            <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
+                                ID: {incidencia.id}
+                            </span>
+                        </div>
+
+                        {/* Main Info Grid */}
+                        <div className="grid md:grid-cols-2 gap-6 mb-6">
+                            {/* Usuario */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <User className="w-5 h-5 text-gray-600" />
+                                    <span className="font-semibold text-gray-700">Usuario</span>
+                                </div>
+                                <p className="text-gray-900 font-medium">
+                                    {incidencia.actor || "Sistema"}
+                                </p>
+                            </div>
+
+                            {/* Acción */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Activity className="w-5 h-5 text-gray-600" />
+                                    <span className="font-semibold text-gray-700">Acción</span>
+                                </div>
+                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getActionColor(incidencia.accion)}`}>
+                                    {getActionLabel(incidencia.accion)}
+                                </span>
+                            </div>
+
+                            {/* Modelo */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Package className="w-5 h-5 text-gray-600" />
+                                    <span className="font-semibold text-gray-700">Modelo afectado</span>
+                                </div>
+                                <p className="text-gray-900">
+                                    {incidencia.content_type || "N/A"}
+                                </p>
+                            </div>
+
+                            {/* Fecha */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <Calendar className="w-5 h-5 text-gray-600" />
+                                    <span className="font-semibold text-gray-700">Fecha y hora</span>
+                                </div>
+                                <p className="text-gray-900 text-sm">
+                                    {formatDate(incidencia.fecha)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* IP Address */}
+                        {incidencia.remote_addr && (
+                            <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+                                <div className="flex items-center space-x-2 mb-2">
+                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                                    </svg>
+                                    <span className="font-semibold text-blue-700">Dirección IP</span>
+                                </div>
+                                <p className="text-blue-900 font-mono text-sm">
+                                    {incidencia.remote_addr}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Objeto */}
+                        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                            <div className="flex items-center space-x-2 mb-2">
+                                <FileText className="w-5 h-5 text-gray-600" />
+                                <span className="font-semibold text-gray-700">Objeto</span>
+                            </div>
+                            <p className="text-gray-900 break-words">
+                                {incidencia.object_repr || "No especificado"}
+                            </p>
+                        </div>
+
+                        {/* Cambios */}
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                            <h3 className="font-semibold text-amber-800 mb-3 flex items-center">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Registro de cambios
+                            </h3>
+                            
+                            {incidencia.changes_summary && incidencia.changes_summary.length > 0 ? (
+                                <div className="space-y-3">
+                                    {incidencia.changes_summary.map((change, index) => (
+                                        <div key={index} className="bg-white p-3 rounded border border-amber-200">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-medium text-amber-700 capitalize">
+                                                    {getFieldDisplayName(change.field)}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm">
+                                                {change.field === 'user_agent' ? (
+                                                    <div className="space-y-2">
+                                                        <div className="bg-red-50 p-2 rounded border border-red-200">
+                                                            <span className="text-red-600 font-medium">Anterior:</span>
+                                                            <p className="break-all text-xs mt-1">{change.old || 'N/A'}</p>
+                                                        </div>
+                                                        <div className="text-center text-gray-400">↓</div>
+                                                        <div className="bg-green-50 p-2 rounded border border-green-200">
+                                                            <span className="text-green-600 font-medium">Nuevo:</span>
+                                                            <p className="break-all text-xs mt-1">{change.new || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center space-x-2 flex-wrap">
+                                                        <span className="text-red-600 bg-red-50 px-2 py-1 rounded text-xs break-all">
+                                                            Anterior: {change.old || 'N/A'}
+                                                        </span>
+                                                        <span className="text-gray-400">→</span>
+                                                        <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs break-all">
+                                                            Nuevo: {change.new || 'N/A'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <svg className="w-12 h-12 mx-auto text-amber-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p className="text-amber-600">No hay cambios registrados para esta incidencia</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    {/* <div className="bg-gray-50 px-6 py-4 flex justify-end border-t">
+                        <button
+                            onClick={onClose}
+                            className="bg-[#365486] text-white px-6 py-2 rounded-lg hover:bg-[#344663] transition-colors font-medium"
+                        >
+                            Cerrar
+                        </button>
+                    </div> */}
+                </div>
+            </div>
         );
     };
 
@@ -369,19 +594,27 @@ function HistorialIncidencias() {
                     </>
                 )}
 
-                {/* Modal for messages */}
+                {/* Modal para mensajes de error/éxito */}
                 {modal.show && (
                     <Modal
                         showModal={modal.show}
                         onClose={() => setModal(prev => ({ ...prev, show: false }))}
                         title={
-                            modal.tipo_falla === "success" ? "Detalles de Incidencia" : 
+                            modal.tipo_falla === "success" ? "Éxito" : 
                             modal.tipo_falla === "warning" ? "Advertencia" : "Error"
                         }
                         btnMessage="Cerrar"
                     >
-                        <pre className="whitespace-pre-wrap text-sm">{modal.message}</pre>
+                        <p className="text-sm">{modal.message}</p>
                     </Modal>
+                )}
+
+                {/* Modal de detalles mejorado */}
+                {detailModal.show && (
+                    <DetailModal
+                        incidencia={detailModal.incidencia}
+                        onClose={() => setDetailModal({ show: false, incidencia: null })}
+                    />
                 )}
             </div>
         </div>

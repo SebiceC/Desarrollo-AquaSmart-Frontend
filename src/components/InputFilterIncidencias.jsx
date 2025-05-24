@@ -19,7 +19,7 @@ const InputFilterIncidencias = ({ filters, onFilterChange, onApplyFilters }) => 
       {/* Filtro por ID de Usuario */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
         <span className="absolute left-3 top-2 text-gray-400">
-          <Search size={18} />
+          <Search size={12} />
         </span>
         <input
           type="text"
