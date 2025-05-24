@@ -173,6 +173,13 @@ function NavBar() {
                     />
 
                     <NavItem direction="/historial-incidencias" text="Historial de Incidencias" />
+                    <NavItem 
+                        direction="/predicciones"
+                        text="Predicciones"
+                        subItems={[
+                            { direction: "/predicciones", text: "Lotes del Distrito" },
+                        ]}
+                    />
 
                     {showPermisosSection && (
                         <NavItem direction="/permisos" text="Permisos" />

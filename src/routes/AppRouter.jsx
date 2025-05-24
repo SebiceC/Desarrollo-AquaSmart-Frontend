@@ -70,6 +70,9 @@ import CrearMantenimiento from "../app/reportes_y_novedades/informe_mantenimient
 import ControlReportesIntervenciones from "../app/reportes_y_novedades/gestion_gerencia_informe/control-reportes-intervenciones";
 import GestionarInforme from "../app/reportes_y_novedades/gestion_gerencia_informe/gestionar-informe";
 import HistorialIncidencias from "../app/historialIncidencias/HistorialIncidencias";
+import PredictionLotChart from "../app/Predicciones/PredictionLotChart";
+import LotsListPredictions from "../app/Predicciones/LotsListPredictions";
+
 
 const AppRouter = () => {
     return (
@@ -83,13 +86,11 @@ const AppRouter = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/forgotPassword" element={<ForgotPassword />} />
             <Route path="/recoverPassword" element={<RecoverPassword />} />
-            {/* <Route path="/registro-predios" element={<RegistroPredios/>}/> */}
 
             {/* Rutas protegidas */}
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
 
-            <Route path="gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
             <Route path="gestionRegistros/lotes" element={<ProtectedRoute element={<RegistroLotes/>}/>}/>
 
             <Route path="/gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
@@ -148,6 +149,8 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
             <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
             <Route path="/historial-incidencias" element={<HistorialIncidencias />} />
+            <Route path="/predicciones" element={<ProtectedRoute element={<LotsListPredictions />} />} />
+            <Route path="/predicciones/:id_lot" element={<ProtectedRoute element={<PredictionLotChart />} />} />
         </Routes>
     );
 };
