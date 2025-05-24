@@ -171,6 +171,9 @@ function NavBar() {
                             { direction: "/reportes-y-novedades/control-reportes-intervenciones", text: "Control de reportes de intervenciones" }
                         ]}
                     />
+
+                    <NavItem direction="/historial-incidencias" text="Historial de Incidencias" />
+
                     {showPermisosSection && (
                         <NavItem direction="/permisos" text="Permisos" />
                     )}
@@ -254,6 +257,8 @@ function NavBar() {
                                 { direction: "/reportes-y-novedades/control-reportes-intervenciones", text: "Control de reportes de intervenciones" }
                             ]}
                         />
+
+                        <NavItem direction="/historial-incidencias" text="Historial de Incidencias" />
 
                         {showPermisosSection && (
                             <NavItem direction="/permisos" text="Permisos" />

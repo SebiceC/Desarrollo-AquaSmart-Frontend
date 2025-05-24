@@ -69,6 +69,7 @@ import InformeMantenimiento from "../app/reportes_y_novedades/informe_mantenimie
 import CrearMantenimiento from "../app/reportes_y_novedades/informe_mantenimiento/crear-informe";
 import ControlReportesIntervenciones from "../app/reportes_y_novedades/gestion_gerencia_informe/control-reportes-intervenciones";
 import GestionarInforme from "../app/reportes_y_novedades/gestion_gerencia_informe/gestionar-informe";
+import HistorialIncidencias from "../app/historialIncidencias/HistorialIncidencias";
 
 const AppRouter = () => {
     return (
@@ -146,6 +147,7 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento/>} />} />
             <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
             <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
+            <Route path="/historial-incidencias" element={<HistorialIncidencias />} />
         </Routes>
     );
 };
