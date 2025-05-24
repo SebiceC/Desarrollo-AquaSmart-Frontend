@@ -299,9 +299,16 @@ const ActivarCaudal = () => {
       setModalMessage("Reporte generado correctamente para el lote " + lote.id_lot)
       setShowModal(true)
     } else {
-      // Lógica para solicitudes de activación
+      // Verificar primero si el lote está activo
+      if (!lote.is_activate) {
+        setModalMessage(
+          "No se puede solicitar activación de caudal para un lote inactivo. Contacte al administrador para activar el lote.",
+        )
+        setShowModal(true)
+        return
+      }
 
-      // Validar primero si el lote tiene una válvula 4" asignada
+      // Validar si el lote tiene una válvula 4" asignada
       if (!lote.hasValve4) {
         setModalMessage('El lote no cuenta con una válvula 4" asignada, no se puede realizar la solicitud.')
         setShowModal(true)
@@ -315,7 +322,7 @@ const ActivarCaudal = () => {
         return
       }
 
-      // Si el lote tiene válvula y el caudal está cancelado, mostrar el modal de solicitud de activación
+      // Si el lote está activo, tiene válvula y el caudal está cancelado, mostrar el modal de solicitud de activación
       setSelectedLote(lote)
       setShowActivationModal(true)
     }
@@ -331,8 +338,8 @@ const ActivarCaudal = () => {
   const canRequestActivation = (lote) => {
     // En modo reporte, permitimos siempre acciones
     if (isReportMode) return true
-    // En modo solicitud, solo si tiene válvula 4" y el caudal está cancelado
-    return lote.hasValve4 && lote.flowCanceled
+    // En modo solicitud, verificar que el lote esté activo, tenga válvula 4" y el caudal esté cancelado
+    return lote.is_activate === true && lote.hasValve4 && lote.flowCanceled
   }
 
   // Configuración de columnas para DataTable
@@ -399,10 +406,10 @@ const ActivarCaudal = () => {
   // Texto para el botón según el modo
   const actionButtonText = isReportMode ? "Reportar" : "Solicitar"
 
-  // Mensaje para el tooltip en modo solicitud cuando está deshabilitado
+  // Actualizar el mensaje para el tooltip cuando está deshabilitado
   const disabledTooltip = isReportMode
     ? ""
-    : 'No se puede solicitar activación. El lote no tiene válvula 4" asignada o el caudal ya está activo.'
+    : 'No se puede solicitar activación. El lote está inactivo, no tiene válvula 4" asignada o el caudal ya está activo.'
 
   return (
     <div>

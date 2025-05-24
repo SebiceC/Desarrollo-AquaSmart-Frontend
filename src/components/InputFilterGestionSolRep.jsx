@@ -61,8 +61,8 @@ const InputFilterGestionSolRep = ({
         />
       </div>
 
-            {/* Filtro por tipo (Reporte/Solicitud) */}
-            <div className="relative w-full lg:w-[22%] xl:w-1/5">
+      {/* Filtro por tipo (Reporte/Solicitud) */}
+      <div className="relative w-full lg:w-[22%] xl:w-1/5">
         <select
           className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
           value={filters.solicitudType}
@@ -71,6 +71,32 @@ const InputFilterGestionSolRep = ({
           <option value="">TIPO</option>
           <option value="solicitud">Solicitud</option>
           <option value="reporte">Reporte</option>
+        </select>
+        <span className="absolute top-3 right-4 text-gray-400">
+          <svg
+            className="w-5 h-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </div>
+
+      {/* Filtro por tipo Especificación */}
+      <div className="relative w-full lg:w-[22%] xl:w-1/5">
+        <select
+          className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+          value={filters.specification}
+          onChange={e => onFilterChange("specification", e.target.value)}
+        >
+          <option value="">ESPECIFICACIÓN</option>
+          <option value="cambio_caudal">Cambio de Caudal</option>
+          <option value="cancelacion temporal de caudal">Cancelación Temporal de Caudal</option>
+          <option value="cancelacion definitiva de caudal">Cancelación Definitiva de Caudal</option>
+          <option value="activacion">Activación de Caudal</option>
         </select>
         <span className="absolute top-3 right-4 text-gray-400">
           <svg
@@ -98,7 +124,6 @@ const InputFilterGestionSolRep = ({
             <option value="en proceso">En Proceso</option>
             <option value="a espera de aprobacion">A Espera de Aprobación</option>
             <option value="finalizado">Finalizado</option>
-            <option value="rechazada">Rechazada</option>
           </select>
           <span className="absolute top-3 right-4 text-gray-400">
             <svg
