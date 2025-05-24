@@ -418,7 +418,7 @@ const InformeMantenimiento = () => {
     <div>
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20">
-        <h1 className="text-center my-15 text-lg md:text-xl font-semibold mb-6">Asignación de mantenimientos</h1>
+        <h1 className="text-center my-15 text-lg md:text-xl font-semibold mb-6">Informe de solicitud/reporte asignada</h1>
 
         {/* Sección de filtros */}
         <div className="mb-6">

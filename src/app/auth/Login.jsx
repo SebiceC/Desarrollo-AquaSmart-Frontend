@@ -12,10 +12,10 @@ import { ChevronLeft, ChevronRight, Mail, Phone } from "lucide-react"
 
 // Simulando las imágenes del carrusel (reemplaza con tus rutas reales)
 const carouselImages = [
-  "/public/img/1.PNG?height=600&width=800",
-  "/public/img/2c.png?height=600&width=800",
-  "/public/img/3.PNG?height=600&width=800",
-  "/public/img/4.PNG?height=600&width=800",
+  "/img/1.PNG?height=600&width=800",
+  "/img/2c.png?height=600&width=800",
+  "/img/3.PNG?height=600&width=800",
+  "/img/4.PNG?height=600&width=800",
 ]
 
 const Login = () => {
@@ -254,14 +254,14 @@ const Login = () => {
       </div>
 
       {/* Lado derecho - Tu formulario original */}
-      <div className="w-full lg:w-[60%] h-full min-h-screen flex flex-col">
+      <div className="w-full lg:w-[60%] bg-[#e8fdf5] h-full min-h-screen flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center gap-10 px-4">
           <div className="flex justify-center">
             <img src="/img/logo.png" alt="Logo" className="w-[60%] lg:w-[50%]" />
           </div>
 
           {!showTokenForm ? (
-            <div className="w-[83%] sm:w-[70%] lg:w-[60%] bg-[#ebfdfd] p-6 border-1 shadow-lg border-[#003F88] rounded-lg flex flex-col items-center">
+            <div className="w-[83%] sm:w-[70%] lg:w-[60%] bg-white p-6 border-1 shadow-lg border-[#003F88] rounded-lg flex flex-col items-center">
               <h1 className="text-4xl font-bold pb-8 text-center">INICIO DE SESIÓN</h1>
               <form onSubmit={handleLogin} className="flex flex-col items-center w-full">
                 {error && (
@@ -327,8 +327,8 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-[50%] mt-4 bg-[#365486] text-white py-2 rounded-lg transition-all duration-300 ${
-                    isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#344663] hover:scale-105"
+                  className={`w-[50%] mt-4 bg-[#2d6a4f] text-white py-2 rounded-lg transition-all duration-300 ${
+                    isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#2c5140] hover:scale-105"
                   }`}
                 >
                   {isLoading ? "INICIANDO SESIÓN..." : "INICIAR SESIÓN"}
@@ -336,7 +336,7 @@ const Login = () => {
               </form>
             </div>
           ) : (
-            <div className="bg-[#ebfdfd] p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[50%] lg:w-[56%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] sm:w-[60%] md:w-[50%] lg:w-[56%] border border-blue-400 flex flex-col justify-center mx-auto items-center">
               <h2 className="text-2xl font-bold text-center">INGRESO DE TOKEN</h2>
               <p className="text-center mt-2">Introduce el token que fue enviado a tu correo electrónico.</p>
 

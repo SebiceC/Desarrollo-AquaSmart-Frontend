@@ -168,7 +168,7 @@ const RegistroLotes = () => {
             const response = await axios.post(
                 `${API_URL}/plot-lot/lots/register`,
                 {
-                    nombre_cultivo: formData.nombre_cultivo,
+                    crop_name: formData.nombre_cultivo,
                     crop_type: formData.tipo_cultivo,
                     plot: formData.predio_asignado,
                     soil_type: formData.tipo_suelo,
