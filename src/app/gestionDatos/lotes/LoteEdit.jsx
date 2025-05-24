@@ -42,7 +42,8 @@ const LoteEdit = () => {
   const [initialIsActive, setInitialIsActive] = useState(false)
   const [cropTypes, setCropTypes] = useState([])
   
-  
+  // Guardar los valores originales al cargar el lote
+  const [originalData, setOriginalData] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -83,6 +84,14 @@ const LoteEdit = () => {
         })
         setFormData({
           id_lot: response.data.id_lot || "",
+          nombre_cultivo: response.data.crop_name || "",
+          tipo_cultivo: response.data.crop_type || "",
+          predio_asignado: response.data.plot || "",
+          tipo_suelo: response.data.soil_type || "",
+          variedad_cultivo: response.data.crop_variety || "",
+          is_activate: response.data.is_activate === true || response.data.is_activate === "true",
+        })
+        setOriginalData({
           nombre_cultivo: response.data.crop_name || "",
           tipo_cultivo: response.data.crop_type || "",
           predio_asignado: response.data.plot || "",
@@ -186,20 +195,22 @@ const LoteEdit = () => {
       return
     }
 
-    const updatedData = {
-      id_lot: formData.id_lot,
-      crop_name: formData.nombre_cultivo,
-      crop_type: formData.tipo_cultivo,
-      plot: formData.predio_asignado,
-      soil_type: formData.tipo_suelo,
-      crop_variety: formData.variedad_cultivo,
-      is_activate: formData.is_activate, // Agregado directamente al mismo PATCH
+    // Solo enviar los campos que han cambiado respecto a los valores originales
+    let changedFields = {};
+    if (originalData) {
+      if (formData.nombre_cultivo !== originalData.nombre_cultivo) changedFields.crop_name = formData.nombre_cultivo;
+      if (formData.tipo_cultivo !== originalData.tipo_cultivo) changedFields.crop_type = formData.tipo_cultivo;
+      if (formData.predio_asignado !== originalData.predio_asignado) changedFields.plot = formData.predio_asignado;
+      if (formData.tipo_suelo !== originalData.tipo_suelo) changedFields.soil_type = formData.tipo_suelo;
+      if (formData.variedad_cultivo !== originalData.variedad_cultivo) changedFields.crop_variety = formData.variedad_cultivo;
+      if (formData.is_activate !== originalData.is_activate) changedFields.is_activate = formData.is_activate;
     }
-
+    if (Object.keys(changedFields).length === 0) {
+      setErrorMessage("No se han realizado cambios para actualizar.");
+      return;
+    }
     try {
-      // Enviar los datos de actualización con is_activate incluido
-      // console.log(updatedData)
-      const response = await axios.patch(`${API_URL}/plot-lot/lots/${id_lot}/update`, updatedData, {
+      const response = await axios.patch(`${API_URL}/plot-lot/lots/${id_lot}/update`, changedFields, {
         headers: {
           Authorization: `Token ${token}`,
           "Content-Type": "application/json",
@@ -212,22 +223,17 @@ const LoteEdit = () => {
     } catch (error) {
       if (error.response) {
         const newErrors = {}
-
-        // Si el error está relacionado con algún campo específico, mostrar mensaje
         if (error.response.data.plot) {
           newErrors.predio_asignado = " "
-          setErrorMessage(error.response.data.plot[0]) // Mostrar el mensaje de error relacionado con el predio
+          setErrorMessage(error.response.data.plot[0])
         }
-
         if (error.response.data.error) {
           setErrorMessage(error.response.data.error)
         }
-
         if (error.response.data.non_field_errors) {
           setErrorMessage(error.response.data.non_field_errors[0])
         }
-
-        setErrors(newErrors) // Actualizar los errores
+        setErrors(newErrors)
       } else {
         setErrorMessage("Error de conexión con el servidor.")
       }
