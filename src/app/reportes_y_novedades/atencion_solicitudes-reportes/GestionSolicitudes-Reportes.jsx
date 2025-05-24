@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
-import { Eye } from "lucide-react";
 import InputFilterGestionSolRep from "../../../components/InputFilterGestionSolRep";
 // Importar los nuevos modales
 
