@@ -4,6 +4,7 @@ import { IoMdDownload, IoIosPlay } from "react-icons/io";
 import NavBar from "../components/NavBar";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Footer from "../components/Footer";
 
 
 const Perfil = () => {
@@ -139,12 +140,18 @@ const Perfil = () => {
                                         </div>
                                         Descargar PDF de guía
                                     </button>
-                                    <button className="px-5 mt-4 bg-[#2ba19b] text-white py-2 hover:cursor-pointer rounded-lg flex items-center gap-5">
+
+                                    <a
+                                        href="https://youtu.be/IOoFib27i6U"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-5 mt-4 bg-[#2ba19b] text-white py-2 hover:cursor-pointer rounded-lg flex items-center gap-5"
+                                    >
                                         <div className="bg-white rounded-full w-6 h-6 flex items-center justify-center">
                                             <IoIosPlay size={20} className="text-[#2ba19b] text-center ml-0.5" />
                                         </div>
                                         Ver video informativo
-                                    </button>
+                                    </a>
 
                                 </div>
                             </div>
@@ -167,6 +174,7 @@ const Perfil = () => {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };

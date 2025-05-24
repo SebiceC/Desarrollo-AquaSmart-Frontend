@@ -1,53 +1,55 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronUp } from "lucide-react";
+"use client"
+
+import { useState, useRef, useEffect, useCallback } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
 const NavItem = ({ direction, text, subItems = [] }) => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const isActive = location.pathname.startsWith(direction);
+    const location = useLocation()
+    const navigate = useNavigate()
+    const isActive = location.pathname.startsWith(direction)
 
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= 1024);
-    const contentRef = useRef(null);
-    const menuRef = useRef(null);
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= 1024)
+    const contentRef = useRef(null)
+    const menuRef = useRef(null)
 
     // Detectar cambios en el tamaño de la pantalla
     useEffect(() => {
         const handleResize = () => {
-            setIsSmallScreen(window.innerWidth <= 1024);
-        };
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+            setIsSmallScreen(window.innerWidth <= 1024)
+        }
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [])
 
     // Manejo de clics fuera del menú para cerrarlo
     const handleClickOutside = useCallback((event) => {
         if (menuRef.current && !menuRef.current.contains(event.target)) {
-            setMenuOpen(false);
+            setMenuOpen(false)
         }
-    }, []);
+    }, [])
 
     useEffect(() => {
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside)
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [handleClickOutside]);
+            document.removeEventListener("mousedown", handleClickOutside)
+        }
+    }, [handleClickOutside])
 
     const handleClick = () => {
         if (subItems.length > 0) {
-            setMenuOpen(!menuOpen);
+            setMenuOpen(!menuOpen)
         } else {
-            navigate(direction);
+            navigate(direction)
         }
-    };
+    }
 
     return (
         <div className="relative" ref={menuRef}>
             <button
                 onClick={handleClick}
-                className={`w-full text-left px-3 py-2 font-semibold flex justify-between items-center transition-all duration-300 ease-in-out 
+                className={`w-full text-left px-2 py-2 font-semibold flex justify-between items-center transition-all duration-300 ease-in-out whitespace-nowrap rounded-md
                     ${isActive ? "bg-[#003F88] text-white" : "hover:text-white hover:bg-[#003F88]"}`}
             >
                 <span>{text}</span>
@@ -79,7 +81,7 @@ const NavItem = ({ direction, text, subItems = [] }) => {
                         </div>
                     ) : (
                         <div
-                            className={`absolute left-0 w-full  bg-[#DCF2F1]  py-2 transition-all duration-300 ease-in-out ${menuOpen ? "block" : "hidden"}`}
+                            className={`absolute left-0 w-full bg-[#DCF2F1] py-2 transition-all duration-300 ease-in-out z-50 rounded-md shadow-lg border border-gray-200 ${menuOpen ? "block" : "hidden"}`}
                         >
                             {subItems.map((subItem, index) => (
                                 <Link
@@ -96,7 +98,7 @@ const NavItem = ({ direction, text, subItems = [] }) => {
                 </>
             )}
         </div>
-    );
-};
+    )
+}
 
-export default NavItem;
+export default NavItem
