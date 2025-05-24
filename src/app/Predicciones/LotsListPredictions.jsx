@@ -7,7 +7,7 @@ import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
 
   
-const PredictionsLotsList = () => {
+const LotsListPredictions = () => {
   const navigate = useNavigate();
   const [lotes, setLotes] = useState([]);
   const [predios, setPredios] = useState([]);
@@ -335,4 +335,4 @@ const PredictionsLotsList = () => {
   );
 };
 
-export default PredictionsLotsList  ;
+export default LotsListPredictions  ;
