@@ -9,7 +9,7 @@ const FallaAplicativoF = ({ showModal, onClose, solicitudBasica, onSuccess, onEr
   const renderDetallesCancelacion = (solicitudBasica, detalleSolicitud) => (
     <>
       <h3 className="text-lg font-semibold mb-3 text-blue-800 border-b border-gray-200 pb-2">
-        Información del reporte 
+        Información del reporte {solicitudBasica.failure_type}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex flex-col space-y-1">
@@ -59,6 +59,15 @@ const FallaAplicativoF = ({ showModal, onClose, solicitudBasica, onSuccess, onEr
   };
 
 
+  const formatearTitulo = (texto) => {
+    if (!texto) return "Falla Aplicativo";
+    return texto
+      .replace(/_/g, ' ')  // Reemplazar guiones bajos con espacios
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
     <BaseInfoFinalModalR
       showModal={showModal}
@@ -66,7 +75,7 @@ const FallaAplicativoF = ({ showModal, onClose, solicitudBasica, onSuccess, onEr
       solicitudBasica={solicitudBasica}
       onSuccess={onSuccess}
       onError={onError}
-      titulo="Reporte de falla en el aplicativo"
+      titulo={formatearTitulo(solicitudBasica?.failure_type) || "Asignación de Reporte de Falla"}
       tipoAsignacion="failure_report"
       renderDetallesSolicitud={renderDetallesCancelacion}
       getEndpointDetalle={getEndpointDetalle}

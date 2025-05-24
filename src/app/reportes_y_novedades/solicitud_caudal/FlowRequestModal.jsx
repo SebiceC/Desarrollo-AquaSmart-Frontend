@@ -19,12 +19,21 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
     }
   };
 
-  // Función para extraer el mensaje de error del formato anidado
+  // Función para extraer el mensaje de error del formato actualizado
   const extractErrorMessage = (errorObj) => {
     try {
-      // Si es un string, intentar parsearlo
+      // Estructura nueva: { status: "error", code: 400, errors: { non_field_errors: "mensaje" } }
+      if (errorObj.errors && errorObj.errors.non_field_errors) {
+        return errorObj.errors.non_field_errors;
+      }
+
+      // Estructura antigua: errors como array
+      if (errorObj.errors && Array.isArray(errorObj.errors) && errorObj.errors.length > 0) {
+        return errorObj.errors[0];
+      }
+
+      // Si es un string, intentar parsearlo (estructura antigua)
       if (typeof errorObj === 'string') {
-        // Intentar extraer el mensaje usando regex
         const match = errorObj.match(/ErrorDetail\(string='([^']+)'/);
         if (match && match[1]) {
           return match[1];
@@ -32,16 +41,15 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
         return errorObj;
       }
 
-      // Si es un objeto con estructura anidada
+      // Si es un objeto con estructura anidada (estructura antigua)
       if (errorObj.error && errorObj.error.message) {
-        // Extraer el mensaje del string anidado
         const match = errorObj.error.message.match(/ErrorDetail\(string='([^']+)'/);
         if (match && match[1]) {
           return match[1];
         }
       }
 
-      // Si tiene la estructura error.error
+      // Si tiene la estructura error.error (estructura antigua)
       if (errorObj.error && Array.isArray(errorObj.error) && errorObj.error.length > 0) {
         return errorObj.error[0];
       }
@@ -66,6 +74,7 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
       "El caudal solicitado es el mismo": "El caudal solicitado es el mismo que se encuentra disponible. Intente con un valor diferente.",
       "no tiene una válvula": "El lote no tiene una válvula asociada.",
       "fuera del rango": "El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg.",
+      "está inactivo": "El caudal del lote está inactivo. Debes solicitar activarlo primero.",
       // Agrega más mapeos según necesites
     };
 
@@ -146,7 +155,7 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
         let errorMessage = "Error al procesar la solicitud. Por favor, intente más tarde.";
 
         if (error.response?.data) {
-          // Extraer mensaje de error de la estructura compleja
+          // Extraer mensaje de error de la estructura actualizada
           errorMessage = extractErrorMessage(error.response.data);
           
           // Categorizar y personalizar el mensaje
