@@ -9,33 +9,26 @@ import Perfil from "../app/Perfil";
 import IoTControll from "../app/IoTControll";
 import ProtectedRoute from "./ProtectedRoute"; // Importamos el componente de protección
 import UsersList from "../app/gestionDatos/Users/UsersList";
-import RegistroPredios from "../app/gestionRegistros/RegistroPredios";
 import PreRegistrosList from "../app/gestionDatos/Users/PreRegistrosList";
 import PreRegistroDetail from "../app/gestionDatos/Users/PreRegistroDetail";
 import UserUpdateInformation from "../app/gestionDatos/Users/id/UserUpdateInformation";
-
-import UpdateInformation from "../app/gestionDatos/UserEdit/UpdateInformation"
+import UpdateInformation from "../app/gestionDatos/UserEdit/UpdateInformation";
 import PrediosList from "../app/gestionDatos/predios/PrediosList";
 import UserInformation from "../app/gestionDatos/Users/id/UserInformation";
-import RegistroLotes from "../app/gestionRegistros/RegistroLotes";
-
 import UpdatedPassword from "../app/seguridad/UpdatedPassword";
 import LotesList from "../app/gestionDatos/lotes/LotesList";
 import LoteInformation from "../app/gestionDatos/lotes/LoteInformation";
-import DispositivoIoTList from "../app/gestionDatos/dispositivosIoT/DispositivosIoTList"
+import DispositivoIoTList from "../app/gestionDatos/dispositivosIoT/DispositivosIoTList";
 import DispositivosIoTInformation from "../app/gestionDatos/dispositivosIoT/DispositivosIoTInformation";
-
 import PrediosDetail from "../app/gestionDatos/predios/PrediosDetail";
 import LoteEdit from "../app/gestionDatos/lotes/LoteEdit";
-import PrediosUpdate from "../app/gestionDatos/predios/PrediosUpdate"
+import PrediosUpdate from "../app/gestionDatos/predios/PrediosUpdate";
 import RegistroDispositivosIoT from "../app/gestionRegistros/RegistroDispositivosIoT";
-import PermissionsSystem from "../app/permisos/index"
+import PermissionsSystem from "../app/permisos/index";
 import DispositivoEdit from "../app/gestionDatos/dispositivosIoT/DispositivoEdit";
-
 import PlotLotUsers from "../app/infoprediosylotes/PlotLotUsersList";
 import MiPlotLotDetail from "../app/infoprediosylotes/PlotLotUsersDetail";
 import LotUsersDetail from "../app/infoprediosylotes/LotUsersDetail";
-
 import HistorialDistrito from "../app/HistorialConsumo/HistorialDistrito";
 import HistorialPredio from "../app/HistorialConsumo/HistorialPredio";
 import HistorialPredioDetail from "../app/HistorialConsumo/HistorialPredioDetail";
@@ -44,24 +37,20 @@ import HistorialUserPredio from "../app/HistorialConsumo/HistorialUserPredioList
 import HistorialUserPredioDetail from "../app/HistorialConsumo/HistorialUserPredioDetail";
 import HistorialUserLoteDetail from "../app/HistorialConsumo/HistorialUserLoteDetail";
 import ControlBocatoma from "../app/controloT/ControlBocatoma";
-
-import ValvesList from "../app/valvulas/ValvesList"
-import ValveDetail from "../app/valvulas/ValveDetail"
-import ValveFlowUpdate from "../app/valvulas/ValveFlowUpdate"
+import ValvesList from "../app/valvulas/ValvesList";
+import ValveDetail from "../app/valvulas/ValveDetail";
+import ValveFlowUpdate from "../app/valvulas/ValveFlowUpdate";
 import HistorialFacturasLote from "../app/facturacion/HistorialFacturasLote";
 import MisFacturas from "../app/misFacturas/MisFacturas";
-
-import GestionFacturas from "../app/facturacion/GestionFacturas"
+import GestionFacturas from "../app/facturacion/GestionFacturas";
 import FacturaLoteDetails from "../app/facturacion/FacturaLoteDetails";
 import MisFacturasDetails from "../app/misFacturas/MisFacturasDetails";
 import PagarFactura from "../app/misFacturas/PagarFactura";
-
 import ReportesYNovedades from "../app/reportes_y_novedades/solicitud_caudal/ReportesYNovedades";
 import ReportesYNovedadesLotesList from "../app/reportes_y_novedades/solicitud_caudal/ReportesYNovedadesLotesList";
 import ReportarFallosList from "../app/reportes_y_novedades/reportar_fallos/ReportarFallosList";
 import CancelacionCaudal from "../app/reportes_y_novedades/solicitud_caudal/CancelacionCaudal";
 import ActivacionCaudal from "../app/reportes_y_novedades/solicitud_caudal/activar-caudal";
-
 import GestionSolicitudesReportes from "../app/reportes_y_novedades/atencion_solicitudes-reportes/GestionSolicitudes-Reportes";
 import ReportesSolicitudes from "../app/reportes_y_novedades/mis-reportes-solicitudes/ReportesSolicitudes";
 import ReportesSolicitudesDetails from "../app/reportes_y_novedades/mis-reportes-solicitudes/ReportesSolicitudesDetails";
@@ -73,87 +62,79 @@ import HistorialIncidencias from "../app/historialIncidencias/HistorialIncidenci
 import PredictionLotChart from "../app/Predicciones/PredictionLotChart";
 import PredictionsLotsList from "../app/Predicciones/Predictionslotslist";
 
-
 const AppRouter = () => {
-    return (
-        <Routes>
-            {/* Redirección a login si no está autenticado */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/home" element={<Navigate to="/perfil" replace />} />
+  return (
+    <Routes>
+      {/* Redirección a login si no está autenticado */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/home" element={<Navigate to="/perfil" replace />} />
 
-            {/* Rutas públicas */}
-            <Route path="/preRegister" element={<PreRegister />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgotPassword" element={<ForgotPassword />} />
-            <Route path="/recoverPassword" element={<RecoverPassword />} />
-            {/* <Route path="/registro-predios" element={<RegistroPredios/>}/> */}
+      {/* Rutas públicas */}
+      <Route path="/preRegister" element={<PreRegister />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgotPassword" element={<ForgotPassword />} />
+      <Route path="/recoverPassword" element={<RecoverPassword />} />
+      {/* <Route path="/registro-predios" element={<RegistroPredios/>}/> */}
 
-            {/* Rutas protegidas */}
-            <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
-            <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
-
-            <Route path="gestionRegistros/lotes" element={<ProtectedRoute element={<RegistroLotes/>}/>}/>
-
-            <Route path="/gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
-
-            <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
-            <Route path="/gestionDatos/users/:document" element={<ProtectedRoute element={<UserInformation />} />} />
-            <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
-            <Route path="/gestionDatos/lotes/:id_lot" element={<ProtectedRoute element={<LoteInformation />} />} />
-            <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
-            <Route path="/gestionDatos/dispositivosIoT/:iot_id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
-            <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
-            <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
-            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} /> 
-            <Route path="/gestionDatos/users/updateinformation/:document" element={<ProtectedRoute element={<UpdateInformation />} />} /> 
-            <Route path="/gestionDatos/predios" element={<ProtectedRoute element={<PrediosList />} />} />           
-            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />         
-            <Route path="/seguridad/actualizar-contrasena" element={<ProtectedRoute element={<UpdatedPassword />} />} />
-            <Route path="/gestionDatos/predios/:id_plot" element={<ProtectedRoute element={<PrediosDetail />} />} />
-            <Route path="/gestionDatos/lotes/:id_lot/update" element={<ProtectedRoute element={<LoteEdit />} />} />
-            <Route path="/gestionDatos/predios/update/:id_plot" element={<ProtectedRoute element={<PrediosUpdate />} />} />
-            <Route path="/gestionRegistros/dispositivosIoT" element={<ProtectedRoute element={<RegistroDispositivosIoT/>}/>}/>            
-            <Route path="/permisos" element={<ProtectedRoute element={<PermissionsSystem/>}/>}/>
-            <Route path="/gestionDatos/dispositivosIoT/:iot_id/update" element={<ProtectedRoute element={<DispositivoEdit />} />} />
-            <Route path="/mispredios/:document" element={<ProtectedRoute element={<PlotLotUsers />} />} />
-            <Route path="/mispredios/predio/:id_plot" element={<ProtectedRoute element={<MiPlotLotDetail />} />} />
-            <Route path="/mislotes/lote/:id_lot" element={<ProtectedRoute element={<LotUsersDetail />} />} />
-            <Route path="/historial-consumo/distrito" element={<ProtectedRoute element={<HistorialDistrito />} />} />
-            <Route path="/historial-consumo/predio" element={<ProtectedRoute element={<HistorialPredio />} />} />
-            <Route path="/historial-consumo/predio/:id_plot" element={<ProtectedRoute element={<HistorialPredioDetail />} />} />
-            <Route path="/historial-consumo/predio/:id_plot/lote/:id_lot" element={<ProtectedRoute element={<HistorialLoteDetail />} />} />
-            <Route path="/mispredios/historial-consumoList/:document" element={<ProtectedRoute element={<HistorialUserPredio />} />} />
-            <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
-            <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
-            <Route path="/control-IoT/bocatoma" element={<ProtectedRoute element={<ControlBocatoma />} />} />
-            <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
-            <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
-            <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
-            <Route path="/facturacion/GestionFacturas" element={<ProtectedRoute element={<GestionFacturas />} />} />
-            <Route path="/facturacion/historial-facturas-lote" element={<ProtectedRoute element={<HistorialFacturasLote />} />} />
-            <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
-            <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
-            <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
-            <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
-            <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
-            <Route path="/reportes-y-novedades/solicitud_caudal" element={<ProtectedRoute element={<ReportesYNovedades />} />} />
-            <Route path="/reportes-y-novedades/lote" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
-            <Route path="/reportes-y-novedades/cancelacion_caudal" element={<ProtectedRoute element={<CancelacionCaudal />} />} />
-            <Route path="/reportes-y-novedades/activar-caudal" element={<ProtectedRoute element={<ActivacionCaudal />} />} />
-            <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />
-            <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
-            <Route path="/reportes-y-novedades/atencion_solicitudes-reportes" element={<ProtectedRoute element={<GestionSolicitudesReportes />} />} />
-            <Route path="/reportes-y-novedades/mis-reportes-solicitudes" element={<ProtectedRoute element={<ReportesSolicitudes/>} />} />
-            <Route path="/reportes-y-novedades/mis-reportes-solicitudes/detalle/:id_reportes_solicitudes" element={<ProtectedRoute element={<ReportesSolicitudesDetails/>} />} />
-            <Route path="/reportes-y-novedades/informe-mantenimiento" element={<ProtectedRoute element={<InformeMantenimiento/>} />} />
-            <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento/>} />} />
-            <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
-            <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
-            <Route path="/historial-incidencias" element={<HistorialIncidencias />} />
-            <Route path="/predicciones" element={<ProtectedRoute element={<PredictionsLotsList />} />} />
-            <Route path="/predicciones/:id_lot" element={<ProtectedRoute element={<PredictionLotChart />} />} />
-        </Routes>
-    );
+      {/* Rutas protegidas */}
+      <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
+      <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
+      <Route path="/gestionRegistros/dispositivosIoT" element={<ProtectedRoute element={<RegistroDispositivosIoT />} />} />
+      <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
+      <Route path="/gestionDatos/users/:document" element={<ProtectedRoute element={<UserInformation />} />} />
+      <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
+      <Route path="/gestionDatos/lotes/:id_lot" element={<ProtectedRoute element={<LoteInformation />} />} />
+      <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
+      <Route path="/gestionDatos/dispositivosIoT/:iot_id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
+      <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
+      <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
+      <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />
+      <Route path="/gestionDatos/users/updateinformation/:document" element={<ProtectedRoute element={<UpdateInformation />} />} />
+      <Route path="/gestionDatos/predios" element={<ProtectedRoute element={<PrediosList />} />} />
+      <Route path="/seguridad/actualizar-contrasena" element={<ProtectedRoute element={<UpdatedPassword />} />} />
+      <Route path="/gestionDatos/predios/:id_plot" element={<ProtectedRoute element={<PrediosDetail />} />} />
+      <Route path="/gestionDatos/lotes/:id_lot/update" element={<ProtectedRoute element={<LoteEdit />} />} />
+      <Route path="/gestionDatos/predios/update/:id_plot" element={<ProtectedRoute element={<PrediosUpdate />} />} />
+      <Route path="/permisos" element={<ProtectedRoute element={<PermissionsSystem />} />} />
+      <Route path="/gestionDatos/dispositivosIoT/:iot_id/update" element={<ProtectedRoute element={<DispositivoEdit />} />} />
+      <Route path="/mispredios/:document" element={<ProtectedRoute element={<PlotLotUsers />} />} />
+      <Route path="/mispredios/predio/:id_plot" element={<ProtectedRoute element={<MiPlotLotDetail />} />} />
+      <Route path="/mislotes/lote/:id_lot" element={<ProtectedRoute element={<LotUsersDetail />} />} />
+      <Route path="/historial-consumo/distrito" element={<ProtectedRoute element={<HistorialDistrito />} />} />
+      <Route path="/historial-consumo/predio" element={<ProtectedRoute element={<HistorialPredio />} />} />
+      <Route path="/historial-consumo/predio/:id_plot" element={<ProtectedRoute element={<HistorialPredioDetail />} />} />
+      <Route path="/historial-consumo/predio/:id_plot/lote/:id_lot" element={<ProtectedRoute element={<HistorialLoteDetail />} />} />
+      <Route path="/mispredios/historial-consumoList/:document" element={<ProtectedRoute element={<HistorialUserPredio />} />} />
+      <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
+      <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
+      <Route path="/control-IoT/bocatoma" element={<ProtectedRoute element={<ControlBocatoma />} />} />
+      <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
+      <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
+      <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
+      <Route path="/facturacion/GestionFacturas" element={<ProtectedRoute element={<GestionFacturas />} />} />
+      <Route path="/facturacion/historial-facturas-lote" element={<ProtectedRoute element={<HistorialFacturasLote />} />} />
+      <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
+      <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
+      <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
+      <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
+      <Route path="/reportes-y-novedades/solicitud_caudal" element={<ProtectedRoute element={<ReportesYNovedades />} />} />
+      <Route path="/reportes-y-novedades/lote" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
+      <Route path="/reportes-y-novedades/cancelacion_caudal" element={<ProtectedRoute element={<CancelacionCaudal />} />} />
+      <Route path="/reportes-y-novedades/activar-caudal" element={<ProtectedRoute element={<ActivacionCaudal />} />} />
+      <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />
+      <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
+      <Route path="/reportes-y-novedades/atencion_solicitudes-reportes" element={<ProtectedRoute element={<GestionSolicitudesReportes />} />} />
+      <Route path="/reportes-y-novedades/mis-reportes-solicitudes" element={<ProtectedRoute element={<ReportesSolicitudes />} />} />
+      <Route path="/reportes-y-novedades/mis-reportes-solicitudes/detalle/:id_reportes_solicitudes" element={<ProtectedRoute element={<ReportesSolicitudesDetails />} />} />
+      <Route path="/reportes-y-novedades/informe-mantenimiento" element={<ProtectedRoute element={<InformeMantenimiento />} />} />
+      <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento />} />} />
+      <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
+      <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
+      <Route path="/historial-incidencias" element={<HistorialIncidencias />} />
+      <Route path="/predicciones" element={<ProtectedRoute element={<PredictionsLotsList />} />} />
+      <Route path="/predicciones/:id_lot" element={<ProtectedRoute element={<PredictionLotChart />} />} />
+    </Routes>
+  );
 };
 
 export default AppRouter;
