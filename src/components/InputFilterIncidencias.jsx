@@ -6,21 +6,17 @@ const InputFilterIncidencias = ({ filters, onFilterChange, onApplyFilters }) => 
     onFilterChange("id", e.target.value);
   };
 
-  const handleLotIdChange = (e) => {
-    onFilterChange("lotId", e.target.value);
-  };
-
   const handleDateChange = (e) => {
     onFilterChange(e.target.name, e.target.value);
   };
 
-  const handleEstadoChange = (e) => {
+  const handleAccionChange = (e) => {
     onFilterChange("accion", e.target.value);
   };
 
   return (
     <div className="p-4 rounded-lg flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-      {/* Filtro por ID */}
+      {/* Filtro por ID de Usuario */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
         <span className="absolute left-3 top-2 text-gray-400">
           <Search size={18} />
@@ -31,21 +27,21 @@ const InputFilterIncidencias = ({ filters, onFilterChange, onApplyFilters }) => 
           className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
           value={filters.id}
           onChange={handleIdChange}
-          maxLength={10}
+          maxLength={20}
         />
       </div>
 
-      {/* Filtro por Estado */}
+      {/* Filtro por Acción */}
       <div className="relative w-full lg:w-[22%] xl:w-1/5">
         <select
           className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
           value={filters.accion}
-          onChange={handleEstadoChange}
+          onChange={handleAccionChange}
         >
-          <option value="">Accion</option>
-          <option value="Pendiente">Crear</option>
-          <option value="En proceso">Actualizar</option>
-          <option value="A espera de aprobación">Eliminar</option>
+          <option value="">Todas las acciones</option>
+          <option value="Crear">Crear</option>
+          <option value="Actualizar">Actualizar</option>
+          <option value="Eliminar">Eliminar</option>
         </select>
         <span className="absolute top-3 right-4 text-gray-400">
           <svg
@@ -60,9 +56,9 @@ const InputFilterIncidencias = ({ filters, onFilterChange, onApplyFilters }) => 
         </span>
       </div>
 
-      {/* Filtro por Periodo de creacion */}
+      {/* Filtro por Periodo de creación */}
       <div className="w-full lg:w-[40%] xl:w-1/3">
-        <p className="text-gray-500 text-sm text-center mb-1">Filtrar por periodo de creacion de la incidencia</p>
+        <p className="text-gray-500 text-sm text-center mb-1">Filtrar por período de la incidencia</p>
         <div className="flex items-center bg-gray-100 rounded-full px-1 w-full border border-gray-300">
           {/* Icono de búsqueda */}
           <span className="text-gray-400 px-2 flex-shrink-0">
@@ -98,7 +94,7 @@ const InputFilterIncidencias = ({ filters, onFilterChange, onApplyFilters }) => 
 
       {/* Botón Filtrar */}
       <button
-        className="bg-[#365486] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#344663] hover:scale-105 w-full lg:w-auto"
+        className="bg-[#365486] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[#344663] hover:scale-105 w-full lg:w-auto transition-all duration-200"
         onClick={onApplyFilters}
       >
         Filtrar
