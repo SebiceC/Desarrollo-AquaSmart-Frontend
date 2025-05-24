@@ -73,6 +73,7 @@ import HistorialIncidencias from "../app/historialIncidencias/HistorialIncidenci
 import PredictionLotChart from "../app/Predicciones/PredictionLotChart";
 import PredictionsLotsList from "../app/Predicciones/Predictionslotslist";
 
+
 const AppRouter = () => {
     return (
         <Routes>
