@@ -92,7 +92,6 @@ const AppRouter = () => {
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
 
-            <Route path="gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
             <Route path="gestionRegistros/lotes" element={<ProtectedRoute element={<RegistroLotes/>}/>}/>
 
             <Route path="/gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
