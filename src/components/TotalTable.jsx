@@ -27,21 +27,70 @@ const TotalTable = ({ data, onDownloadPDF, onDownloadExcel }) => {
         // Incrementar cantidad de facturas
         totals[estado].facturas += 1;
         
-        // Agregar usuario único (usando client_document)
-        if (factura.client_document) {
-          totals[estado].usuarios.add(factura.client_document.toString());
+        // Agregar usuario único (usando client_document) - Solo si existe y no es null/undefined
+        if (factura.client_document && factura.client_document !== null && factura.client_document !== undefined) {
+          const clientDoc = factura.client_document.toString().trim();
+          if (clientDoc !== '') {
+            totals[estado].usuarios.add(clientDoc);
+          }
         }
         
-        // Agregar predio único (usando property_id como principal, client_document como fallback)
-        const predioId = factura.property_id || factura.client_document || `predio_${index}`;
-        if (predioId) {
-          totals[estado].predios.add(predioId.toString());
+        // Extraer predio único del lot_code (primeros 7 dígitos)
+        let predioId = null;
+        if (factura.lot_code && factura.lot_code !== null && factura.lot_code !== undefined) {
+          const lotCodeStr = factura.lot_code.toString().trim();
+          console.log(`Procesando lot_code: "${lotCodeStr}"`);
+          
+          if (lotCodeStr.includes('-')) {
+            // Formato xxxxxxx-xxx
+            const partes = lotCodeStr.split('-');
+            if (partes.length >= 2 && partes[0].length >= 7) {
+              predioId = partes[0].substring(0, 7);
+              console.log(`Predio extraído del formato con guión: "${predioId}"`);
+            } else if (partes[0].length > 0) {
+              predioId = partes[0];
+              console.log(`Predio extraído (parte antes del guión): "${predioId}"`);
+            }
+          } else if (lotCodeStr.length >= 7) {
+            // Sin guión pero con al menos 7 caracteres
+            predioId = lotCodeStr.substring(0, 7);
+            console.log(`Predio extraído (primeros 7 chars): "${predioId}"`);
+          } else if (lotCodeStr.length > 0) {
+            // Usar el código completo si es muy corto
+            predioId = lotCodeStr;
+            console.log(`Predio extraído (código completo): "${predioId}"`);
+          }
+        }
+        
+        // Fallbacks para predioId si no se pudo extraer del lot_code
+        if (!predioId && factura.property_id) {
+          predioId = factura.property_id.toString().trim();
+          console.log(`Predio fallback a property_id: "${predioId}"`);
+        } else if (!predioId && factura.client_document) {
+          predioId = `predio_${factura.client_document.toString().trim()}`;
+          console.log(`Predio fallback a client_document: "${predioId}"`);
+        } else if (!predioId) {
+          predioId = `predio_${index}`;
+          console.log(`Predio fallback a index: "${predioId}"`);
+        }
+        
+        if (predioId && predioId.trim() !== '') {
+          totals[estado].predios.add(predioId.trim());
+          console.log(`Predio agregado: "${predioId.trim()}"`);
         }
         
         // Agregar lote único (usando lot_code como principal, lot como fallback)
-        const loteId = factura.lot_code || factura.lot || `lote_${index}`;
-        if (loteId) {
-          totals[estado].lotes.add(loteId.toString());
+        let loteId = null;
+        if (factura.lot_code && factura.lot_code !== null && factura.lot_code !== undefined) {
+          loteId = factura.lot_code.toString().trim();
+        } else if (factura.lot && factura.lot !== null && factura.lot !== undefined) {
+          loteId = factura.lot.toString().trim();
+        } else {
+          loteId = `lote_${index}`;
+        }
+        
+        if (loteId && loteId !== '') {
+          totals[estado].lotes.add(loteId);
         }
         
         // Sumar monto (asegurarse de que sea un número válido)
@@ -70,7 +119,72 @@ const TotalTable = ({ data, onDownloadPDF, onDownloadExcel }) => {
   };
 
   const totals = calculateTotals();
+  
+  // Calcular totales generales
   const totalFacturas = totals.pendiente.facturas + totals.pagada.facturas + totals.vencida.facturas + (totals.validada?.facturas || 0);
+  const totalUsuarios = new Set();
+  const totalPredios = new Set();
+  const totalLotes = new Set();
+  let totalMonto = 0;
+
+  // Recalcular totales únicos globales
+  data.forEach((factura, index) => {
+    // Usuarios únicos globales
+    if (factura.client_document && factura.client_document !== null && factura.client_document !== undefined) {
+      const clientDoc = factura.client_document.toString().trim();
+      if (clientDoc !== '') {
+        totalUsuarios.add(clientDoc);
+      }
+    }
+
+    // Predios únicos globales
+    let predioId = null;
+    if (factura.lot_code && factura.lot_code !== null && factura.lot_code !== undefined) {
+      const lotCodeStr = factura.lot_code.toString().trim();
+      if (lotCodeStr.includes('-')) {
+        const partes = lotCodeStr.split('-');
+        if (partes.length >= 2 && partes[0].length >= 7) {
+          predioId = partes[0].substring(0, 7);
+        } else if (partes[0].length > 0) {
+          predioId = partes[0];
+        }
+      } else if (lotCodeStr.length >= 7) {
+        predioId = lotCodeStr.substring(0, 7);
+      } else if (lotCodeStr.length > 0) {
+        predioId = lotCodeStr;
+      }
+    }
+
+    if (!predioId && factura.property_id) {
+      predioId = factura.property_id.toString().trim();
+    } else if (!predioId && factura.client_document) {
+      predioId = `predio_${factura.client_document.toString().trim()}`;
+    } else if (!predioId) {
+      predioId = `predio_${index}`;
+    }
+
+    if (predioId && predioId.trim() !== '') {
+      totalPredios.add(predioId.trim());
+    }
+
+    // Lotes únicos globales
+    let loteId = null;
+    if (factura.lot_code && factura.lot_code !== null && factura.lot_code !== undefined) {
+      loteId = factura.lot_code.toString().trim();
+    } else if (factura.lot && factura.lot !== null && factura.lot !== undefined) {
+      loteId = factura.lot.toString().trim();
+    } else {
+      loteId = `lote_${index}`;
+    }
+
+    if (loteId && loteId !== '') {
+      totalLotes.add(loteId);
+    }
+
+    // Sumar monto total
+    const monto = parseFloat(factura.total_amount) || 0;
+    totalMonto += monto;
+  });
 
   const formatCurrency = (amount) => {
     return `$${parseFloat(amount).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`;
@@ -149,6 +263,7 @@ const TotalTable = ({ data, onDownloadPDF, onDownloadExcel }) => {
                 </tr>
               );
             })}
+            {/* Fila de totales con valores reales */}
             <tr className="bg-gray-100 font-semibold border-t-2 border-gray-300">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                 Total
@@ -156,17 +271,17 @@ const TotalTable = ({ data, onDownloadPDF, onDownloadExcel }) => {
               <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900">
                 {totalFacturas}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
-                -
+              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900">
+                {totalUsuarios.size}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
-                -
+              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900">
+                {totalPredios.size}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
-                -
+              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900">
+                {totalLotes.size}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-400">
-                -
+              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-900">
+                {formatCurrency(totalMonto)}
               </td>
             </tr>
           </tbody>
