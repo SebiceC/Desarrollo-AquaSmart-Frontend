@@ -73,7 +73,8 @@ import HistorialIncidencias from "../app/historialIncidencias/HistorialIncidenci
 import PredictionLotChart from "../app/Predicciones/PredictionLotChart";
 import LotsListPredictions from "../app/Predicciones/LotsListPredictions";
 import PredictionDistrito from "../app/Predicciones/distrito/PredictionDistrito";
-
+import MyLotsListPredictions from "../app/Predicciones/predicciones-usuario/MisPredicciones"
+import MiPrediccionLote from "../app/Predicciones/predicciones-usuario/MiPrediccionLote"
 
 const AppRouter = () => {
     return (
@@ -153,6 +154,8 @@ const AppRouter = () => {
             <Route path="/predicciones" element={<ProtectedRoute element={<LotsListPredictions />} />} />
             <Route path="/predicciones/:id_lot" element={<ProtectedRoute element={<PredictionLotChart />} />} />
             <Route path="/predicciones-distrito" element={<ProtectedRoute element={<PredictionDistrito />} />} />
+            <Route path="/mis-predicciones" element={<ProtectedRoute element={<MyLotsListPredictions />} />} />
+            <Route path="/mis-predicciones/:id_lot" element={<ProtectedRoute element={<MiPrediccionLote />} />} />
         </Routes>
     );
 };
