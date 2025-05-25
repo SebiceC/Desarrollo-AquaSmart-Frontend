@@ -87,9 +87,14 @@ const PredictionDistrito = () => {
                 getAxiosConfig()
             );
 
+            // Validar si la respuesta es un array, si no, probablemente es un error HTML
+            if (!Array.isArray(response.data)) {
+                throw new Error('Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico');
+            }
+
             console.log('Predicciones del distrito obtenidas:', response.data);
             
-            if (Array.isArray(response.data) && response.data.length > 0) {
+            if (response.data.length > 0) {
                 // Filtrar por período si se especifica
                 let filteredData = response.data;
                 if (periodTime) {
@@ -113,6 +118,7 @@ const PredictionDistrito = () => {
             // Usar la función helper para extraer el error
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
+            setShowErrorModal(true);
             setPredictionData([]);
         } finally {
             setLoading(false);
@@ -161,7 +167,20 @@ const PredictionDistrito = () => {
     // Cargar predicciones al montar el componente
     useEffect(() => {
         const fetchOnMount = async () => {
-            await fetchExistingPredictions(selectedPeriod);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('No hay una sesión activa. Por favor, inicie sesión.');
+                setShowErrorModal(true);
+                setPredictionData([]);
+                return;
+            }
+            try {
+                await fetchExistingPredictions(selectedPeriod);
+            } catch {
+                setError('Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico');
+                setShowErrorModal(true);
+                setPredictionData([]);
+            }
         };
         fetchOnMount();
     }, [fetchExistingPredictions, selectedPeriod]);
