@@ -122,7 +122,7 @@ function ReportesSolicitudes() {
         try {
 
             // Verificar si no llegaron datos del backend
-            if (!reportesSolicitudes || reportesSolicitudes.length === 0) {
+            if (!reportesSolicitudes) {
                 showModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico");
                 setFilteredReporteSolicitudes([]);
                 return;
