@@ -132,7 +132,17 @@ function NavBar() {
     ].filter(Boolean)
 
     const reportesNovedadesSubItems = [
-        
+        {
+            direction: "/reportes-y-novedades/mis-reportes-solicitudes",
+            text: "Ver mis reportes/solicitudes",
+        },
+        { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
+        { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
+        hasPermission("Can_view_assignment") && hasPermission("can_be_assigned") && { direction: "/reportes-y-novedades/informe-mantenimiento", text: "Informe de solicitud/reporte asignada" },
+        hasPermission("view_all_assignments") && hasPermission("can_assign_user") && hasPermission("change_assignment") && hasPermission("add_assignment") && {
+            direction: "/reportes-y-novedades/atencion_solicitudes-reportes",
+            text: "Atención de solicitudes y reportes",
+        },
     ].filter(Boolean)
 
     // Verificar si el usuario tiene los permisos para la sección de permisos
@@ -252,18 +262,18 @@ function NavBar() {
                             direction="/reportes-y-novedades"
                             text="Reportes y novedades"
                             subItems={[
-                            {
-                                direction: "/reportes-y-novedades/mis-reportes-solicitudes",
-                                text: "Ver mis reportes/solicitudes",
-                            },
-                            { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
-                            { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
-                            { direction: "/reportes-y-novedades/informe-mantenimiento", text: "Informe de solicitud/reporte asignada" },
-                            {
-                                direction: "/reportes-y-novedades/atencion_solicitudes-reportes",
-                                text: "Atención de solicitudes y reportes",
-                            },
-                        ]}
+                                {
+                                    direction: "/reportes-y-novedades/mis-reportes-solicitudes",
+                                    text: "Ver mis reportes/solicitudes",
+                                },
+                                { direction: "/reportes-y-novedades/solicitud_caudal", text: "Solicitudes de caudal" },
+                                { direction: "/reportes-y-novedades/reportar_fallos", text: "Reportar fallos" },
+                                { direction: "/reportes-y-novedades/informe-mantenimiento", text: "Informe de solicitud/reporte asignada" },
+                                {
+                                    direction: "/reportes-y-novedades/atencion_solicitudes-reportes",
+                                    text: "Atención de solicitudes y reportes",
+                                },
+                            ]}
                         />
 
                         {showPermisosSection && <NavItem direction="/permisos" text="Permisos" />}

@@ -294,10 +294,34 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/activar-caudal" element={<ProtectedRoute element={<ActivacionCaudal />} />} />
             <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />
             <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
-            <Route path="/reportes-y-novedades/atencion_solicitudes-reportes" element={<ProtectedRoute element={<GestionSolicitudesReportes />} />} />
+            <Route
+                path="/reportes-y-novedades/atencion_solicitudes-reportes"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "view_all_assignments",
+                            "can_assign_user",
+                            "change_assignment",
+                            "add_assignment"
+                        ]}
+                        element={<GestionSolicitudesReportes />}
+                    />
+                }
+            />
             <Route path="/reportes-y-novedades/mis-reportes-solicitudes" element={<ProtectedRoute element={<ReportesSolicitudes />} />} />
             <Route path="/reportes-y-novedades/mis-reportes-solicitudes/detalle/:id_reportes_solicitudes" element={<ProtectedRoute element={<ReportesSolicitudesDetails />} />} />
-            <Route path="/reportes-y-novedades/informe-mantenimiento" element={<ProtectedRoute element={<InformeMantenimiento />} />} />
+            <Route
+                path="/reportes-y-novedades/informe-mantenimiento"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "Can_view_assignment",
+                            "can_be_assigned"
+                        ]}
+                        element={<InformeMantenimiento />}
+                    />
+                }
+            />
             <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento />} />} />
             <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
             <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
