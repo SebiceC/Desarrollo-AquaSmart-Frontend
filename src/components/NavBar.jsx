@@ -179,6 +179,7 @@ function NavBar() {
                         subItems={[
                             { direction: "/predicciones-distrito", text: "Distrito" },
                             { direction: "/predicciones", text: "Lotes del Distrito" },
+                            { direction: "/mis-predicciones", text: "Mis lotes" },
                         ]}
                     />
 
@@ -274,6 +275,7 @@ function NavBar() {
                             subItems={[
                                 { direction: "/predicciones-distrito", text: "Distrito" },
                                 { direction: "/predicciones", text: "Lotes del Distrito" },
+                                { direction: "/mis-predicciones", text: "Mis lotes" },
                             ]}
                         />
 
