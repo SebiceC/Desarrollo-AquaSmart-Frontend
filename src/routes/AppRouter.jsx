@@ -69,6 +69,7 @@ import InformeMantenimiento from "../app/reportes_y_novedades/informe_mantenimie
 import CrearMantenimiento from "../app/reportes_y_novedades/informe_mantenimiento/crear-informe";
 import ControlReportesIntervenciones from "../app/reportes_y_novedades/gestion_gerencia_informe/control-reportes-intervenciones";
 import GestionarInforme from "../app/reportes_y_novedades/gestion_gerencia_informe/gestionar-informe";
+import NotAuthorized from "../app/NotAuthorized";
 
 const AppRouter = () => {
     return (
@@ -88,46 +89,200 @@ const AppRouter = () => {
             <Route path="/perfil" element={<ProtectedRoute element={<Perfil />} />} />
             <Route path="/control-IoT" element={<ProtectedRoute element={<IoTControll />} />} />
 
-            <Route path="gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
-            <Route path="gestionRegistros/lotes" element={<ProtectedRoute element={<RegistroLotes/>}/>}/>
+            <Route
+                path="gestionRegistros/predios"
+                element={
+                    <ProtectedRoute
+                        permissions={["registrar_info_predios"]}
+                        element={<RegistroPredios />}
+                    />
+                }
+            />
+            <Route
+                path="gestionRegistros/lotes"
+                element={
+                    <ProtectedRoute
+                        permissions={["registrar_info_lotes"]}
+                        element={<RegistroLotes />}
+                    />
+                }
+            />
 
-            <Route path="/gestionRegistros/predios" element={<ProtectedRoute element={<RegistroPredios/>}/>}/>
+            <Route
+                path="/gestionRegistros/predios"
+                lement={
+                    <ProtectedRoute
+                        permissions={["registrar_disp_iot"]}
+                        element={<RegistroPredios />}
+                    />
+                }
+            />
 
-            <Route path="/gestionDatos/users" element={<ProtectedRoute element={<UsersList />} />} />
+            <Route
+                path="/gestionDatos/users"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "visualizar_usuarios_distrito",
+                            "ver_info_usuarios_distrito",
+                            "actualizar_info_usuarios_distrito",
+                            "agregar_info_usuarios_distrito",
+                            "eliminar_info_usuarios_distrito"]}
+                        element={<UsersList />} />}
+            />
             <Route path="/gestionDatos/users/:document" element={<ProtectedRoute element={<UserInformation />} />} />
-            <Route path="/gestionDatos/lotes" element={<ProtectedRoute element={<LotesList />} />} />
+            <Route
+                path="/gestionDatos/lotes"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_lotes",
+                            "actualizar_info_lotes",
+                            "inhabilitar_lotes",
+                        ]}
+                        element={<LotesList />}
+                    />
+                }
+            />
             <Route path="/gestionDatos/lotes/:id_lot" element={<ProtectedRoute element={<LoteInformation />} />} />
-            <Route path="/gestionDatos/dispositivosIoT" element={<ProtectedRoute element={<DispositivoIoTList />} />} />
+            <Route
+                path="/gestionDatos/dispositivosIoT"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "habilitar_disp_iot",
+                            "ver_disp_iot",
+                            "change_iotdevice",
+                            "inhabilitar_disp_iot"
+                        ]}
+                        element={<DispositivoIoTList />}
+                    />
+                }
+            />
             <Route path="/gestionDatos/dispositivosIoT/:iot_id" element={<ProtectedRoute element={<DispositivosIoTInformation />} />} />
-            <Route path="/gestionDatos/pre-registros" element={<ProtectedRoute element={<PreRegistrosList />} />} />
+            <Route
+                path="/gestionDatos/pre-registros"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_pre_registros",
+                            "aceptar_pre_registros",
+                            "rechazar_pre_registros",
+                        ]}
+                        element={<PreRegistrosList />}
+                    />
+                }
+            />
             <Route path="/gestionDatos/pre-registros/:document" element={<ProtectedRoute element={<PreRegistroDetail />} />} />
-            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} /> 
-            <Route path="/gestionDatos/users/updateinformation/:document" element={<ProtectedRoute element={<UpdateInformation />} />} /> 
-            <Route path="/gestionDatos/predios" element={<ProtectedRoute element={<PrediosList />} />} />           
-            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />         
+            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />
+            <Route path="/gestionDatos/users/updateinformation/:document" element={<ProtectedRoute element={<UpdateInformation />} />} />
+            <Route
+                path="/gestionDatos/predios"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_predios",
+                            "inhabilitar_predios",
+                            "actualizar_info_predios",
+                            "eliminar_info_predios"
+                        ]}
+                        element={<PrediosList />}
+                    />
+                }
+            />
+            <Route path="/perfil/actualizar-informacion" element={<ProtectedRoute element={<UserUpdateInformation />} />} />
             <Route path="/seguridad/actualizar-contrasena" element={<ProtectedRoute element={<UpdatedPassword />} />} />
             <Route path="/gestionDatos/predios/:id_plot" element={<ProtectedRoute element={<PrediosDetail />} />} />
             <Route path="/gestionDatos/lotes/:id_lot/update" element={<ProtectedRoute element={<LoteEdit />} />} />
             <Route path="/gestionDatos/predios/update/:id_plot" element={<ProtectedRoute element={<PrediosUpdate />} />} />
-            <Route path="/gestionRegistros/dispositivosIoT" element={<ProtectedRoute element={<RegistroDispositivosIoT/>}/>}/>            
-            <Route path="/permisos" element={<ProtectedRoute element={<PermissionsSystem/>}/>}/>
+            <Route path="/gestionRegistros/dispositivosIoT" element={<ProtectedRoute element={<RegistroDispositivosIoT />} />} />
+            <Route
+                path="/permisos"
+                element=
+                {<ProtectedRoute
+                    permissions={[
+                        "asignar_permisos",
+                        "quitar_permisos_asignados",
+                        "ver_permisos_asignados",
+                        "ver_roles_asignados",
+                        "asignar_roles_asignados"
+                    ]}
+                    element={<PermissionsSystem />}
+                />
+                }
+            />
             <Route path="/gestionDatos/dispositivosIoT/:iot_id/update" element={<ProtectedRoute element={<DispositivoEdit />} />} />
             <Route path="/mispredios/:document" element={<ProtectedRoute element={<PlotLotUsers />} />} />
             <Route path="/mispredios/predio/:id_plot" element={<ProtectedRoute element={<MiPlotLotDetail />} />} />
             <Route path="/mislotes/lote/:id_lot" element={<ProtectedRoute element={<LotUsersDetail />} />} />
-            <Route path="/historial-consumo/distrito" element={<ProtectedRoute element={<HistorialDistrito />} />} />
-            <Route path="/historial-consumo/predio" element={<ProtectedRoute element={<HistorialPredio />} />} />
+            <Route
+                path="/historial-consumo/distrito"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_historial_consumo_general_distrito",
+                            "descargar_facturas_distrito_pdf"
+                        ]}
+                        element={<HistorialDistrito />}
+                    />
+                }
+            />
+            <Route
+                path="/historial-consumo/predio"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_historial_consumo_predios",
+                            "ver_historial_consumo_lotes"
+                        ]}
+                        element={<HistorialPredio />}
+                    />
+                }
+            />
             <Route path="/historial-consumo/predio/:id_plot" element={<ProtectedRoute element={<HistorialPredioDetail />} />} />
             <Route path="/historial-consumo/predio/:id_plot/lote/:id_lot" element={<ProtectedRoute element={<HistorialLoteDetail />} />} />
-            <Route path="/mispredios/historial-consumoList/:document" element={<ProtectedRoute element={<HistorialUserPredio />} />} />
+            <Route
+                path="/mispredios/historial-consumoList/:document"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_historial_consumo_predios_individuales",
+                            "ver_historial_consumo_lotes_individuales"
+                        ]}
+                        element={<HistorialUserPredio />}
+                    />
+                }
+            />
             <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
             <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
             <Route path="/control-IoT/bocatoma" element={<ProtectedRoute element={<ControlBocatoma />} />} />
             <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
             <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
             <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
-            <Route path="/facturacion/GestionFacturas" element={<ProtectedRoute element={<GestionFacturas />} />} />
-            <Route path="/facturacion/historial-facturas-lote" element={<ProtectedRoute element={<HistorialFacturasLote />} />} />
+            <Route
+                path="/facturacion/GestionFacturas"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_tarifas_cobro",
+                            "ingresar_tarifas_cobro",
+                            "modificar_tarifas_cobro"
+                        ]}
+                        element={<GestionFacturas />}
+                    />
+                }
+            />
+            <Route
+                path="/facturacion/historial-facturas-lote"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_historial_facturas_usuarios"
+                        ]}
+                        element={<HistorialFacturasLote />}
+                    />
+                }
+            />
             <Route path="/mis-facturas" element={<ProtectedRoute element={<MisFacturas />} />} />
             <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
@@ -140,12 +295,13 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/reportar_fallos" element={<ProtectedRoute element={<ReportarFallosList />} />} />
             <Route path="/reportes-y-novedades/lotes" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
             <Route path="/reportes-y-novedades/atencion_solicitudes-reportes" element={<ProtectedRoute element={<GestionSolicitudesReportes />} />} />
-            <Route path="/reportes-y-novedades/mis-reportes-solicitudes" element={<ProtectedRoute element={<ReportesSolicitudes/>} />} />
-            <Route path="/reportes-y-novedades/mis-reportes-solicitudes/detalle/:id_reportes_solicitudes" element={<ProtectedRoute element={<ReportesSolicitudesDetails/>} />} />
-            <Route path="/reportes-y-novedades/informe-mantenimiento" element={<ProtectedRoute element={<InformeMantenimiento/>} />} />
-            <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento/>} />} />
+            <Route path="/reportes-y-novedades/mis-reportes-solicitudes" element={<ProtectedRoute element={<ReportesSolicitudes />} />} />
+            <Route path="/reportes-y-novedades/mis-reportes-solicitudes/detalle/:id_reportes_solicitudes" element={<ProtectedRoute element={<ReportesSolicitudesDetails />} />} />
+            <Route path="/reportes-y-novedades/informe-mantenimiento" element={<ProtectedRoute element={<InformeMantenimiento />} />} />
+            <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento />} />} />
             <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
             <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
+            <Route path="/no-autorizado" element={<NotAuthorized />} />
         </Routes>
     );
 };
