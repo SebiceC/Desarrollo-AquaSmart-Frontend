@@ -348,10 +348,10 @@ const ValvesList = () => {
     () => [
       { key: "id", label: "ID" },
       { key: "name", label: "NOMBRE" },
-      { key: "location_id", label: "ID UBICACIÓN" },
+      { key: "location_id", label: "ID PROPIEDAD" },
       {
         key: "location_name",
-        label: "NOMBRE UBICACIÓN",
+        label: "NOMBRE PROPIEDAD",
         responsive: "hidden md:table-cell",
         render: (valve) => {
           if (valve.location_type === "lote" && valve.parent_plot_name) {

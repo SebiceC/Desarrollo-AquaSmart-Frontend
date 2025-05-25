@@ -1,8 +1,29 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Calendar, ChevronDown, Brain } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts"
+import {
+  Calendar,
+  Brain,
+  TrendingUp,
+  Droplet,
+  Loader,
+  AlertTriangle,
+  RefreshCw,
+  ArrowUp,
+  ArrowDown,
+  Lightbulb,
+} from "lucide-react"
 import Modal from "./Modal"
 
 const MiPrediccionLoteComponent = ({
@@ -13,45 +34,69 @@ const MiPrediccionLoteComponent = ({
   onGeneratePredictions = () => {},
   selectedPeriod = "3",
   lotId = "",
-  title = "PREDICCIÓN DE CONSUMO",
+  title = "PREDICCIÓN DE CONSUMO - LOTE",
   chartRef,
   isGenerating = false,
   canGenerate = true,
+  showNoDataMessage = false,
 }) => {
   const localChartRef = useRef(null)
   const actualChartRef = chartRef || localChartRef
 
-  const [showPeriodSelector, setShowPeriodSelector] = useState(false)
+  // Estados para modales
   const [showPredictionErrorModal, setShowPredictionErrorModal] = useState(false)
   const [showNoDataModal, setShowNoDataModal] = useState(false)
 
-  // Opciones de períodos de predicción (1, 3, 6 meses según requerimiento)
-  const predictionPeriods = {
-    "1": { label: "1 mes", months: 1 },
-    "3": { label: "3 meses", months: 3 },
-    "6": { label: "6 meses", months: 6 },
-  }
+  // Estado para estadísticas
+  const [stats, setStats] = useState({
+    totalPredicted: 0,
+    avgConsumption: 0,
+    maxConsumption: 0,
+    minConsumption: 0,
+    trend: "stable",
+  })
+
+  // Opciones de períodos de predicción
+  const periodOptions = [
+    { value: "1", label: "1 mes" },
+    { value: "3", label: "3 meses" },
+    { value: "6", label: "6 meses" },
+  ]
 
   // Procesar datos de predicción para el gráfico
   const processedData = useMemo(() => {
-    if (!predictionData || predictionData.length === 0) {
-      return []
-    }
-
     try {
-      const sortedData = [...predictionData].sort((a, b) => {
+      // Filtrar datos que correspondan al período seleccionado
+      const correctPeriodData = predictionData.filter((item) => {
+        const matches = item.period_time === selectedPeriod || item.period_time === Number.parseInt(selectedPeriod)
+        return matches
+      })
+
+      if (correctPeriodData.length === 0) {
+        return []
+      }
+
+      // Ordenar datos por fecha de predicción
+      const sortedData = [...correctPeriodData].sort((a, b) => {
         return new Date(a.date_prediction) - new Date(b.date_prediction)
       })
 
-      const result = sortedData.map((item) => {
-        const date = new Date(item.date_prediction)
-        const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+      // Procesar cada predicción individual como un punto en la gráfica
+      const result = sortedData.map((prediction, index) => {
+        const predictionDate = new Date(prediction.date_prediction)
+        const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        const monthLabel = `${monthNames[predictionDate.getMonth()]} ${predictionDate.getFullYear()}`
+
+        const consumptionValue = Number.parseFloat(prediction.consumption_prediction || 0)
 
         return {
-          name: `${months[date.getMonth()]} ${date.getFullYear()}`,
-          flowRate: Number.parseFloat(item.consumption_prediction || 0),
-          timestamp: item.date_prediction,
-          originalData: item,
+          month: monthLabel,
+          predicted: consumptionValue,
+          date: prediction.date_prediction,
+          fullDate: predictionDate.toLocaleDateString("es-ES"),
+          originalData: prediction,
+          isPredicted: true,
+          monthIndex: index + 1,
         }
       })
 
@@ -60,288 +105,404 @@ const MiPrediccionLoteComponent = ({
       console.error("Error procesando datos de predicción:", err)
       return []
     }
-  }, [predictionData])
-
-  // Solo mostrar error si realmente hay un error y no hay datos
-  useEffect(() => {
-    if (error && processedData.length === 0) {
-      setShowPredictionErrorModal(true)
-    }
-  }, [error, processedData.length])
-
-  const handlePeriodChange = (period, e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault()
-    }
-
-    try {
-      setShowPeriodSelector(false)
-      onPeriodChange(period)
-    } catch (err) {
-      console.error("Error al cambiar el período de predicción:", err)
-    }
-  }
-
-  const handleGeneratePredictions = (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault()
-    }
-
-    onGeneratePredictions()
-  }
-
-  const togglePeriodSelector = (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault()
-    }
-
-    setShowPeriodSelector(!showPeriodSelector)
-  }
-
-  const formatYAxis = (value) => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M`
-    } else if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}k`
-    }
-    return value.toFixed(0)
-  }
+  }, [predictionData, selectedPeriod])
 
   // Calcular estadísticas
-  const statistics = useMemo(() => {
-    if (processedData.length === 0) return null
+  useEffect(() => {
+    if (processedData && processedData.length > 0) {
+      const values = processedData.map((item) => item.predicted)
+      const totalPredicted = values.reduce((sum, val) => sum + val, 0)
+      const avgConsumption = totalPredicted / values.length
+      const maxConsumption = Math.max(...values)
+      const minConsumption = Math.min(...values)
 
-    const values = processedData.map((item) => item.flowRate)
-    const average = values.reduce((acc, val) => acc + val, 0) / values.length
-    const max = Math.max(...values)
-    const min = Math.min(...values)
+      // Calcular tendencia
+      let trend = "stable"
+      if (values.length > 1) {
+        const firstHalf = values.slice(0, Math.ceil(values.length / 2))
+        const secondHalf = values.slice(Math.ceil(values.length / 2))
+        const firstAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length
+        const secondAvg = secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length
+        if (secondAvg > firstAvg * 1.05) trend = "increasing"
+        else if (secondAvg < firstAvg * 0.95) trend = "decreasing"
+      }
 
-    return { average, max, min }
+      setStats({
+        totalPredicted: totalPredicted.toFixed(2),
+        avgConsumption: avgConsumption.toFixed(2),
+        maxConsumption: maxConsumption.toFixed(2),
+        minConsumption: minConsumption.toFixed(2),
+        trend,
+      })
+    } else {
+      setStats({
+        totalPredicted: 0,
+        avgConsumption: 0,
+        maxConsumption: 0,
+        minConsumption: 0,
+        trend: "stable",
+      })
+    }
   }, [processedData])
 
+  // Mostrar modal de error cuando hay error
+  useEffect(() => {
+    if (error) {
+      setShowPredictionErrorModal(true)
+    }
+  }, [error])
+
+  // Tooltip personalizado
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      return (
+        <div className="bg-white p-4 border rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-800">{`${label}`}</p>
+          <p className="text-blue-600">
+            <span className="font-medium">Consumo Predicho: </span>
+            {`${payload[0].value.toFixed(2)} L/mes`}
+          </p>
+          <p className="text-gray-500 text-sm">{data.fullDate}</p>
+          <p className="text-purple-600 text-sm">
+            <span className="font-medium">Mes futuro #{data.monthIndex}</span>
+          </p>
+          {data.originalData?.code_prediction && (
+            <p className="text-gray-400 text-xs">Código: {data.originalData.code_prediction}</p>
+          )}
+        </div>
+      )
+    }
+    return null
+  }
+
+  // Manejar cambio de período
+  const handlePeriodChange = async (event) => {
+    const newPeriod = event.target.value
+    await onPeriodChange(newPeriod)
+  }
+
+  // Limpieza al desmontar el componente
   useEffect(() => {
     return () => {
-      setShowPeriodSelector(false)
       setShowPredictionErrorModal(false)
       setShowNoDataModal(false)
     }
   }, [])
 
+  // Componente de mensaje de sin datos personalizado
+  const NoDataMessage = () => (
+    <div className="flex items-center justify-center py-16">
+      <div className="text-center max-w-md">
+        <div className="mb-4">
+          <Brain className="mx-auto text-blue-400" size={48} />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay predicciones disponibles</h3>
+        <p className="text-gray-500 mb-4 text-sm leading-relaxed">
+          Para el período de {selectedPeriod} {selectedPeriod === "1" ? "mes" : "meses"} futuro
+          {selectedPeriod !== "1" ? "s" : ""} no hay predicciones generadas.
+          {canGenerate
+            ? ' Usa el botón "Generar Predicción" para crear predicciones de los próximos meses con IA.'
+            : " Las predicciones se generarán automáticamente al cambiar de período."}
+        </p>
+        <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded">
+          <div className="flex items-start">
+            <Lightbulb className="text-purple-500 mt-0.5 mr-2" size={16} />
+            <div className="text-left">
+              <p className="text-purple-700 text-xs font-medium mb-1">Predicciones futuras:</p>
+              <ul className="text-purple-600 text-xs space-y-1">
+                <li>• 1 mes: Predicción del próximo mes</li>
+                <li>• 3 meses: Predicciones de los próximos 3 meses</li>
+                <li>• 6 meses: Predicciones de los próximos 6 meses</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  // Determinar el estado del botón de generar
+  const shouldShowGenerateButton = canGenerate && predictionData.length === 0
+
   return (
-    <div className="flex flex-col bg-white rounded-lg shadow-md p-6 md:p-10 w-full max-w-4xl mx-auto">
-      {/* Modales */}
+    <div className="bg-white rounded-lg shadow-md">
+      {/* Modal de error de predicción */}
       <Modal
         showModal={showPredictionErrorModal}
         onClose={() => setShowPredictionErrorModal(false)}
-        title="Error"
+        title="Error en la predicción"
         btnMessage="Aceptar"
       >
-        <p>
-          {error?.includes("conexión")
-            ? "Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico"
-            : `¡Ocurrió un error al momento de generar la predicción! ${error || "Error desconocido"}. Vuelve a intentarlo más tarde o ponte en contacto con soporte.`}
-        </p>
-      </Modal>
-
-      <Modal
-        showModal={showNoDataModal}
-        onClose={() => setShowNoDataModal(false)}
-        title="Sin datos de predicción"
-        btnMessage="Aceptar"
-      >
-        <p>
-          No hay datos de predicción disponibles para el período seleccionado. Selecciona un período y presiona
-          "Predecir".
-        </p>
-      </Modal>
-
-      {/* Encabezado */}
-      <div className="mb-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Brain className="text-blue-600" size={24} />
-          <h1 className="text-2xl font-bold text-center text-gray-800">{title}</h1>
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="text-red-500 mt-1" size={20} />
+          <div>
+            <p className="text-gray-700 mb-2">Ocurrió un error al procesar las predicciones.</p>
+            <p className="text-sm text-gray-600">
+              {error || "Error desconocido. Vuelve a intentarlo más tarde o ponte en contacto con soporte."}
+            </p>
+          </div>
         </div>
+      </Modal>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          {/* Selector de período */}
-          <div className="relative mb-4 sm:mb-0">
-            <button
-              onClick={togglePeriodSelector}
-              type="button"
-              className="flex items-center gap-2 bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-lg font-medium disabled:opacity-50"
-              disabled={isLoading || isGenerating}
-            >
-              <Calendar size={16} />
-              <span>Predicción: {predictionPeriods[selectedPeriod].label}</span>
-              <ChevronDown size={16} />
-            </button>
-
-            {showPeriodSelector && (
-              <div className="absolute left-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-10 min-w-full">
-                {Object.entries(predictionPeriods).map(([key, period]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                      selectedPeriod === key ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-700"
-                    }`}
-                    onClick={(e) => handlePeriodChange(key, e)}
-                  >
-                    {period.label}
-                  </button>
-                ))}
-              </div>
+      {/* Header del componente */}
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Brain className="text-blue-600" size={24} />
+              {title}
+            </h2>
+            {predictionData.length > 0 && (
+              <p className="text-sm text-gray-600 mt-1">
+                Período: {predictionData[0]?.period_time} {predictionData[0]?.period_time === 1 ? "mes" : "meses"} -
+                Generado:{" "}
+                {predictionData[0]?.created_at
+                  ? new Date(predictionData[0].created_at).toLocaleDateString("es-ES")
+                  : "N/A"}
+              </p>
             )}
           </div>
 
-          {/* Información del lote y botón de generar */}
-          <div className="flex items-center gap-4">
+          <div className="flex gap-3 items-center">
+            {/* Selector de período */}
+            <div className="flex items-center gap-2">
+              <Calendar size={16} className="text-gray-500" />
+              <select
+                value={selectedPeriod}
+                onChange={handlePeriodChange}
+                disabled={isLoading || isGenerating}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {periodOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Información del lote */}
             {lotId && (
-              <div className="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm">
+              <div className="flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-sm">
                 <span className="font-medium">Lote: {lotId}</span>
               </div>
             )}
 
-            <button
-              onClick={handleGeneratePredictions}
-              disabled={!canGenerate || isGenerating || isLoading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                canGenerate && !isGenerating && !isLoading
-                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Predecir
-                </>
-              ) : (
-                <>
-                  <Brain size={16} />
-                  Predecir
-                </>
+            {/* Botón de generar predicciones */}
+            {shouldShowGenerateButton && (
+              <button
+                onClick={onGeneratePredictions}
+                disabled={!canGenerate || isGenerating || isLoading}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-colors"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Brain size={16} />
+                    Generar Predicción
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Indicador de estado cuando hay datos */}
+            {predictionData.length > 0 && (
+              <div className="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="font-medium">Predicciones Activas</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="p-6">
+        {/* Estados de carga */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <RefreshCw className="animate-spin text-blue-600 mx-auto mb-3" size={32} />
+              <p className="text-gray-600">Cargando predicciones...</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Período: {selectedPeriod} {selectedPeriod === "1" ? "mes" : "meses"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Estado de generación */}
+        {isGenerating && !isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Brain className="animate-pulse text-blue-600 mx-auto mb-3" size={32} />
+              <p className="text-gray-600 font-medium">Generando predicciones con IA...</p>
+              <p className="text-sm text-gray-500 mt-1">Esto puede tomar unos momentos</p>
+            </div>
+          </div>
+        )}
+
+        {/* Estado de error */}
+        {error && !isLoading && !isGenerating && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center text-red-600">
+              <AlertTriangle className="mx-auto mb-3" size={32} />
+              <p className="font-medium">Error al cargar predicciones</p>
+              <p className="text-sm text-gray-600 mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Estado sin datos */}
+        {!isLoading && !isGenerating && !error && (processedData.length === 0 || showNoDataMessage) && (
+          <NoDataMessage />
+        )}
+
+        {/* Gráfica y estadísticas */}
+        {!isLoading && !isGenerating && !error && processedData.length > 0 && (
+          <>
+            {/* Estadísticas rápidas */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Droplet className="text-blue-600" size={20} />
+                  <div>
+                    <p className="text-sm text-gray-600">Consumo Total</p>
+                    <p className="font-bold text-gray-800 text-sm">{stats.totalPredicted} L</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="text-green-600" size={20} />
+                  <div>
+                    <p className="text-sm text-gray-600">Promedio Mensual</p>
+                    <p className="font-bold text-gray-800 text-sm">{stats.avgConsumption} L/mes</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-red-50 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <ArrowUp className="text-red-600" size={20} />
+                  <div>
+                    <p className="text-sm text-gray-600">Consumo Máximo</p>
+                    <p className="font-bold text-gray-800 text-sm">{stats.maxConsumption} L</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-cyan-50 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <ArrowDown className="text-cyan-600" size={20} />
+                  <div>
+                    <p className="text-sm text-gray-600">Consumo Mínimo</p>
+                    <p className="font-bold text-gray-800 text-sm">{stats.minConsumption} L</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Gráfica */}
+            <div className="h-96" ref={actualChartRef}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={processedData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    label={{
+                      value: "Consumo (L/mes)",
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { textAnchor: "middle" },
+                    }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+
+                  {/* Línea de promedio */}
+                  <ReferenceLine
+                    y={Number.parseFloat(stats.avgConsumption)}
+                    stroke="#10b981"
+                    strokeDasharray="8 8"
+                    label={{ value: "Promedio", position: "topRight" }}
+                  />
+
+                  {/* Línea principal de predicciones */}
+                  <Line
+                    type="monotone"
+                    dataKey="predicted"
+                    stroke="#2563eb"
+                    strokeWidth={3}
+                    dot={{ fill: "#2563eb", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "#2563eb", strokeWidth: 2, fill: "#fff" }}
+                    name="Consumo Predicho (L/mes)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Indicador de tendencia */}
+            {stats.trend !== "stable" && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <TrendingUp
+                    className={`${stats.trend === "increasing" ? "text-red-500" : "text-green-500"}`}
+                    size={16}
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Tendencia:
+                    <span className={`ml-1 ${stats.trend === "increasing" ? "text-red-600" : "text-green-600"}`}>
+                      {stats.trend === "increasing" ? "Aumento en el consumo" : "Disminución en el consumo"}
+                    </span>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Nota informativa */}
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                <strong>Nota:</strong> Las predicciones muestran el consumo mensual estimado para los próximos{" "}
+                {selectedPeriod} {selectedPeriod === "1" ? "mes" : "meses"} basado en modelos de IA entrenados con datos
+                históricos. Cada punto representa el consumo estimado por mes futuro. El consumo total predicho para los
+                próximos {selectedPeriod} {selectedPeriod === "1" ? "mes" : "meses"} es de {stats.totalPredicted} L.
+              </p>
+              {predictionData[0]?.code_prediction && (
+                <p className="text-xs text-gray-500 mt-2">Código de predicción: {predictionData[0].code_prediction}</p>
               )}
-            </button>
-          </div>
-        </div>
+            </div>
 
-        {/* Nota informativa */}
-        {!isLoading && !error && processedData.length > 0 && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  <strong>Nota:</strong> Los datos presentados son aproximaciones y pueden variar respecto a los valores
-                  reales. Por favor, consultelos únicamente como referencia.
-                </p>
+            {/* Banner informativo sobre la funcionalidad automática */}
+            <div className="mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Brain className="text-purple-600 mt-0.5" size={20} />
+                <div>
+                  <h4 className="text-sm font-semibold text-purple-800 mb-1">Predicciones de Meses Futuros</h4>
+                  <p className="text-xs text-purple-700 mb-2">
+                    La gráfica muestra predicciones para los meses venideros desde la fecha actual:
+                  </p>
+                  <ul className="text-xs text-purple-600 space-y-1">
+                    <li>
+                      • <strong>1 mes:</strong> Predicción del próximo mes únicamente
+                    </li>
+                    <li>
+                      • <strong>3 meses:</strong> Predicciones de los próximos 3 meses consecutivos
+                    </li>
+                    <li>
+                      • <strong>6 meses:</strong> Predicciones de los próximos 6 meses consecutivos
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
-
-      {/* Contenedor de la gráfica */}
-      <div className="h-64 sm:h-80 mt-6" ref={actualChartRef}>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-gray-500">Generando predicción con IA...</p>
-            </div>
-          </div>
-        ) : processedData.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Brain className="mx-auto text-gray-400 mb-2" size={48} />
-              <p className="text-gray-500">No hay predicción disponible</p>
-              <p className="text-sm text-gray-400">Selecciona un período y presiona "Predecir"</p>
-            </div>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={processedData} margin={{ top: 10, right: 30, left: 20, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
-              <XAxis
-                dataKey="name"
-                axisLine={{ stroke: "#E5E7EB" }}
-                tick={{ fill: "#6B7280", fontSize: 12 }}
-                tickLine={{ stroke: "#E5E7EB" }}
-                padding={{ left: 10, right: 10 }}
-              />
-              <YAxis
-                tickFormatter={formatYAxis}
-                axisLine={{ stroke: "#E5E7EB" }}
-                tick={{ fill: "#6B7280", fontSize: 12 }}
-                tickLine={{ stroke: "#E5E7EB" }}
-                domain={["auto", "auto"]}
-                label={{ value: "Litros (L)", angle: -90, position: "insideLeft" }}
-              />
-              <Tooltip
-                formatter={(value, name) => {
-                  if (name === "flowRate") {
-                    return [`${value.toLocaleString()} L`, "Consumo Predicho"]
-                  }
-                  return [value, name]
-                }}
-                labelFormatter={(value) => `${value}`}
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #E5E7EB",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="flowRate"
-                stroke="#2563EB"
-                strokeWidth={3}
-                strokeDasharray="8 8"
-                dot={{ stroke: "#2563EB", strokeWidth: 2, r: 5, fill: "white" }}
-                activeDot={{ stroke: "#1D4ED8", strokeWidth: 2, r: 7, fill: "#2563EB" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      {/* Leyenda y estadísticas */}
-      {processedData.length > 0 && !isLoading && !error && statistics && (
-        <div className="mt-6 space-y-4">
-          {/* Leyenda */}
-          <div className="flex justify-center">
-            <div className="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-0.5 bg-blue-500" style={{ borderTop: "3px dashed #2563EB" }}></div>
-                <span className="text-sm text-gray-600">Predicción de consumo mensual en L/s</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Estadísticas */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-3 rounded-lg text-center">
-              <p className="text-sm text-blue-600 font-medium">Promedio Mensual</p>
-              <p className="text-lg font-bold text-blue-800">
-                {statistics.average.toLocaleString(undefined, { maximumFractionDigits: 2 })} L
-              </p>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg text-center">
-              <p className="text-sm text-green-600 font-medium">Consumo Máximo</p>
-              <p className="text-lg font-bold text-green-800">
-                {statistics.max.toLocaleString(undefined, { maximumFractionDigits: 2 })} L
-              </p>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-lg text-center">
-              <p className="text-sm text-orange-600 font-medium">Consumo Mínimo</p>
-              <p className="text-lg font-bold text-orange-800">
-                {statistics.min.toLocaleString(undefined, { maximumFractionDigits: 2 })} L
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

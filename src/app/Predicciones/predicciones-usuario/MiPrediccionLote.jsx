@@ -1,12 +1,14 @@
 "use client"
 
+import React from "react"
+
 import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import MiPrediccionLoteComponent from "../../../components/MiPrediccionLoteComponent"
 import axios from "axios"
-import { Brain, RefreshCw, AlertTriangle, User } from "lucide-react"
+import { Brain, RefreshCw, AlertTriangle, User, Home } from "lucide-react"
 import BackButton from "../../../components/BackButton"
 
 const MiPrediccionLote = () => {
@@ -14,21 +16,62 @@ const MiPrediccionLote = () => {
   const navigate = useNavigate()
   const [predictionData, setPredictionData] = useState([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [selectedPeriod, setSelectedPeriod] = useState("3")
   const [isGenerating, setIsGenerating] = useState(false)
   const [canGenerate, setCanGenerate] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(false)
   const [loteInfo, setLoteInfo] = useState(null)
   const [userDocument, setUserDocument] = useState("")
   const chartRef = useRef(null)
 
-  // Estados para modales - siguiendo el patrón del proyecto
-  const [modalMessage, setModalMessage] = useState("")
-  const [showModal, setShowModal] = useState(false)
+  // Estados para modales - siguiendo el nuevo patrón
+  const [showErrorModal, setShowErrorModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showNoDataModal, setShowNoDataModal] = useState(false)
+  const [showPredictionExistsModal, setShowPredictionExistsModal] = useState(false)
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false)
   const [showInsufficientDataModal, setShowInsufficientDataModal] = useState(false)
 
+  // Estados para mensajes de modales
+  const [modalErrorMessage, setModalErrorMessage] = useState("")
+  const [modalTitle, setModalTitle] = useState("")
+
   const API_URL = import.meta.env.VITE_APP_API_URL
+
+  // Función helper para extraer mensajes de error
+  const extractErrorMessage = (err) => {
+    if (err.response?.data) {
+      const errorData = err.response.data
+
+      if (errorData.errors?.detail) {
+        return errorData.errors.detail
+      }
+
+      if (errorData.errors && typeof errorData.errors === "object") {
+        const errorMessages = Object.values(errorData.errors)
+          .filter((msg) => msg && typeof msg === "string" && msg.trim())
+          .join(". ")
+        if (errorMessages) {
+          return errorMessages
+        }
+      }
+
+      if (errorData.message) {
+        return errorData.message
+      }
+
+      if (errorData.error) {
+        return errorData.error
+      }
+    }
+
+    if (err.message) {
+      return err.message
+    }
+
+    return "Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico"
+  }
 
   // Configurar axios con el token de autenticación
   const getAxiosConfig = () => {
@@ -75,8 +118,9 @@ const MiPrediccionLote = () => {
 
         // Verificar que el lote esté activo
         if (!loteResponse.data.is_activate) {
-          setModalMessage("Este lote no está activo y no se pueden generar predicciones.")
-          setShowModal(true)
+          setModalErrorMessage("Este lote no está activo y no se pueden generar predicciones.")
+          setModalTitle("Lote inactivo")
+          setShowErrorModal(true)
           return
         }
 
@@ -87,13 +131,15 @@ const MiPrediccionLote = () => {
       } catch (err) {
         console.error("Error al verificar acceso al lote:", err)
         if (err.response?.status === 404) {
-          setModalMessage("El lote especificado no existe.")
-          setShowModal(true)
+          setModalErrorMessage("El lote especificado no existe.")
+          setModalTitle("Lote no encontrado")
+          setShowErrorModal(true)
         } else if (err.response?.status === 403) {
           setShowAccessDeniedModal(true)
         } else {
-          setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
-          setShowModal(true)
+          setModalErrorMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
+          setModalTitle("Error de conexión")
+          setShowErrorModal(true)
         }
       }
     }
@@ -104,134 +150,266 @@ const MiPrediccionLote = () => {
   }, [id_lot, API_URL, navigate])
 
   // Función para obtener predicciones existentes
-  const fetchExistingPredictions = async (lotId, periodTime = null) => {
-    try {
-      setLoading(true)
+  const fetchExistingPredictions = React.useCallback(
+    async (lotId, periodTime = null) => {
+      try {
+        setLoading(true)
+        setError(null)
 
-      const response = await axios.get(`${API_URL}/ia/prediction-lot`, {
-        ...getAxiosConfig(),
-        params: {
-          lot: lotId,
-        },
-      })
+        const url = `${API_URL}/ia/prediction-lot?lot=${lotId}`
 
-      if (Array.isArray(response.data) && response.data.length > 0) {
-        let filteredData = response.data
-        if (periodTime) {
-          filteredData = response.data.filter((item) => item.period_time.toString() === periodTime.toString())
+        const response = await axios.get(url, getAxiosConfig())
+
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          let validData = response.data
+          if (periodTime) {
+            validData = response.data.filter(
+              (item) => item.period_time === periodTime || item.period_time === Number.parseInt(periodTime),
+            )
+          }
+
+          if (validData.length > 0) {
+            setPredictionData(validData)
+            setCanGenerate(false)
+          } else if (periodTime) {
+            setPredictionData([])
+            setCanGenerate(true)
+            await generateNewPredictions(lotId, periodTime, true)
+          } else {
+            setPredictionData([])
+            setCanGenerate(true)
+          }
+        } else {
+          if (periodTime) {
+            setPredictionData([])
+            setCanGenerate(true)
+            await generateNewPredictions(lotId, periodTime, true)
+          } else {
+            setPredictionData([])
+            setCanGenerate(true)
+          }
         }
-        setPredictionData(filteredData)
-      } else {
+      } catch (err) {
+        console.error("Error al obtener predicciones:", err)
+        const errorMessage = extractErrorMessage(err)
+
+        if (err.response?.status === 404 && periodTime) {
+          setPredictionData([])
+          setCanGenerate(true)
+          await generateNewPredictions(lotId, periodTime, true)
+        } else if (err.response?.status === 404) {
+          setPredictionData([])
+          setCanGenerate(true)
+        } else if (err.response?.status === 403) {
+          setShowAccessDeniedModal(true)
+        } else {
+          setError(errorMessage)
+          setModalErrorMessage(errorMessage)
+          setModalTitle("Error al cargar predicciones")
+          setShowErrorModal(true)
+          setCanGenerate(true)
+        }
         setPredictionData([])
+      } finally {
+        setLoading(false)
+        if (!initialLoad) {
+          setInitialLoad(true)
+        }
       }
-    } catch (err) {
-      console.error("Error al obtener predicciones:", err)
-      if (err.response?.status === 403) {
-        setShowAccessDeniedModal(true)
-      } else {
-        setModalMessage("Error al obtener las predicciones")
-        setShowModal(true)
-        setPredictionData([])
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+    [API_URL, initialLoad],
+  )
 
   // Función para generar nuevas predicciones
-  const generateNewPredictions = async (lotId, periodTime) => {
+  const generateNewPredictions = async (lotId, periodTime, isAutoGeneration = false) => {
     try {
       setIsGenerating(true)
+      setError(null)
       setCanGenerate(false)
 
       const requestData = {
         lot: lotId,
-        period_time: periodTime,
+        period_time: Number.parseInt(periodTime),
       }
 
       const response = await axios.post(`${API_URL}/ia/prediction-lot`, requestData, getAxiosConfig())
 
-      setShowSuccessModal(true)
-      // Recargar las predicciones después de generar
-      await fetchExistingPredictions(lotId, periodTime)
+      if (!isAutoGeneration) {
+        setShowSuccessModal(true)
+      }
+
+      setTimeout(async () => {
+        try {
+          setLoading(true)
+          const url = `${API_URL}/ia/prediction-lot?lot=${lotId}`
+          const response = await axios.get(url, getAxiosConfig())
+
+          if (Array.isArray(response.data) && response.data.length > 0) {
+            const validData = response.data.filter(
+              (item) => item.period_time === periodTime || item.period_time === Number.parseInt(periodTime),
+            )
+
+            if (validData.length > 0) {
+              setPredictionData(validData)
+              setCanGenerate(false)
+            }
+          }
+        } catch (err) {
+          console.error("Error al cargar predicciones después de generar:", err)
+        } finally {
+          setLoading(false)
+        }
+      }, 2000)
     } catch (err) {
       console.error("Error al generar predicciones:", err)
-      console.log("Error response:", err.response?.data)
+      const errorMessage = extractErrorMessage(err)
 
-      // Manejar errores específicos del backend - siguiendo el patrón del proyecto
-      if (err.response?.data) {
-        const errorData = err.response.data
+      if (
+        errorMessage.includes("Ya existe una predicción") ||
+        errorMessage.includes("already exists") ||
+        errorMessage.includes("ya existe") ||
+        err.response?.status === 409
+      ) {
+        try {
+          const url = `${API_URL}/ia/prediction-lot?lot=${lotId}`
+          const existingResponse = await axios.get(url, getAxiosConfig())
 
-        if (errorData.errors?.detail) {
-          // Estructura: { errors: { detail: "mensaje" } }
-          const errorMessage = errorData.errors.detail
+          if (Array.isArray(existingResponse.data) && existingResponse.data.length > 0) {
+            const correctData = existingResponse.data.filter(
+              (item) => item.period_time === periodTime || item.period_time === Number.parseInt(periodTime),
+            )
 
-          if (errorMessage.includes("predicción activa")) {
-            setModalMessage(errorMessage)
-            setShowModal(true)
-            // Automáticamente cargar las predicciones existentes
-            await fetchExistingPredictions(lotId, periodTime)
-          } else if (errorMessage.includes("tiempo mínimo") || errorMessage.includes("consumo")) {
-            setShowInsufficientDataModal(true)
+            if (correctData.length > 0) {
+              setPredictionData(correctData)
+              setCanGenerate(false)
+              setError(null)
+
+              if (!isAutoGeneration) {
+                setModalErrorMessage(
+                  `Se encontraron ${correctData.length} predicciones existentes para ${periodTime} ${periodTime === "1" ? "mes" : "meses"}.`,
+                )
+                setShowPredictionExistsModal(true)
+              }
+            } else {
+              setPredictionData([])
+              setCanGenerate(true)
+              if (!isAutoGeneration) {
+                setShowNoDataModal(true)
+              }
+            }
           } else {
-            setModalMessage(errorMessage)
-            setShowModal(true)
+            setPredictionData([])
+            setCanGenerate(true)
+            if (!isAutoGeneration) {
+              setShowNoDataModal(true)
+            }
           }
-        } else if (errorData.detail) {
-          // Estructura: { detail: "mensaje" }
-          const errorMessage = errorData.detail
-
-          if (errorMessage.includes("predicción activa")) {
-            setModalMessage(errorMessage)
-            setShowModal(true)
-            // Automáticamente cargar las predicciones existentes
-            await fetchExistingPredictions(lotId, periodTime)
-          } else if (errorMessage.includes("tiempo mínimo") || errorMessage.includes("consumo")) {
-            setShowInsufficientDataModal(true)
-          } else {
-            setModalMessage(errorMessage)
-            setShowModal(true)
+        } catch (fetchErr) {
+          console.error("Error al cargar predicciones existentes:", fetchErr)
+          if (!isAutoGeneration) {
+            setError("No se pudieron cargar las predicciones existentes")
+            setModalErrorMessage("Error al cargar las predicciones existentes")
+            setModalTitle("Error de carga")
+            setShowErrorModal(true)
           }
-        } else if (errorData.message) {
-          // Estructura: { message: "mensaje" }
-          setModalMessage(errorData.message)
-          setShowModal(true)
-        } else {
-          setModalMessage("Error al procesar la solicitud. Verifique los datos e intente nuevamente.")
-          setShowModal(true)
+          setCanGenerate(true)
         }
-      } else if (err.response?.status === 403) {
-        setShowAccessDeniedModal(true)
+      } else if (errorMessage.includes("tiempo mínimo") || errorMessage.includes("consumo")) {
+        if (!isAutoGeneration) {
+          setShowInsufficientDataModal(true)
+        }
+        setCanGenerate(true)
       } else {
-        setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
-        setShowModal(true)
+        if (!isAutoGeneration) {
+          setError(errorMessage)
+          setModalErrorMessage(errorMessage)
+          setModalTitle("Error al generar predicciones")
+          setShowErrorModal(true)
+        }
+        setCanGenerate(true)
       }
     } finally {
       setIsGenerating(false)
-      setCanGenerate(true)
     }
   }
 
   // Cargar predicciones al montar el componente
   useEffect(() => {
-    if (id_lot && loteInfo) {
-      fetchExistingPredictions(id_lot, selectedPeriod)
+    const fetchOnMount = async () => {
+      if (id_lot && loteInfo) {
+        await fetchExistingPredictions(id_lot, selectedPeriod)
+      }
     }
-  }, [id_lot, loteInfo])
+    fetchOnMount()
+  }, [id_lot, loteInfo, fetchExistingPredictions])
 
-  // Cargar predicciones cuando cambie el período
-  useEffect(() => {
-    if (id_lot && selectedPeriod && loteInfo) {
-      fetchExistingPredictions(id_lot, selectedPeriod)
-    }
-  }, [selectedPeriod])
-
-  const handlePeriodChange = (newPeriod) => {
+  // Manejar cambio de período de predicción
+  const handlePeriodChange = async (newPeriod) => {
     setSelectedPeriod(newPeriod)
+
+    setPredictionData([])
+    setCanGenerate(true)
+    setError(null)
+
+    setShowErrorModal(false)
+    setShowPredictionExistsModal(false)
+    setShowNoDataModal(false)
+
+    if (id_lot) {
+      try {
+        setLoading(true)
+
+        const url = `${API_URL}/ia/prediction-lot?lot=${id_lot}`
+        const response = await axios.get(url, getAxiosConfig())
+
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const correctPeriodData = response.data.filter(
+            (item) => item.period_time === newPeriod || item.period_time === Number.parseInt(newPeriod),
+          )
+
+          if (correctPeriodData.length > 0) {
+            setPredictionData(correctPeriodData)
+            setCanGenerate(false)
+          } else {
+            setPredictionData([])
+            setCanGenerate(true)
+            await generateNewPredictions(id_lot, newPeriod, true)
+          }
+        } else {
+          setPredictionData([])
+          setCanGenerate(true)
+          await generateNewPredictions(id_lot, newPeriod, true)
+        }
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setPredictionData([])
+          setCanGenerate(true)
+          await generateNewPredictions(id_lot, newPeriod, true)
+        } else {
+          setPredictionData([])
+          setCanGenerate(true)
+          const errorMessage = extractErrorMessage(err)
+          setError(errorMessage)
+          setModalErrorMessage(errorMessage)
+          setModalTitle("Error al cargar predicciones")
+          setTimeout(() => {
+            setShowErrorModal(true)
+          }, 500)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
   }
 
+  // Manejar generación manual de nuevas predicciones
   const handleGeneratePredictions = () => {
-    generateNewPredictions(id_lot, selectedPeriod)
+    generateNewPredictions(id_lot, selectedPeriod, false)
+  }
+
+  // Función para refrescar datos
+  const handleRefresh = () => {
+    fetchExistingPredictions(id_lot, selectedPeriod)
   }
 
   return (
@@ -277,23 +455,18 @@ const MiPrediccionLote = () => {
         </div>
       </Modal>
 
-      {/* Modal de error principal - siguiendo el patrón del proyecto */}
-      <Modal showModal={showModal} onClose={() => setShowModal(false)} title="Error" btnMessage="Aceptar">
-        <p>{modalMessage}</p>
-      </Modal>
-
       {/* Modal de éxito */}
       <Modal
         showModal={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        title="Predicciones generadas exitosamente"
+        title="Predicciones del lote generadas exitosamente"
         btnMessage="Aceptar"
       >
         <div className="flex items-start gap-3">
           <Brain className="text-green-500 mt-1" size={20} />
           <div>
             <p className="text-gray-700 mb-2">
-              Las predicciones para{" "}
+              Las predicciones del lote para{" "}
               <strong>
                 {selectedPeriod} {selectedPeriod === "1" ? "mes" : "meses"}
               </strong>{" "}
@@ -304,10 +477,95 @@ const MiPrediccionLote = () => {
         </div>
       </Modal>
 
-      {/* Contenedor principal con padding top suficiente para evitar el navbar */}
+      {/* Modal de error general */}
+      <Modal
+        showModal={showErrorModal}
+        onClose={() => {
+          setShowErrorModal(false)
+          setError(null)
+          setModalErrorMessage("")
+          if (modalErrorMessage.includes("sesión") || modalTitle.includes("no encontrado")) {
+            navigate("/mis-predicciones")
+          }
+        }}
+        title={modalTitle || "Error en la conexión"}
+        btnMessage="Cerrar"
+      >
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="text-red-500 mt-1" size={20} />
+          <div>
+            <p className="text-gray-700 mb-2">
+              {modalErrorMessage || "Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico"}
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de predicción ya existente */}
+      <Modal
+        showModal={showPredictionExistsModal}
+        onClose={() => {
+          setShowPredictionExistsModal(false)
+          setModalErrorMessage("")
+        }}
+        title="Predicciones encontradas"
+        btnMessage="Ver gráfica"
+      >
+        <div className="flex items-start gap-3">
+          <Brain className="text-green-500 mt-1" size={20} />
+          <div>
+            <p className="text-gray-700 mb-2">
+              ✅ Ya existen predicciones para este lote con el período de {selectedPeriod}{" "}
+              {selectedPeriod === "1" ? "mes" : "meses"}.
+            </p>
+            <p className="text-sm text-gray-600 mb-2">{modalErrorMessage}</p>
+            <p className="text-sm text-green-600 font-medium">
+              Las predicciones se han cargado y están listas para visualizar.
+            </p>
+            {predictionData.length > 0 && (
+              <div className="mt-3 p-2 bg-green-50 rounded text-xs">
+                <p>📊 Datos cargados: {predictionData.length} registros</p>
+                <p>
+                  📅 Período: {predictionData[0]?.period_time} {predictionData[0]?.period_time === 1 ? "mes" : "meses"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de sin datos */}
+      <Modal
+        showModal={showNoDataModal}
+        onClose={() => setShowNoDataModal(false)}
+        title="No hay predicciones disponibles"
+        btnMessage="Entendido"
+      >
+        <div className="flex items-start gap-3">
+          <Brain className="text-blue-500 mt-1" size={20} />
+          <div>
+            <p className="text-gray-700 mb-3">
+              No se encontraron predicciones para este período ({selectedPeriod}{" "}
+              {selectedPeriod === "1" ? "mes" : "meses"}).
+            </p>
+            <p className="text-sm text-gray-600 mb-3">
+              Se generará automáticamente una nueva predicción al seleccionar un período, o puedes usar el botón
+              "Generar Predicción" cuando esté habilitado.
+            </p>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-xs text-blue-700">
+                <strong>Tip:</strong> Las predicciones se generan utilizando modelos de inteligencia artificial basados
+                en datos históricos de consumo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Contenedor principal */}
       <div className="flex-1 pt-24 pb-8">
         <div className="max-w-6xl mx-auto px-4">
-          {/* Botón de regreso con espaciado adecuado */}
+          {/* Botón de regreso */}
           <div className="mb-6">
             <BackButton to="/mis-predicciones" text="Volver a mis predicciones" />
           </div>
@@ -317,10 +575,12 @@ const MiPrediccionLote = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                  <Brain className="text-blue-600" size={32} />
-                  Predicción del consumo de agua para lotes del distrito
+                  <Home className="text-blue-600" size={32} />
+                  Predicciones IA - Lote {id_lot}
                 </h1>
-                <p className="text-gray-600 mt-2">Predicción de consumo de agua generada con inteligencia artificial</p>
+                <p className="text-gray-600 mt-2">
+                  Predicciones de consumo del lote generadas con inteligencia artificial
+                </p>
 
                 {loteInfo && (
                   <div className="mt-3 flex flex-wrap gap-4 text-sm">
@@ -345,7 +605,7 @@ const MiPrediccionLote = () => {
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => fetchExistingPredictions(id_lot, selectedPeriod)}
+                  onClick={handleRefresh}
                   disabled={loading || isGenerating}
                   className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg disabled:opacity-50"
                 >
@@ -360,7 +620,14 @@ const MiPrediccionLote = () => {
               {predictionData.length > 0 && (
                 <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  Predicciones para {selectedPeriod} {selectedPeriod === "1" ? "mes" : "meses"}
+                  Predicciones disponibles
+                </span>
+              )}
+
+              {predictionData.length === 0 && !loading && initialLoad && (
+                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
+                  <Brain size={12} />
+                  Sin predicciones - Generación automática disponible
                 </span>
               )}
 
@@ -377,6 +644,13 @@ const MiPrediccionLote = () => {
                   Cargando datos...
                 </span>
               )}
+
+              {error && (
+                <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
+                  <AlertTriangle size={12} />
+                  Error en predicciones
+                </span>
+              )}
             </div>
           </div>
 
@@ -386,7 +660,7 @@ const MiPrediccionLote = () => {
               <MiPrediccionLoteComponent
                 predictionData={predictionData}
                 isLoading={loading}
-                error={null} // No pasar errores aquí para evitar duplicados
+                error={error}
                 onPeriodChange={handlePeriodChange}
                 onGeneratePredictions={handleGeneratePredictions}
                 selectedPeriod={selectedPeriod}
@@ -395,6 +669,7 @@ const MiPrediccionLote = () => {
                 chartRef={chartRef}
                 isGenerating={isGenerating}
                 canGenerate={canGenerate}
+                showNoDataMessage={predictionData.length === 0 && initialLoad && !loading}
               />
             </div>
           )}
@@ -402,25 +677,23 @@ const MiPrediccionLote = () => {
           {/* Información adicional */}
           {predictionData.length > 0 && (
             <div className="bg-blue-50 rounded-lg p-6 mt-6">
-              <h3 className="text-lg font-semibold text-blue-800 mb-3">Información de las Predicciones</h3>
+              <h3 className="text-lg font-semibold text-blue-800 mb-3">Información de las Predicciones del Lote</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p>
-                    <strong>ID Predio:</strong> {predictionData[0]?.plot}
+                    <strong>Predio:</strong> {predictionData[0]?.plot || "No disponible"}
                   </p>
                   <p>
-                    <strong>ID Lote:</strong> {id_lot}
+                    <strong>Propietario:</strong> {userDocument}
                   </p>
                   <p>
-                    <strong>ID Dueño:</strong> {userDocument}
-                  </p>
-                  <p>
-                    <strong>Período de predicción:</strong> {predictionData[0]?.period_time} meses
+                    <strong>Período de predicción:</strong> {predictionData[0]?.period_time}{" "}
+                    {predictionData[0]?.period_time === 1 ? "mes" : "meses"}
                   </p>
                 </div>
                 <div>
                   <p>
-                    <strong>Código de predicción:</strong> {predictionData[0]?.code_prediction}
+                    <strong>Código de predicción:</strong> {predictionData[0]?.code_prediction || "No disponible"}
                   </p>
                   <p>
                     <strong>Fecha de generación:</strong>{" "}
@@ -433,7 +706,7 @@ const MiPrediccionLote = () => {
                       : "No disponible"}
                   </p>
                   <p>
-                    <strong>Total de predicciones:</strong> {predictionData.length} meses
+                    <strong>Total de predicciones:</strong> {predictionData.length} registros
                   </p>
                 </div>
               </div>
