@@ -5,11 +5,15 @@ import axios from "axios";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
 import InputFilterFacturas from "../../components/InputFilterFacturas";
+import TotalTable from "../../components/TotalTable";
+import { PDFDownloadTotales } from "../../components/PDFDownloadTotales";
+import { ExcelDownloadTotales } from "../../components/ExcelDownloadTotales";
 
 const HistorialFacturasLote = () => {
   const navigate = useNavigate();
   const [facturas, setFacturas] = useState([]);
-  const [filteredFacturas, setFilteredFacturas] = useState(null); // Null para controlar si se han aplicado filtros
+  const [filteredFacturas, setFilteredFacturas] = useState(null);
+  const [showTotalizacion, setShowTotalizacion] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -18,10 +22,23 @@ const HistorialFacturasLote = () => {
     lotId: "",
     startDate: "",
     endDate: "",
-    isActive: "",
+    status: "",
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
+
+  // Usar los hooks de descarga
+  const { generatePDF, isGenerating: isGeneratingPDF } = PDFDownloadTotales({
+    data: filteredFacturas || [],
+    filters,
+    onError: handleDownloadError
+  });
+
+  const { generateExcel, isGenerating: isGeneratingExcel } = ExcelDownloadTotales({
+    data: filteredFacturas || [],
+    filters,
+    onError: handleDownloadError
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,9 +87,6 @@ const HistorialFacturasLote = () => {
       
       // PASO 1: Aplicar el filtro de fechas PRIMERO, de forma aislada
       if (filters.startDate || filters.endDate) {
-        // console.log("Aplicando filtro de fechas...");
-        // console.log("Total facturas antes del filtro:", filteredResults.length);
-        
         // Filtrar por fechas
         filteredResults = filteredResults.filter(factura => {
           // Convertir a fecha y remover componente de hora
@@ -94,11 +108,8 @@ const HistorialFacturasLote = () => {
               parseInt(startDateParts[2]) // día
             );
             
-            // console.log(`Factura ${factura.code} - fecha: ${facturaDateOnly.toLocaleDateString()}, comparando con inicio: ${startDate.toLocaleDateString()}`);
-            
             if (facturaDateOnly < startDate) {
               keepFactura = false;
-              // console.log(`-> FILTRADA: Fecha anterior a la inicial`);
             }
           }
           
@@ -111,18 +122,13 @@ const HistorialFacturasLote = () => {
               parseInt(endDateParts[2]) // día
             );
             
-            // console.log(`Factura ${factura.code} - comparando con fin: ${endDate.toLocaleDateString()}`);
-            
             if (facturaDateOnly > endDate) {
               keepFactura = false;
-              // console.log(`-> FILTRADA: Fecha posterior a la final`);
             }
           }
           
           return keepFactura;
         });
-        
-        // console.log("Total facturas después del filtro de fechas:", filteredResults.length);
       }
       
       // PASO 2: Aplicar el resto de los filtros
@@ -144,16 +150,19 @@ const HistorialFacturasLote = () => {
   
         // Filtro por estado de pago
         const matchesStatus =
-          filters.isActive === "" ||
-          (filters.isActive === "true" && factura.status?.toLowerCase() === "pagada") ||
-          (filters.isActive === "false" && factura.status?.toLowerCase() === "pendiente");
+          filters.status === "" ||
+          (filters.status === "Pagada" && factura.status?.toLowerCase() === "pagada") ||
+          (filters.status === "Pendiente" && factura.status?.toLowerCase() === "pendiente") ||
+          (filters.status === "Validada" && factura.status?.toLowerCase() === "validada") ||
+          (filters.status === "Vencida" && factura.status?.toLowerCase() === "vencida");
           
         return matchesId && matchesIdLote && matchesOwner && matchesStatus;
       });
       
       // Establecer los resultados filtrados
-      // console.log("Total facturas después de todos los filtros:", filteredResults.length);
       setFilteredFacturas(filteredResults);
+      // Ocultar la totalización cuando se aplican nuevos filtros
+      setShowTotalizacion(false);
       
       // Mostrar mensaje si no hay resultados
       if (filteredResults.length === 0) {
@@ -161,9 +170,55 @@ const HistorialFacturasLote = () => {
         setShowModal(true);
       }
     } catch (error) {
-      // console.error("Error al aplicar filtros:", error);
+      console.error("Error al aplicar filtros:", error);
       setModalMessage("Ocurrió un error al aplicar los filtros. Por favor, inténtalo de nuevo.");
       setShowModal(true);
+    }
+  };
+
+  // Función para manejar la totalización
+  const handleTotalizar = () => {
+    if (filteredFacturas && filteredFacturas.length > 0) {
+      setShowTotalizacion(true);
+    } else {
+      setModalMessage("Primero debe aplicar filtros para ver los resultados antes de totalizar.");
+      setShowModal(true);
+    }
+  };
+
+  // Función para manejar errores de descarga
+  function handleDownloadError(message) {
+    setModalMessage(message);
+    setShowModal(true);
+  }
+
+  // Función para generar PDF - CORREGIDA
+  const handleGeneratePDF = async () => {
+    if (!filteredFacturas || filteredFacturas.length === 0) {
+      handleDownloadError("No hay datos para exportar. Por favor, aplique filtros primero.");
+      return;
+    }
+
+    try {
+      await generatePDF();
+    } catch (error) {
+      console.error("Error al generar PDF:", error);
+      handleDownloadError("Error al generar el PDF. Por favor, inténtalo de nuevo.");
+    }
+  };
+
+  // Función para generar Excel - CORREGIDA
+  const handleGenerateExcel = async () => {
+    if (!filteredFacturas || filteredFacturas.length === 0) {
+      handleDownloadError("No hay datos para exportar. Por favor, aplique filtros primero.");
+      return;
+    }
+
+    try {
+      await generateExcel();
+    } catch (error) {
+      console.error("Error al generar Excel:", error);
+      handleDownloadError("Error al generar el Excel. Por favor, inténtalo de nuevo.");
     }
   };
 
@@ -189,7 +244,6 @@ const HistorialFacturasLote = () => {
           : factura.status?.toLowerCase() === "vencida"
           ? "bg-red-100 text-red-800 border border-red-200"
           : "";
-
 
         return (
           <span className={`flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass} w-18`}>
@@ -233,6 +287,19 @@ const HistorialFacturasLote = () => {
           showStatusFilter={true}
         />
 
+        {/* Botón Totalizar - Solo se muestra cuando hay filtros aplicados */}
+        {filteredFacturas !== null && filteredFacturas.length > 0 && (
+          <div className="flex justify-end my-1">
+            <button
+              onClick={handleTotalizar}
+              className=" bg-[#365486]  hover:bg-blue-500 transition-colors p-1.5 w-50 rounded-full min-w-[28px] min-h-[28px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              disabled={isGeneratingPDF || isGeneratingExcel}
+            >
+              <p className="font-bold text-white">Totalizar</p>
+            </button>
+          </div>
+        )}
+
         {/* Modal de mensajes */}
         {showModal && (
           <Modal
@@ -247,6 +314,15 @@ const HistorialFacturasLote = () => {
           >
             <p>{modalMessage}</p>
           </Modal>
+        )}
+
+        {/* Tabla de totalización - Solo se muestra cuando se ha hecho clic en Totalizar */}
+        {showTotalizacion && filteredFacturas && filteredFacturas.length > 0 && (
+          <TotalTable
+            data={filteredFacturas}
+            onDownloadPDF={handleGeneratePDF}
+            onDownloadExcel={handleGenerateExcel}
+          />
         )}
 
         {/* Uso del componente DataTable - Solo mostrar cuando hay filtros aplicados */}

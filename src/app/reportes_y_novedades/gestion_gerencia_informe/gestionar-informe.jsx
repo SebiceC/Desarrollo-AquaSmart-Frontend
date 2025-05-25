@@ -436,7 +436,7 @@ const GestionarInforme = () => {
 
             {/* Botones de acción */}
             <div className="flex flex-col md:flex-row justify-between gap-4 mt-8">
-              <BackButton to="/reportes-y-novedades/control-reportes-intervenciones" text="Volver" />
+              <BackButton to="/reportes-y-novedades/atencion_solicitudes-reportes" text="Volver" />
 
               {!isReadOnly && (
                 <div className="flex flex-col md:flex-row gap-4">

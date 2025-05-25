@@ -15,7 +15,7 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
   };
 
   const handleStatusChange = (e) => {
-    onFilterChange("isActive", e.target.value);
+    onFilterChange("status", e.target.value);
   };
 
   const handleDateChange = (e) => {
@@ -53,6 +53,32 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
           maxLength={12}
         />
       </div>
+      
+      {/* Filtro por Estado */}
+      <div className="relative w-full lg:w-[22%] xl:w-1/5">
+        <select
+          className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+          value={filters.status}
+          onChange={handleStatusChange}
+        >
+          <option value="">Estado</option>
+          <option value="Pagada">Pagada</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Validada">Validada</option>
+          <option value="Vencida">Vencida</option>
+        </select>
+        <span className="absolute top-3 right-4 text-gray-400">
+          <svg
+            className="w-5 h-5"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </div>
 
       {/* Filtro por documento del propietario */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
@@ -72,6 +98,7 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
             }
           }}
         />
+
 
       </div>
 
