@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import axios from "axios"
-import { Search, Filter, User, Calendar, AlertCircle } from "lucide-react"
+import { Search } from "lucide-react"
 import DataTable from "../../../components/DataTable"
 
 const InformeMantenimiento = () => {
@@ -32,7 +32,7 @@ const InformeMantenimiento = () => {
 
   // Tipos de solicitudes para el filtro - Ordenados alfabéticamente
   const requestTypes = [
-    { value: "", label: "Todos los tipos" },
+    { value: "", label: "TIPO" },
     { value: "app_failure", label: "Fallo en el aplicativo" },
     { value: "water_supply", label: "Fallo en el suministro del agua" },
     { value: "flow_definitive_cancel", label: "Cancelación Definitiva de Caudal" },
@@ -40,9 +40,10 @@ const InformeMantenimiento = () => {
 
   // Estados de solución para el filtro
   const solutionStates = [
-    { value: "", label: "Todos los estados" },
-    { value: "pending", label: "Pendiente de solución" },
-    { value: "solved", label: "Solucionado" },
+    { value: "", label: "ESTADO" },
+    { value: "pending", label: "Pendiente de informe" },
+    { value: "solved", label: "Con informe" },
+    { value: "reassigned", label: "Reasignado" },
   ]
 
   const handleFilterChange = (name, value) => {
@@ -266,12 +267,13 @@ const InformeMantenimiento = () => {
       })
     }
 
-    // Filtro por estado de solución
+    // Filtro por estado de informe
     if (filters.status) {
       filtered = filtered.filter((asignacion) => {
-        const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
-        if (filters.status === "pending") return !tieneSolucion
-        if (filters.status === "solved") return tieneSolucion
+        const tieneInforme = tieneInformeMantenimiento(asignacion.id)
+        if (filters.status === "pending") return !tieneInforme
+        if (filters.status === "solved") return tieneInforme
+        if (filters.status === "reassigned") return asignacion.reassigned
         return true
       })
     }
@@ -326,12 +328,26 @@ const InformeMantenimiento = () => {
     setFilteredAsignaciones(filtered)
   }, [filters, fetchAsignaciones, asignacionesCompletas])
 
+  // Modificar la función handleSolucionar para adaptarse al nuevo estilo
   const handleSolucionar = (asignacion) => {
-    // Navegar a la página de crear informe con el ID de la asignación
+    // Verificar si la asignación ya tiene un informe
+    const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
+
+    if (tieneSolucion) {
+      // Buscar el ID del informe correspondiente a esta asignación
+      const informe = informesMantenimiento.find((inf) => inf.assignment === asignacion.id)
+      if (informe) {
+        // Navegar a la página de gestionar informe con el ID del informe
+        navigate(`/reportes-y-novedades/gestionar-informe/${informe.id}`)
+        return
+      }
+    }
+
+    // Si no tiene informe o no se encontró el informe, navegar a crear informe
     navigate(`/reportes-y-novedades/crear-informe/${asignacion.id}`)
   }
 
-  // Configuración de columnas para DataTable
+  // Actualizar la definición de columnas para usar el nuevo estilo de botón
   const columns = [
     { key: "id", label: "ID Asignación" },
     {
@@ -356,29 +372,42 @@ const InformeMantenimiento = () => {
       render: (asignacion) => determinarTipoSolicitud(asignacion),
     },
     {
+      key: "reassigned",
+      label: "Estado",
+      render: (asignacion) => {
+        return (
+          <div className="flex items-center">
+            {asignacion.reassigned && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mr-2">
+                Reasignado
+              </span>
+            )}
+            {tieneInformeMantenimiento(asignacion.id) && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Con informe
+              </span>
+            )}
+            {!tieneInformeMantenimiento(asignacion.id) && !asignacion.reassigned && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Pendiente
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
       key: "action",
       label: "Acción",
       render: (asignacion) => {
         const tieneSolucion = tieneInformeMantenimiento(asignacion.id)
 
-        if (tieneSolucion) {
-          return (
-            <button
-              disabled
-              className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg w-full cursor-not-allowed"
-              title="Esta asignación ya ha sido solucionada"
-            >
-              Solucionado
-            </button>
-          )
-        }
-
         return (
           <button
             onClick={() => handleSolucionar(asignacion)}
-            className="bg-[#365486] hover:bg-[#344663] text-white px-4 py-2 rounded-lg w-full"
+            className="bg-[#365486] hover:bg-[#42A5F5] text-white text-xs px-4 py-1 h-8 rounded-lg w-24"
           >
-            Solucionar
+            {tieneSolucion ? "Ver" : "Solucionar"}
           </button>
         )
       },
@@ -392,32 +421,46 @@ const InformeMantenimiento = () => {
         <h1 className="text-center my-15 text-lg md:text-xl font-semibold mb-6">Asignación de mantenimientos</h1>
 
         {/* Sección de filtros */}
-        <div className="mb-8 bg-white p-5 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex flex-col gap-4">
+        <div className="mb-6">
+          <div className="p-4 rounded-lg">
             {/* Primera fila de filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              {/* Filtro por ID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {/* Filtro por ID de asignación */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <Search size={16} />
+                <span className="absolute left-3 top-2 text-gray-400">
+                  <Search size={18} />
                 </span>
                 <input
                   type="text"
-                  placeholder="ID asignación"
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
+                  placeholder="ID de asignación"
+                  className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, "")
+                  }}
                   value={filters.id}
                   onChange={(e) => handleFilterChange("id", e.target.value)}
                   maxLength={8}
                 />
               </div>
 
+              {/* Filtro por usuario que asigna */}
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-400">
+                  <Search size={18} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Asignador (documento o nombre)"
+                  className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+                  value={filters.assignedBy}
+                  onChange={(e) => handleFilterChange("assignedBy", e.target.value)}
+                />
+              </div>
+
               {/* Filtro por tipo de solicitud */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <Filter size={16} />
-                </span>
                 <select
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] appearance-none text-sm"
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
                   value={filters.requestType}
                   onChange={(e) => handleFilterChange("requestType", e.target.value)}
                 >
@@ -427,9 +470,9 @@ const InformeMantenimiento = () => {
                     </option>
                   ))}
                 </select>
-                <span className="absolute top-3 right-3 text-gray-400 pointer-events-none">
+                <span className="absolute top-3 right-4 text-gray-400">
                   <svg
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -442,11 +485,8 @@ const InformeMantenimiento = () => {
 
               {/* Filtro por estado de solución */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <AlertCircle size={16} />
-                </span>
                 <select
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] appearance-none text-sm"
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
                   value={filters.status}
                   onChange={(e) => handleFilterChange("status", e.target.value)}
                 >
@@ -456,9 +496,9 @@ const InformeMantenimiento = () => {
                     </option>
                   ))}
                 </select>
-                <span className="absolute top-3 right-3 text-gray-400 pointer-events-none">
+                <span className="absolute top-3 right-4 text-gray-400">
                   <svg
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -468,68 +508,55 @@ const InformeMantenimiento = () => {
                   </svg>
                 </span>
               </div>
-
-              {/* Filtro por usuario que asigna */}
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <User size={16} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Asignador (documento o nombre)"
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                  value={filters.assignedBy}
-                  onChange={(e) => handleFilterChange("assignedBy", e.target.value)}
-                />
-              </div>
             </div>
 
-            {/* Segunda fila de filtros */}
-            <div className="flex flex-col md:flex-row gap-3 items-end">
-              {/* Filtros de fecha */}
-              <div className="w-full md:w-3/4">
-                <p className="text-gray-500 text-xs font-medium mb-1.5 flex items-center">
-                  <Calendar size={14} className="mr-1" />
-                  Filtrar por fecha de asignación
-                </p>
-                <div className="flex gap-3">
-                  <div className="w-1/2 relative">
-                    <input
-                      type="date"
-                      name="startDate"
-                      className="w-full py-2 px-3 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                      value={filters.startDate || ""}
-                      onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                    />
-                    <span className="text-gray-400 text-xs absolute -bottom-4 left-1">Inicio</span>
-                  </div>
+            {/* Segunda fila con filtro de fecha y botón */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+              {/* Filtro por fecha - Ocupa 4 columnas en md */}
+              <div className="md:col-span-4">
+                <p className="text-gray-500 text-sm mb-1 text-center">Filtrar por fecha de asignación</p>
+                <div className="flex items-center bg-gray-100 rounded-full px-1 w-full border border-gray-300">
+                  <span className="text-gray-400 px-2 flex-shrink-0">
+                    <Search size={18} />
+                  </span>
 
-                  <div className="w-1/2 relative">
-                    <input
-                      type="date"
-                      name="endDate"
-                      className="w-full py-2 px-3 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                      value={filters.endDate || ""}
-                      onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                    />
-                    <span className="text-gray-400 text-xs absolute -bottom-4 left-1">Fin</span>
-                  </div>
+                  <input
+                    type="date"
+                    name="startDate"
+                    className="w-full min-w-0 px-3 py-2 bg-transparent focus:outline-none text-gray-500 text-sm"
+                    value={filters.startDate || ""}
+                    onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                  />
+
+                  <span className="text-gray-400 px-2 flex-shrink-0">|</span>
+
+                  <input
+                    type="date"
+                    name="endDate"
+                    className="w-full min-w-0 px-3 py-2 bg-transparent focus:outline-none text-gray-500 text-sm"
+                    value={filters.endDate || ""}
+                    onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-between text-gray-400 text-xs px-2 mt-1">
+                  <span>Inicio</span>
+                  <span>Fin</span>
                 </div>
               </div>
 
-              {/* Botón de filtrar */}
-              <div className="w-full md:w-1/4 mt-6 md:mt-0">
+              {/* Botón de filtrar - Ocupa 2 columnas en md */}
+              <div className="md:col-span-2 flex justify-center md:justify-start">
                 <button
                   onClick={applyFilters}
-                  className={`${
-                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#365486] hover:bg-[#2A4374]"
-                  } text-white px-6 py-2 rounded-md text-sm font-medium transition-colors w-full flex items-center justify-center`}
                   disabled={loading}
+                  className={`${
+                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#365486] hover:bg-[#344663] hover:scale-105"
+                  } text-white px-6 py-2 rounded-full text-sm font-semibold w-full md:w-auto`}
                 >
                   {loading ? (
                     <>
                       <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        className="animate-spin inline-block mr-2 h-4 w-4 text-white"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -551,10 +578,7 @@ const InformeMantenimiento = () => {
                       Cargando...
                     </>
                   ) : (
-                    <>
-                      <Filter size={16} className="mr-1.5" />
-                      Filtrar
-                    </>
+                    "Filtrar"
                   )}
                 </button>
               </div>

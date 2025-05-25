@@ -257,6 +257,21 @@ function NavBar() {
               },
             ]}
           />
+
+          <NavItem
+            direction="/historial-incidencias"
+            text="Historial de Incidencias"
+          />
+          <NavItem
+            direction="/predicciones"
+            text="Predicciones"
+            subItems={[
+              { direction: "/predicciones-distrito", text: "Distrito" },
+              { direction: "/predicciones", text: "Lotes del Distrito" },
+              { direction: "/mis-predicciones", text: "Mis lotes" },
+            ]}
+          />
+
           {showPermisosSection && (
             <NavItem direction="/permisos" text="Permisos" />
           )}
@@ -554,8 +569,8 @@ function NavBar() {
               text="Reportes y novedades"
               subItems={[
                 {
-                  direction: "/reportes-y-novedades/misReportes",
-                  text: "Mis reportes/solicitudes",
+                  direction: "/reportes-y-novedades/mis-reportes-solicitudes",
+                  text: "Ver mis reportes/solicitudes",
                 },
                 {
                   direction: "/reportes-y-novedades/solicitud_caudal",
@@ -566,7 +581,7 @@ function NavBar() {
                   text: "Reportar fallos",
                 },
                 {
-                  direction: "/reportes-y-novedades/misReportes",
+                  direction: "/reportes-y-novedades/informe-mantenimiento",
                   text: "Asignación de mantenimientos",
                 },
                 {
@@ -577,6 +592,26 @@ function NavBar() {
                   direction: "/reportes-y-novedades/misReportes",
                   text: "Aprobación de mantenimiento",
                 },
+                {
+                  direction:
+                    "/reportes-y-novedades/control-reportes-intervenciones",
+                  text: "Control de reportes de intervenciones",
+                },
+              ]}
+            />
+
+            <NavItem
+              direction="/historial-incidencias"
+              text="Historial de Incidencias"
+            />
+
+            <NavItem
+              direction="/predicciones"
+              text="Predicciones"
+              subItems={[
+                { direction: "/predicciones-distrito", text: "Distrito" },
+                { direction: "/predicciones", text: "Lotes del Distrito" },
+                { direction: "/mis-predicciones", text: "Mis lotes" },
               ]}
             />
 
@@ -596,13 +631,6 @@ function NavBar() {
               <span>Cerrar sesión</span>
             </button>
             <Minus className="w-full h-[2px] bg-gray-400" />
-            <Link
-              to="/"
-              className="flex items-center space-x-2 text-sm text-gray-600 pb-5 px-2"
-            >
-              <HelpCircle size={20} />
-              <span>Manual de usuario y soporte</span>
-            </Link>
           </div>
         </div>
       </nav>

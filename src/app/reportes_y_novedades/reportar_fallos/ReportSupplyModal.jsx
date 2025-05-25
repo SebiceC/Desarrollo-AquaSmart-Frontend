@@ -209,7 +209,7 @@ const ReportSupplyModal = ({ showModal, onClose, onSuccess, API_URL }) => {
             console.error("Error al enviar el reporte:", error);
 
             // Extraer mensaje de error del backend
-            let errorMessage = "Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico";
+            let errorMessage = "No se puede crear el reporte porque ya existe uno pendiente para el predio o el lote seleccionado.";
             
             if (error.response?.data) {
                 const responseData = error.response.data;

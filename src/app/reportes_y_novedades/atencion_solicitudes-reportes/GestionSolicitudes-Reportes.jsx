@@ -4,19 +4,27 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
-import { Eye } from "lucide-react";
 import InputFilterGestionSolRep from "../../../components/InputFilterGestionSolRep";
-import GestionSolicitudModal from "./GestionSolicitudModal";
 // Importar los nuevos modales
-import CancelacionDefinitivaModal from "./CancelacionDefinitivaModal";
-import FallaSuministroModal from "./FallaSuministroModal";
-import FallaAplicativoModal from "./FallaAplicativoModal";
+
+import SolicitudInfoModal from "./SolicitudInfoModal";
+//para cancelacion definitiva
+import CancelacionDefinitivaF from "./Cancelacion_definitiva/CancelacionDefinitivaF";
+import CancelacionDefinitivaP from "./Cancelacion_definitiva/CancelacionDefinitivaP";
+import CancelacionDefinitivaE from "./Cancelacion_definitiva/CancelacionDefinitivaE";
+//para falla aplicativo
+import FallaAplicativoF from "./Falla_aplicativo/FallaAplicativoF";
+import FallaAplicativoP from "./Falla_aplicativo/FallaAplicativoP";
+import FallaAplicativoE from "./Falla_aplicativo/FallaAplicativoE";
+
+import GestionSolicitudModal from "./GestionSolicitudModal";
 
 const GestionSolicitudes = () => {
   const navigate = useNavigate();
   const [solicitudes, setSolicitudes] = useState([]);
   const [reportes, setReportes] = useState([]);
   const [allData, setAllData] = useState([]);
+  const [maintenanceReports, setMaintenanceReports] = useState([]); // Nuevo estado para informes de mantenimiento
   const [filteredData, setFilteredData] = useState(null); // Inicialmente null para que no muestre datos
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -26,6 +34,7 @@ const GestionSolicitudes = () => {
     createdBy: "",  // Campo para filtrar por ID de usuario (created_by)
     solicitudType: "", // 'solicitud' o 'reporte'
     subType: "",       // Tipo específico de solicitud o reporte
+    specification: "", // Nuevo filtro de especificación
     status: "", // 'pendiente', 'en proceso', 'a espera de aprobacion', 'finalizado', 'rechazada'
     startDate: "",
     endDate: "",
@@ -36,10 +45,13 @@ const GestionSolicitudes = () => {
   
   // Estados para controlar la visibilidad de cada modal
   const [showGestionModal, setShowGestionModal] = useState(false);
-  const [showCancelacionDefinitivaModal, setShowCancelacionDefinitivaModal] = useState(false);
-  const [showFallaSuministroModal, setShowFallaSuministroModal] = useState(false);
-  const [showFallaAplicativoModal, setShowFallaAplicativoModal] = useState(false);
-
+  const [showCancelacionDefinitivaFModal, setShowCancelacionDefinitivaFModal] = useState(false);
+  const [showCancelacionDefinitivaPModal, setShowCancelacionDefinitivaPModal] = useState(false);
+  const [showCancelacionDefinitivaEModal, setShowCancelacionDefinitivaEModal] = useState(false);
+  const [showFallaAplicativoFModal, setShowFallaAplicativoFModal] = useState(false);
+  const [showFallaAplicativoPModal, setShowFallaAplicativoPModal] = useState(false);
+  const [showFallaAplicativoEModal, setShowFallaAplicativoEModal] = useState(false);
+  const [showSolicitudInfoModal, setShowSolicitudInfoModal] = useState(false);
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
   // Mapa de estados aceptados para normalización
@@ -49,7 +61,6 @@ const GestionSolicitudes = () => {
     "a espera de aprobacion": "a espera de aprobacion",
     "a espera de aprobación": "a espera de aprobacion", // Variante con tilde
     "finalizado": "finalizado",
-    "rechazada": "rechazada"
   };
 
   // Estados aceptados y sus correspondientes visualizaciones
@@ -58,7 +69,6 @@ const GestionSolicitudes = () => {
     'en proceso': 'En Proceso',
     'a espera de aprobacion': 'A Espera de Aprobación',
     'finalizado': 'Finalizado',
-    'rechazada': 'Rechazada'
   };
 
   // Colores para los estados
@@ -67,7 +77,6 @@ const GestionSolicitudes = () => {
     "en proceso": "bg-blue-100 text-blue-800 border border-blue-300",
     "a espera de aprobacion": "bg-orange-100 text-orange-800 border border-orange-300",
     "finalizado": "bg-green-100 text-green-800 border border-green-300",
-    "rechazada": "bg-red-100 text-red-800 border border-red-200"
   };
 
   // Mapa de tipos de solicitud/reporte para visualización
@@ -107,76 +116,114 @@ const GestionSolicitudes = () => {
   // Función para obtener el tipo específico del item según si es solicitud o reporte
   const getItemSpecificType = (item) => {
     if (item.reportType === 'solicitud') {
-      return item.flow_request_type;
+      // Normalizar para que coincida con las keys de typeMap
+      let specificType = item.flow_request_type;
+      if (specificType === "Cancelación Temporal de Caudal") return "cancelacion temporal de caudal";
+      if (specificType === "Cambio de Caudal") return "cambio_caudal";
+      if (specificType === "Cancelación Definitiva de Caudal") return "cancelacion definitiva de caudal";
+      if (specificType === "Activación de Caudal") return "activacion";
+      return specificType;
     } else if (item.reportType === 'reporte') {
-      return item.failure_type;
+      let specificType = item.failure_type;
+      if (specificType === "Fallo en el Suministro del Agua") return "falla_suministro";
+      if (specificType === "Fallo en el Aplicativo") return "falla_aplicativo";
+      return specificType;
     }
     return "";
+  };
+
+  // Nueva función para obtener informes de mantenimiento
+  const fetchMaintenanceReports = async (token) => {
+    try {
+      const response = await axios.get(`${API_URL}/communication/maintenance-reports/list`, {
+        headers: { Authorization: `Token ${token}` }
+      });
+      
+      console.log("Informes de mantenimiento obtenidos:", response.data);
+      setMaintenanceReports(response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener informes de mantenimiento:", error);
+      return [];
+    }
+  };
+
+  // Función para encontrar el ID del informe de mantenimiento correspondiente
+  const findMaintenanceReportId = (item, maintenanceReportsData) => {
+    const itemId = item.id;
+    
+    // Buscar en los informes de mantenimiento
+    const matchingReport = maintenanceReportsData.find(report => {
+      // Verificar si coincide con flow_request
+      if (item.reportType === 'solicitud' && report.assignment_details?.flow_request) {
+        // Si flow_request es un objeto, comparar su id
+        if (typeof report.assignment_details.flow_request === 'object') {
+          return report.assignment_details.flow_request.id === itemId;
+        }
+        // Si flow_request es un ID directo, comparar directamente
+        return report.assignment_details.flow_request === itemId;
+      }
+      
+      // Verificar si coincide con failure_report
+      if (item.reportType === 'reporte' && report.assignment_details?.failure_report) {
+        // Si failure_report es un objeto, comparar su id
+        if (typeof report.assignment_details.failure_report === 'object') {
+          return report.assignment_details.failure_report.id === itemId;
+        }
+        // Si failure_report es un ID directo, comparar directamente
+        return report.assignment_details.failure_report === itemId;
+      }
+      
+      return false;
+    });
+    
+    return matchingReport?.id || null;
   };
 
   // Función para aplicar filtros a datos específicos
   const applyFiltersToData = (dataToFilter) => {
     try {
-      // Verificamos si hay al menos un filtro aplicado
       const hasActiveFilters = 
         filters.id.trim() !== "" || 
         filters.createdBy.trim() !== "" || 
         filters.solicitudType !== "" || 
         filters.subType !== "" ||
+        filters.specification !== "" ||
         filters.status !== "" ||
         filters.startDate !== "" || 
         filters.endDate !== "";
 
-      // Si no hay filtros activos, mostramos todos los datos
       if (!hasActiveFilters) {
         setFilteredData(dataToFilter);
         return;
       }
 
-      // Preparar el estado del filtro normalizado
       const filterStatusNormalized = normalizeStatus(filters.status);
 
-      // Filtrado de datos
       const filtered = dataToFilter.filter((item) => {
-        // Filtro por ID de reporte/solicitud
         const matchesId = filters.id.trim() === "" ||
           (item.id && item.id.toString().includes(filters.id.trim()));
-
-        // Filtro por ID de usuario (created_by)
         const matchesCreatedBy = filters.createdBy.trim() === "" ||
           (item.created_by && item.created_by.toString().includes(filters.createdBy.trim()));
-
-        // Filtro por tipo de solicitud/reporte
         const matchesSolicitudType = filters.solicitudType === "" ||
           item.reportType === filters.solicitudType;
-          
-        // Obtener el tipo específico según si es solicitud o reporte
         const specificType = getItemSpecificType(item);
-          
-        // Filtro por subtipo específico
         const matchesSubType = filters.subType === "" || specificType === filters.subType;
-
-        // Filtro por estado - normalizar para hacer la comparación más robusta
+        // Filtrado por especificación usando la key normalizada
+        const matchesSpecification = filters.specification === "" || specificType === filters.specification;
         const itemStatusNormalized = normalizeStatus(item.status);
-        
-        // Verificar si el estado del item coincide con el filtro de estado
         const matchesStatus = filterStatusNormalized === "" || 
                              itemStatusNormalized === filterStatusNormalized;
-
-        // Manejo de fechas
         let matchesDate = true;
-        
         if (filters.startDate !== "" || filters.endDate !== "") {
           const itemDate = new Date(item.created_at);
           const itemDateStr = itemDate.toISOString().split('T')[0];
-          
           if (filters.startDate !== "") {
             const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
             if (itemDateStr < startDateStr) {
               matchesDate = false;
             }
           }
-          
           if (matchesDate && filters.endDate !== "") {
             const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
             if (itemDateStr > endDateStr) {
@@ -184,51 +231,41 @@ const GestionSolicitudes = () => {
             }
           }
         }
-
-        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesStatus && matchesDate;
+        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesSpecification && matchesStatus && matchesDate;
       });
-
       setFilteredData(filtered);
-    } catch (error) {
-      console.error("Error al aplicar filtros:", error);
+    } catch {
       setFilteredData([]);
     }
   };
 
   const applyFilters = () => {
     try {
-      // Verificamos si hay al menos un filtro aplicado
       const hasActiveFilters = 
         filters.id.trim() !== "" || 
         filters.createdBy.trim() !== "" || 
         filters.solicitudType !== "" || 
         filters.subType !== "" ||
+        filters.specification !== "" ||
         filters.status !== "" ||
         filters.startDate !== "" || 
         filters.endDate !== "";
-
-      // Si no hay filtros activos, mostramos todos los datos
       if (!hasActiveFilters) {
         setFilteredData(allData);
         return;
       }
-
-      // Validación: solo números en ID de usuario y de solicitud
       if (filters.id.trim() !== "" && !/^\d+$/.test(filters.id.trim())) {
         setModalMessage("El campo de filtrado de ID de reporte/solicitud contiene caracteres no válidos.");
         setModalType("error");
         setShowModal(true);
         return;
       }
-
       if (filters.createdBy.trim() !== "" && !/^\d+$/.test(filters.createdBy.trim())) {
         setModalMessage("El campo de filtrado por ID de usuario contiene caracteres no válidos.");
         setModalType("error");
         setShowModal(true);
         return;
       }
-
-      // Validación de fechas
       if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
         setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.");
         setModalType("error");
@@ -236,51 +273,31 @@ const GestionSolicitudes = () => {
         setFilteredData([]);
         return;
       }
-
-      // Preparar el estado del filtro normalizado
       const filterStatusNormalized = normalizeStatus(filters.status);
-
-      // Filtrado de datos
       const filtered = allData.filter((item) => {
-        // Filtro por ID de reporte/solicitud
         const matchesId = filters.id.trim() === "" ||
           (item.id && item.id.toString().includes(filters.id.trim()));
-
-        // Filtro por ID de usuario (created_by)
         const matchesCreatedBy = filters.createdBy.trim() === "" ||
           (item.created_by && item.created_by.toString().includes(filters.createdBy.trim()));
-
-        // Filtro por tipo de solicitud/reporte
         const matchesSolicitudType = filters.solicitudType === "" ||
           item.reportType === filters.solicitudType;
-          
-        // Obtener el tipo específico según si es solicitud o reporte
         const specificType = getItemSpecificType(item);
-          
-        // Filtro por subtipo específico
         const matchesSubType = filters.subType === "" || specificType === filters.subType;
-
-        // Filtro por estado - normalizar para hacer la comparación más robusta
+        // Filtrado por especificación usando la key normalizada
+        const matchesSpecification = filters.specification === "" || specificType === filters.specification;
         const itemStatusNormalized = normalizeStatus(item.status);
-        
-        // Verificar si el estado del item coincide con el filtro de estado
         const matchesStatus = filterStatusNormalized === "" || 
                              itemStatusNormalized === filterStatusNormalized;
-
-        // Manejo de fechas
         let matchesDate = true;
-        
         if (filters.startDate !== "" || filters.endDate !== "") {
           const itemDate = new Date(item.created_at);
           const itemDateStr = itemDate.toISOString().split('T')[0];
-          
           if (filters.startDate !== "") {
             const startDateStr = new Date(filters.startDate).toISOString().split('T')[0];
             if (itemDateStr < startDateStr) {
               matchesDate = false;
             }
           }
-          
           if (matchesDate && filters.endDate !== "") {
             const endDateStr = new Date(filters.endDate).toISOString().split('T')[0];
             if (itemDateStr > endDateStr) {
@@ -288,21 +305,17 @@ const GestionSolicitudes = () => {
             }
           }
         }
-
-        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesStatus && matchesDate;
+        return matchesId && matchesCreatedBy && matchesSolicitudType && matchesSubType && matchesSpecification && matchesStatus && matchesDate;
       });
-
       if (filtered.length === 0) {
-        // Mostrar siempre un mensaje genérico cuando no hay resultados
         setModalMessage("No se encontraron solicitudes/reportes con los filtros aplicados.");
         setModalType("error");
         setShowModal(true);
         setFilteredData([]);
         return;
       }
-
       setFilteredData(filtered);
-    } catch (error) {
+    } catch {
       setModalMessage("Error al aplicar filtros. Por favor, intente más tarde.");
       setModalType("error");
       setShowModal(true);
@@ -382,54 +395,129 @@ const GestionSolicitudes = () => {
       render: (item) => {
         // Normalizar el estado para hacer la comparación más robusta
         const normalizedStatus = normalizeStatus(item.status);
-        const isPendiente = ['pendiente', 'en proceso', 'a espera de aprobacion'].includes(normalizedStatus);
+        
+        let buttonLabel = "";
+        
+        if (item.reportType === 'solicitud') {
+          if (['cambio_caudal', 'cancelacion temporal de caudal', 'cancelacion definitiva de caudal'].includes(item.flow_request_type)) {
+            if (normalizedStatus === 'finalizado') {
+              buttonLabel = "Ver Información";
+            } else if (normalizedStatus === 'pendiente') {
+              buttonLabel = "Gestionar";
+            } else if (normalizedStatus === 'a espera de aprobacion') {
+              buttonLabel = "Gestionar";
+            } else if (normalizedStatus === 'en proceso') {
+              buttonLabel = "Ver Información";
+            }
+          } else if (['activacion'].includes(item.flow_request_type)) {
+            if (normalizedStatus === 'finalizado') {
+              buttonLabel = "Ver Información";
+            } else {
+              buttonLabel = "Gestionar";
+            }
+          } else {
+            buttonLabel = "Ver Información";
+          }
+        } else if (item.reportType === 'reporte') {
+          if (normalizedStatus === 'pendiente') {
+            buttonLabel = "Gestionar";
+          } else if (normalizedStatus === 'a espera de aprobacion') {
+            buttonLabel = "Gestionar";
+          } else {
+            buttonLabel = "Ver Información";
+          }
+        }
         
         return (
           <button
             onClick={() => handleGestionar(item)}
-            className={`font-bold py-2 px-4 rounded transition-colors ${
-              isPendiente 
-                ? 'bg-[#365486] hover:bg-blue-700 text-white'
-                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-            }`}
-            disabled={!isPendiente}
+            className="font-bold py-2 px-4 rounded transition-colors bg-[#365486] hover:bg-blue-700 text-white"
           >
-            Gestionar
+            {buttonLabel}
           </button>
         );
       }
     }
   ];
 
-  // Manejador para el botón Gestionar - MODIFICADO para abrir modal específico
+  // Manejador para el botón Gestionar - MODIFICADO para usar el mapeo de informes de mantenimiento
   const handleGestionar = (item) => {
     // Normalizar el estado para hacer la comparación más robusta
     const normalizedStatus = normalizeStatus(item.status);
-    const isPendiente = ['pendiente', 'en proceso', 'a espera de aprobacion'].includes(normalizedStatus);
     
-    if (isPendiente) {
-      // Pasar el objeto completo incluyendo el tipo como se muestra en la tabla
-      const solicitudConTipo = {
-        ...item,
-        displayType: item.reportType === 'solicitud' ? item.flow_request_type : item.failure_type
-      };
-      setSelectedSolicitud(solicitudConTipo);
+    // Pasar el objeto completo incluyendo el tipo como se muestra en la tabla
+    const solicitudConTipo = {
+      ...item,
+      displayType: item.reportType === 'solicitud' ? item.flow_request_type : item.failure_type
+    };
+    setSelectedSolicitud(solicitudConTipo);
+    
+    // Verificar si necesitamos navegar a la página de aprobación
+    const shouldNavigateToApproval = normalizedStatus === 'a espera de aprobacion';
+    
+    if (shouldNavigateToApproval) {
+      // Buscar el ID del informe de mantenimiento correspondiente
+      const maintenanceReportId = findMaintenanceReportId(item, maintenanceReports);
       
-      // AQUÍ ES LA LÓGICA PRINCIPAL DEL CAMBIO:
-      // Determinar qué modal mostrar basado en el tipo de solicitud o reporte
-      if (item.reportType === 'solicitud') {
-        // Para solicitudes
-        if (['cambio_caudal', 'cancelacion temporal de caudal', 'activacion'].includes(item.flow_request_type)) {
+      if (maintenanceReportId) {
+        console.log(`Navegando a gestionar informe con ID: ${maintenanceReportId}`);
+        navigate(`/reportes-y-novedades/gestionar-informe/${maintenanceReportId}`);
+        return;
+      } else {
+        // Si no se encuentra el informe de mantenimiento, mostrar error o usar la navegación por defecto
+        console.warn(`No se encontró informe de mantenimiento para el item con ID: ${item.id}`);
+        navigate('/reportes-y-novedades/control-reportes-intervenciones');
+        return;
+      }
+    }
+    
+    // Para otros estados, continuar con la lógica original de modales
+    // Determinar qué modal mostrar basado en el tipo de solicitud o reporte
+    if (item.reportType === 'solicitud') {
+      // Para solicitudes
+      if (['cambio_caudal', 'cancelacion temporal de caudal', 'activacion'].includes(item.flow_request_type)) {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowSolicitudInfoModal(true);
+        } else {
           setShowGestionModal(true);
-        } else if (item.flow_request_type === 'cancelacion definitiva de caudal') {
-          setShowCancelacionDefinitivaModal(true);
+          // Mostrar modal con datos de la solicitud
+        } 
+      } else if (item.flow_request_type === 'cancelacion definitiva de caudal') {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowCancelacionDefinitivaFModal(true);
+        } else if (normalizedStatus === 'pendiente') {
+          // Mostrar modal con datos de la solicitud
+          setShowCancelacionDefinitivaPModal(true);
+        } else if (normalizedStatus === 'en proceso') {
+          // Mostrar modal con información y técnico asignado
+          setShowCancelacionDefinitivaEModal(true);
         }
-      } else if (item.reportType === 'reporte') {
-        // Para reportes
-        if (item.failure_type === 'falla_suministro') {
-          setShowFallaSuministroModal(true);
-        } else if (item.failure_type === 'falla_aplicativo') {
-          setShowFallaAplicativoModal(true);
+      }
+    } else if (item.reportType === 'reporte') {
+      // Para reportes
+      if (item.failure_type === 'falla_suministro') {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowFallaAplicativoFModal(true);
+        } else if (normalizedStatus === 'pendiente') {
+          // Mostrar modal con datos del reporte
+          setShowFallaAplicativoPModal(true);
+        } else if (normalizedStatus === 'en proceso') {
+          // Mostrar modal con información y técnico asignado
+          setShowFallaAplicativoEModal(true);
+        }
+      } else if (item.failure_type === 'falla_aplicativo') {
+        if (normalizedStatus === 'finalizado') {
+          // Mostrar modal con datos y fotos del técnico
+          setShowFallaAplicativoFModal(true);
+        } else if (normalizedStatus === 'pendiente') {
+          // Mostrar modal con datos del reporte
+          setShowFallaAplicativoPModal(true);
+        } else if (normalizedStatus === 'en proceso') {
+          // Mostrar modal con información y técnico asignado
+          setShowFallaAplicativoEModal(true);
         }
       }
     }
@@ -443,10 +531,13 @@ const GestionSolicitudes = () => {
     
     // Cerrar todos los modales de gestión
     setShowGestionModal(false);
-    setShowCancelacionDefinitivaModal(false);
-    setShowFallaSuministroModal(false);
-    setShowFallaAplicativoModal(false);
-    
+    setShowCancelacionDefinitivaFModal(false);
+    setShowCancelacionDefinitivaPModal(false);
+    setShowCancelacionDefinitivaEModal(false);
+    setShowFallaAplicativoFModal(false);
+    setShowFallaAplicativoPModal(false);
+    setShowFallaAplicativoEModal(false);
+    setShowSolicitudInfoModal(false);
     setSelectedSolicitud(null);
     // No llamamos fetchData aquí, lo haremos al cerrar el modal
   };
@@ -457,7 +548,7 @@ const GestionSolicitudes = () => {
     setShowModal(true);
   };
 
-  // Función para recargar datos - MODIFICADA para usar el nuevo endpoint unificado
+  // Función para recargar datos - MODIFICADA para incluir informes de mantenimiento
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -473,13 +564,16 @@ const GestionSolicitudes = () => {
         headers: { Authorization: `Token ${token}` }
       };
       
-      // Realizar una única solicitud al nuevo endpoint unificado
-      const response = await axios.get(`${API_URL}/communication/admin/requests-and-reports`, options);
+      // Realizar solicitudes a ambos endpoints de forma paralela
+      const [requestsResponse, maintenanceResponse] = await Promise.all([
+        axios.get(`${API_URL}/communication/admin/requests-and-reports`, options),
+        fetchMaintenanceReports(token)
+      ]);
       
       // Procesar los datos recibidos
-      if (response.data) {
+      if (requestsResponse.data) {
         // Procesamos las solicitudes (flow_requests)
-        const solicitudesData = response.data.flow_requests ? response.data.flow_requests.map(item => {
+        const solicitudesData = requestsResponse.data.flow_requests ? requestsResponse.data.flow_requests.map(item => {
           // Normalizar el subtipo
           let specificType = item.flow_request_type;
           // Convertir "Cancelación Temporal de Caudal" a "cancelacion temporal de caudal"
@@ -504,7 +598,7 @@ const GestionSolicitudes = () => {
         }) : [];
         
         // Procesamos los reportes (failure_reports)
-        const reportesData = response.data.failure_reports ? response.data.failure_reports.map(item => {
+        const reportesData = requestsResponse.data.failure_reports ? requestsResponse.data.failure_reports.map(item => {
           // Normalizar el subtipo
           let specificType = item.failure_type;
           // Convertir "Fallo en el Suministro del Agua" a "falla_suministro"
@@ -532,11 +626,16 @@ const GestionSolicitudes = () => {
         setReportes(reportesData);
         setAllData(allDataCombined);
         
+        // Los informes de mantenimiento ya se actualizaron en fetchMaintenanceReports
+        
         // IMPORTANTE: Mantener filteredData como null para que la tabla esté vacía inicialmente
         // Solo se actualizan los datos filtrados si ya había un filtro aplicado anteriormente
         if (filteredData !== null) {
           applyFiltersToData(allDataCombined);
         }
+        
+        console.log("Datos combinados:", allDataCombined);
+        console.log("Informes de mantenimiento:", maintenanceResponse);
       }
     } catch (error) {
       console.error("Error al obtener los datos:", error);
@@ -559,25 +658,6 @@ const GestionSolicitudes = () => {
           onFilterChange={handleFilterChange}
           onApplyFilters={applyFilters}
           showStatusFilter={true}
-          solicitudTypes={[
-            { value: "", label: "Todos" },
-            { value: "solicitud", label: "Solicitud" },
-            { value: "reporte", label: "Reporte" }
-          ]}
-          subTypes={{
-            solicitud: [
-              { value: "", label: "Todos" },
-              { value: "cambio_caudal", label: "Cambio de Caudal" },
-              { value: "cancelacion definitiva de caudal", label: "Cancelación Definitiva" },
-              { value: "cancelacion temporal de caudal", label: "Cancelación Temporal" },
-              { value: "activacion", label: "Activación" }
-            ],
-            reporte: [
-              { value: "", label: "Todos" },
-              { value: "falla_suministro", label: "Falla en Suministro" },
-              { value: "falla_aplicativo", label: "Falla en Aplicativo" }
-            ]
-          }}
         />
 
         {/* Modal de mensajes (error o éxito) */}
@@ -600,7 +680,8 @@ const GestionSolicitudes = () => {
           </Modal>
         )}
 
-        {/* Modal de Gestión de Solicitud (para cambio_caudal, cancelacion temporal de caudal, activacion) */}
+
+        {/* Modal de Gestión de Solicitud - CORREGIDO */}
         <GestionSolicitudModal
           showModal={showGestionModal}
           onClose={() => {
@@ -612,41 +693,93 @@ const GestionSolicitudes = () => {
           onError={handleModalError}
         />
 
-        {/* Modal para Cancelación Definitiva */}
-        <CancelacionDefinitivaModal
-          showModal={showCancelacionDefinitivaModal}
-          onClose={() => {
-            setShowCancelacionDefinitivaModal(false);
-            setSelectedSolicitud(null);
-          }}
-          solicitudBasica={selectedSolicitud}
-          onSuccess={handleModalSuccess}
-          onError={handleModalError}
-        />
 
-        {/* Modal para Falla en Suministro */}
-        <FallaSuministroModal
-          showModal={showFallaSuministroModal}
-          onClose={() => {
-            setShowFallaSuministroModal(false);
-            setSelectedSolicitud(null);
-          }}
-          solicitudBasica={selectedSolicitud}
-          onSuccess={handleModalSuccess}
-          onError={handleModalError}
-        />
 
-        {/* Modal para Falla en Aplicativo */}
-        <FallaAplicativoModal
-          showModal={showFallaAplicativoModal}
-          onClose={() => {
-            setShowFallaAplicativoModal(false);
-            setSelectedSolicitud(null);
-          }}
-          solicitudBasica={selectedSolicitud}
-          onSuccess={handleModalSuccess}
-          onError={handleModalError}
-        />
+       {/* Modal para Cancelación Definitiva */}
+       <CancelacionDefinitivaF
+        showModal={showCancelacionDefinitivaFModal}
+        onClose={() => {
+          setShowCancelacionDefinitivaFModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Cancelación Definitiva */}
+      <CancelacionDefinitivaP
+        showModal={showCancelacionDefinitivaPModal}
+        onClose={() => {
+          setShowCancelacionDefinitivaPModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Cancelación Definitiva */}
+      <CancelacionDefinitivaE
+        showModal={showCancelacionDefinitivaEModal}
+        onClose={() => {
+          setShowCancelacionDefinitivaEModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Falla en Aplicativo */}
+      <FallaAplicativoF
+        showModal={showFallaAplicativoFModal}
+        onClose={() => {
+          setShowFallaAplicativoFModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+      {/* Modal para Falla en Aplicativo */}
+      <FallaAplicativoP
+        showModal={showFallaAplicativoPModal}
+        onClose={() => {
+          setShowFallaAplicativoPModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+
+      {/* Modal para Falla en Aplicativo */}
+      <FallaAplicativoE
+        showModal={showFallaAplicativoEModal}
+        onClose={() => {
+          setShowFallaAplicativoEModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
+
+
+      {/* Modal para Solicitud Info */}
+      <SolicitudInfoModal
+        showModal={showSolicitudInfoModal}
+        onClose={() => {
+          setShowSolicitudInfoModal(false);
+          setSelectedSolicitud(null);
+        }}
+        solicitudBasica={selectedSolicitud}
+        onSuccess={handleModalSuccess}
+        onError={handleModalError}
+      />
 
         {/* Uso del componente DataTable */}
         {filteredData !== null && (

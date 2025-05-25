@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import axios from "axios"
-import { Search, Filter, User, Calendar } from "lucide-react"
+import { Search } from "lucide-react"
 import DataTable from "../../../components/DataTable"
 
 const ControlReportesIntervenciones = () => {
@@ -16,6 +16,7 @@ const ControlReportesIntervenciones = () => {
   const [showModal, setShowModal] = useState(false)
   const [modalMessage, setModalMessage] = useState("")
   const [modalTitle, setModalTitle] = useState("Error")
+  const [informesCompletos, setInformesCompletos] = useState([]) // Para almacenar informes con detalles completos
 
   // Estados para los filtros
   const [filters, setFilters] = useState({
@@ -25,19 +26,75 @@ const ControlReportesIntervenciones = () => {
     reportType: "",
     technicianId: "",
     reporterId: "",
+    status: "", // Nuevo filtro para estado de gestión
   })
 
   const API_URL = import.meta.env.VITE_APP_API_URL
 
   // Tipos de reportes para el filtro
   const reportTypes = [
-    { value: "", label: "Todos los tipos" },
+    { value: "", label: "TIPO" },
     { value: "water_supply", label: "Fallo en el suministro del agua" },
     { value: "flow_definitive_cancel", label: "Cancelación definitiva de caudal" },
     { value: "app_failure", label: "Fallo en el aplicativo" },
   ]
 
-  // Modificar la función fetchInformes para usar el endpoint correcto
+  // Estados de gestión para el filtro
+  const managementStates = [
+    { value: "", label: "ESTADO" },
+    { value: "pending", label: "Pendiente de gestión" },
+    { value: "managed", label: "Gestionado" },
+    { value: "approved", label: "Aprobado" },
+  ]
+
+  // Función para obtener los detalles completos de un informe
+  const obtenerDetallesCompletos = async (informe, token) => {
+    const informeCompleto = { ...informe }
+
+    try {
+      // Si hay un reporte de fallo, obtener sus detalles completos
+      if (
+        informeCompleto.assignment_details &&
+        informeCompleto.assignment_details.failure_report &&
+        typeof informeCompleto.assignment_details.failure_report !== "object"
+      ) {
+        try {
+          const failureResponse = await axios.get(
+            `${API_URL}/communication/assignments/failure-report/${informeCompleto.assignment_details.failure_report}`,
+            { headers: { Authorization: `Token ${token}` } },
+          )
+          informeCompleto.assignment_details.failure_report = failureResponse.data
+          console.log("Detalles de reporte de fallo:", failureResponse.data)
+        } catch (error) {
+          console.error("Error al obtener detalles del reporte de fallo:", error)
+        }
+      }
+
+      // Si hay una solicitud de caudal, obtener sus detalles completos
+      if (
+        informeCompleto.assignment_details &&
+        informeCompleto.assignment_details.flow_request &&
+        typeof informeCompleto.assignment_details.flow_request !== "object"
+      ) {
+        try {
+          const flowResponse = await axios.get(
+            `${API_URL}/communication/assignments/flow-request/${informeCompleto.assignment_details.flow_request}`,
+            { headers: { Authorization: `Token ${token}` } },
+          )
+          informeCompleto.assignment_details.flow_request = flowResponse.data
+          console.log("Detalles de solicitud de caudal:", flowResponse.data)
+        } catch (error) {
+          console.error("Error al obtener detalles de la solicitud de caudal:", error)
+        }
+      }
+    } catch (error) {
+      console.error("Error general al obtener detalles:", error)
+    }
+
+    return informeCompleto
+  }
+
+  // Modificar la función fetchInformes para obtener detalles completos
   const fetchInformes = useCallback(async () => {
     try {
       setLoading(true)
@@ -50,18 +107,25 @@ const ControlReportesIntervenciones = () => {
         return []
       }
 
-      // Usar el endpoint que muestra los informes de mantenimiento en estado "A espera de aprobación"
+      // Usar el endpoint que muestra los informes de mantenimiento
       const response = await axios.get(`${API_URL}/communication/maintenance-reports/list`, {
         headers: { Authorization: `Token ${token}` },
       })
 
-      // Filtrar solo los informes que no están aprobados
-      const pendingReports = response.data.filter((report) => report.is_approved === false)
+      console.log("Informes obtenidos:", response.data)
 
-      console.log("Informes obtenidos:", pendingReports)
-      setInformes(pendingReports)
+      // Obtener detalles completos para cada informe
+      const informesConDetalles = await Promise.all(
+        response.data.map(async (informe) => {
+          return await obtenerDetallesCompletos(informe, token)
+        }),
+      )
+
+      console.log("Informes con detalles completos:", informesConDetalles)
+      setInformes(response.data)
+      setInformesCompletos(informesConDetalles)
       setLoading(false)
-      return pendingReports
+      return informesConDetalles
     } catch (error) {
       console.error("Error al obtener los informes:", error)
       setModalTitle("Error")
@@ -82,6 +146,48 @@ const ControlReportesIntervenciones = () => {
       ...filters,
       [name]: value,
     })
+  }
+
+  // Función para determinar el tipo de solicitud o reporte
+  const determinarTipoSolicitud = (informe) => {
+    if (!informe.assignment_details) return "No especificado"
+
+    // Para solicitudes de caudal
+    if (informe.assignment_details.flow_request) {
+      if (typeof informe.assignment_details.flow_request === "object") {
+        return informe.assignment_details.flow_request.flow_request_type || "Solicitud de caudal"
+      }
+      return "Solicitud de caudal"
+    }
+
+    // Para reportes de fallo
+    if (informe.assignment_details.failure_report) {
+      if (typeof informe.assignment_details.failure_report === "object") {
+        return informe.assignment_details.failure_report.failure_type || "Reporte de fallo"
+      }
+      return "Reporte de fallo"
+    }
+
+    return "No especificado"
+  }
+
+  // Función para determinar el estado de gestión de un informe
+  const determinarEstadoGestion = (informe) => {
+    // Si el informe está aprobado
+    if (informe.is_approved === true) {
+      return "approved"
+    }
+
+    // Si el informe tiene un estado específico
+    if (informe.status) {
+      // Si el estado indica que está finalizado o gestionado
+      if (informe.status === "Finalizado" || informe.status === "Gestionado") {
+        return "managed"
+      }
+    }
+
+    // Por defecto, consideramos que está pendiente
+    return "pending"
   }
 
   // Modificar la función applyFilters para adaptarse a la estructura de datos del backend
@@ -119,7 +225,12 @@ const ControlReportesIntervenciones = () => {
     }
 
     // Obtener los datos - siempre traemos todos los registros
-    const dataToFilter = await fetchInformes()
+    let dataToFilter = []
+    if (informesCompletos.length === 0) {
+      dataToFilter = await fetchInformes()
+    } else {
+      dataToFilter = informesCompletos
+    }
 
     // Si no hay datos, mostramos un mensaje
     if (!dataToFilter || dataToFilter.length === 0) {
@@ -137,7 +248,8 @@ const ControlReportesIntervenciones = () => {
       filters.endDate !== "" ||
       filters.reportType !== "" ||
       filters.technicianId.trim() !== "" ||
-      filters.reporterId.trim() !== ""
+      filters.reporterId.trim() !== "" ||
+      filters.status !== ""
 
     // Si no hay filtros específicos, mostramos todos los registros
     if (!hasSpecificFilters) {
@@ -153,30 +265,33 @@ const ControlReportesIntervenciones = () => {
       filtered = filtered.filter((informe) => informe.assignment && informe.assignment.toString().includes(filters.id))
     }
 
-    // Filtro por tipo de reporte
+    // Filtro por tipo de reporte (mejorado con los detalles completos)
     if (filters.reportType) {
-      if (filters.reportType === "water_supply") {
-        filtered = filtered.filter(
-          (informe) =>
-            informe.assignment_details &&
-            informe.assignment_details.failure_report &&
-            informe.assignment_details.failure_report.failure_type === "Fallo en el suministro del agua",
-        )
-      } else if (filters.reportType === "flow_definitive_cancel") {
-        filtered = filtered.filter(
-          (informe) =>
-            informe.assignment_details &&
-            informe.assignment_details.flow_request &&
-            informe.assignment_details.flow_request.flow_request_type === "Cancelación Definitiva de Caudal",
-        )
-      } else if (filters.reportType === "app_failure") {
-        filtered = filtered.filter(
-          (informe) =>
-            informe.assignment_details &&
-            informe.assignment_details.failure_report &&
-            informe.assignment_details.failure_report.failure_type === "Fallo en el aplicativo",
-        )
-      }
+      filtered = filtered.filter((informe) => {
+        const tipoSolicitud = determinarTipoSolicitud(informe)
+        console.log(`Informe ${informe.id}, tipo: ${tipoSolicitud}`)
+
+        if (filters.reportType === "water_supply") {
+          return (
+            tipoSolicitud.includes("Fallo en el suministro del agua") ||
+            tipoSolicitud.includes("Fallo en el Suministro del Agua")
+          )
+        } else if (filters.reportType === "app_failure") {
+          return tipoSolicitud.includes("Fallo en el aplicativo") || tipoSolicitud.includes("Fallo en el Aplicativo")
+        } else if (filters.reportType === "flow_definitive_cancel") {
+          return tipoSolicitud.includes("Cancelación Definitiva de Caudal")
+        }
+
+        return false
+      })
+    }
+
+    // Filtro por estado de gestión
+    if (filters.status) {
+      filtered = filtered.filter((informe) => {
+        const estadoGestion = determinarEstadoGestion(informe)
+        return estadoGestion === filters.status
+      })
     }
 
     // Filtro por ID del técnico
@@ -192,13 +307,8 @@ const ControlReportesIntervenciones = () => {
     // Filtro por ID del reportador
     if (filters.reporterId.trim()) {
       filtered = filtered.filter((informe) => {
-        if (informe.assignment_details) {
-          if (informe.assignment_details.flow_request && informe.assignment_details.flow_request.created_by) {
-            return informe.assignment_details.flow_request.created_by.toString().includes(filters.reporterId.trim())
-          }
-          if (informe.assignment_details.failure_report && informe.assignment_details.failure_report.created_by) {
-            return informe.assignment_details.failure_report.created_by.toString().includes(filters.reporterId.trim())
-          }
+        if (informe.assignment_details && informe.assignment_details.assigned_by) {
+          return informe.assignment_details.assigned_by.toString().includes(filters.reporterId.trim())
         }
         return false
       })
@@ -236,14 +346,15 @@ const ControlReportesIntervenciones = () => {
     }
 
     setFilteredInformes(filtered)
-  }, [filters, fetchInformes])
+  }, [filters, fetchInformes, informesCompletos])
 
+  // Actualizar la función handleGestionar para mantener la consistencia
   const handleGestionar = (informe) => {
     // Navegar a la página de gestionar informe con el ID del informe
     navigate(`/reportes-y-novedades/gestionar-informe/${informe.id}`)
   }
 
-  // Actualizar las columnas para adaptarse a la estructura de datos del backend
+  // Actualizar las columnas para adaptarse a la estructura de datos del backend y usar el nuevo estilo de botón
   const columns = [
     {
       key: "assignment",
@@ -258,71 +369,114 @@ const ControlReportesIntervenciones = () => {
     {
       key: "technician_id",
       label: "ID Usuario Intervención",
-      render: (informe) =>
-        informe.assignment_details?.assigned_to_name || informe.assignment_details?.assigned_to || "No disponible",
+      render: (informe) => informe.assignment_details?.assigned_to || "No disponible",
+    },
+    {
+      key: "reporter_id",
+      label: "ID Usuario que Reportó",
+      render: (informe) => {
+        // Verificar si hay un campo assigned_by (quien asignó podría ser quien reportó)
+        if (informe.assignment_details?.assigned_by) {
+          return informe.assignment_details.assigned_by
+        }
+        return "No disponible"
+      },
     },
     {
       key: "report_type",
-      label: "Tipo de Reporte",
-      render: (informe) => {
-        if (informe.assignment_details) {
-          if (informe.assignment_details.failure_report) {
-            return informe.assignment_details.failure_report.failure_type || "Reporte de fallo"
-          } else if (informe.assignment_details.flow_request) {
-            return informe.assignment_details.flow_request.flow_request_type || "Solicitud de caudal"
-          }
-        }
-        return "No especificado"
-      },
+      label: "Tipo de Solicitud",
+      render: (informe) => determinarTipoSolicitud(informe),
     },
     {
       key: "action",
       label: "Acción",
-      render: (informe) => (
-        <button
-          onClick={() => handleGestionar(informe)}
-          className="bg-[#365486] hover:bg-[#344663] text-white px-4 py-2 rounded-lg w-full"
-        >
-          Gestionar
-        </button>
-      ),
+      render: (informe) => {
+        const estadoGestion = determinarEstadoGestion(informe)
+
+        return (
+          <button
+            onClick={() => handleGestionar(informe)}
+            className="bg-[#365486] hover:bg-[#42A5F5] text-white text-xs px-4 py-1 h-8 rounded-lg w-24"
+          >
+            {estadoGestion === "approved" ? "Ver" : "Gestionar"}
+          </button>
+        )
+      },
     },
   ]
 
   return (
     <div>
       <NavBar />
-      <div className="container mx-auto p-4 md:p-8 lg:p-20 mt-[70px] md:mt-[80px]">
-        <h1 className="text-center my-6 text-xl font-semibold text-[#365486]">Control de reportes de intervenciones</h1>
-        <div className="w-16 h-1 bg-[#365486] mx-auto mb-8 rounded-full"></div>
+      <div className="container mx-auto p-4 md:p-8 lg:p-20">
+        {/* Título con el nuevo estilo */}
+        <h1 className="text-center my-15 text-lg md:text-xl font-semibold mb-6">
+          Control de reportes de intervenciones
+        </h1>
 
-        {/* Sección de filtros */}
-        <div className="mb-8 bg-white p-5 rounded-lg shadow-sm border border-gray-100">
-          <div className="flex flex-col gap-4">
+        {/* Sección de filtros con el nuevo diseño */}
+        <div className="mb-6">
+          <div className="p-4 rounded-lg">
             {/* Primera fila de filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Filtro por ID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+              {/* Filtro por ID de asignación */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <Search size={16} />
+                <span className="absolute left-3 top-2 text-gray-400">
+                  <Search size={18} />
                 </span>
                 <input
                   type="text"
-                  placeholder="ID asignación"
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
+                  placeholder="ID de asignación"
+                  className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, "")
+                  }}
                   value={filters.id}
                   onChange={(e) => handleFilterChange("id", e.target.value)}
                   maxLength={8}
                 />
               </div>
 
+              {/* Filtro por ID del usuario que realizó la intervención */}
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-400">
+                  <Search size={18} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="ID usuario intervención"
+                  className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, "")
+                  }}
+                  value={filters.technicianId}
+                  onChange={(e) => handleFilterChange("technicianId", e.target.value)}
+                  maxLength={12}
+                />
+              </div>
+
+              {/* Filtro por ID del usuario que reportó */}
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-gray-400">
+                  <Search size={18} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="ID usuario que reportó"
+                  className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, "")
+                  }}
+                  value={filters.reporterId}
+                  onChange={(e) => handleFilterChange("reporterId", e.target.value)}
+                  maxLength={12}
+                />
+              </div>
+
               {/* Filtro por tipo de reporte */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <Filter size={16} />
-                </span>
                 <select
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] appearance-none text-sm"
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
                   value={filters.reportType}
                   onChange={(e) => handleFilterChange("reportType", e.target.value)}
                 >
@@ -332,9 +486,9 @@ const ControlReportesIntervenciones = () => {
                     </option>
                   ))}
                 </select>
-                <span className="absolute top-3 right-3 text-gray-400 pointer-events-none">
+                <span className="absolute top-3 right-4 text-gray-400">
                   <svg
-                    className="w-4 h-4"
+                    className="w-5 h-5"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -345,111 +499,79 @@ const ControlReportesIntervenciones = () => {
                 </span>
               </div>
 
-              {/* Filtro por ID del usuario que realizó la intervención */}
+              {/* Filtro por estado de gestión */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <User size={16} />
+                <select
+                  className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                >
+                  {managementStates.map((state) => (
+                    <option key={state.value} value={state.value}>
+                      {state.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute top-3 right-4 text-gray-400">
+                  <svg
+                    className="w-5 h-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </span>
-                <input
-                  type="text"
-                  placeholder="ID usuario intervención"
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                  value={filters.technicianId}
-                  onChange={(e) => handleFilterChange("technicianId", e.target.value)}
-                  maxLength={12}
-                />
               </div>
             </div>
 
-            {/* Segunda fila de filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Filtro por ID del usuario que reportó */}
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">
-                  <User size={16} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="ID usuario que reportó"
-                  className="w-full pl-9 py-2 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                  value={filters.reporterId}
-                  onChange={(e) => handleFilterChange("reporterId", e.target.value)}
-                  maxLength={12}
-                />
-              </div>
+            {/* Segunda fila con filtro de fecha y botón */}
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+              {/* Filtro por fecha - Ocupa 4 columnas en md */}
+              <div className="md:col-span-4">
+                <p className="text-gray-500 text-sm mb-1 text-center">Filtrar por fecha de intervención</p>
+                <div className="flex items-center bg-gray-100 rounded-full px-1 w-full border border-gray-300">
+                  <span className="text-gray-400 px-2 flex-shrink-0">
+                    <Search size={18} />
+                  </span>
 
-              {/* Filtros de fecha */}
-              <div className="col-span-1 md:col-span-2">
-                <p className="text-gray-500 text-xs font-medium mb-1.5 flex items-center">
-                  <Calendar size={14} className="mr-1" />
-                  Filtrar por fecha de intervención
-                </p>
-                <div className="flex gap-3">
-                  <div className="w-1/2 relative">
-                    <input
-                      type="date"
-                      name="startDate"
-                      className="w-full py-2 px-3 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                      value={filters.startDate || ""}
-                      onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                    />
-                    <span className="text-gray-400 text-xs absolute -bottom-4 left-1">Inicio</span>
-                  </div>
+                  <input
+                    type="date"
+                    name="startDate"
+                    className="w-full min-w-0 px-3 py-2 bg-transparent focus:outline-none text-gray-500 text-sm"
+                    value={filters.startDate || ""}
+                    onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                  />
 
-                  <div className="w-1/2 relative">
-                    <input
-                      type="date"
-                      name="endDate"
-                      className="w-full py-2 px-3 bg-gray-50 text-gray-600 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#365486] text-sm"
-                      value={filters.endDate || ""}
-                      onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                    />
-                    <span className="text-gray-400 text-xs absolute -bottom-4 left-1">Fin</span>
-                  </div>
+                  <span className="text-gray-400 px-2 flex-shrink-0">|</span>
+
+                  <input
+                    type="date"
+                    name="endDate"
+                    className="w-full min-w-0 px-3 py-2 bg-transparent focus:outline-none text-gray-500 text-sm"
+                    value={filters.endDate || ""}
+                    onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-between text-gray-400 text-xs px-2 mt-1">
+                  <span>Inicio</span>
+                  <span>Fin</span>
                 </div>
               </div>
-            </div>
 
-            {/* Botón de filtrar */}
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={applyFilters}
-                className={`${
-                  loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#365486] hover:bg-[#2A4374]"
-                } text-white px-6 py-2 rounded-md text-sm font-medium transition-colors w-full md:w-auto flex items-center justify-center`}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Cargando...
-                  </>
-                ) : (
-                  <>
-                    <Filter size={16} className="mr-1.5" />
-                    Filtrar
-                  </>
-                )}
-              </button>
+              {/* Botón de filtrar - Ocupa 2 columnas en md */}
+              <div className="md:col-span-2 flex justify-center md:justify-start">
+                <button
+                  onClick={applyFilters}
+                  disabled={loading}
+                  className={`${
+                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#365486] hover:bg-[#344663] hover:scale-105"
+                  } text-white px-6 py-2 rounded-full text-sm font-semibold w-full md:w-auto`}
+                >
+                  Filtrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
