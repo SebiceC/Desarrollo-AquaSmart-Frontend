@@ -1,16 +1,33 @@
-import PropTypes, { element } from "prop-types";
-import React from "react";
+import PropTypes from "prop-types";
+import React, { useContext } from "react";
 import { Navigate } from "react-router-dom";
+import { PermissionsContext } from "../app/context/PermissionsContext";
 
-const ProtectedRoute = ({ element }) => {
-    const token = localStorage.getItem("token"); // Verificar si hay token de sesión
+const ProtectedRoute = ({ element, permissions }) => {
+    const token = localStorage.getItem("token");
+    const { hasPermission, loading } = useContext(PermissionsContext);
 
-    return token ? element : <Navigate to="/login" replace />;
+    if (!token) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (loading) {
+        return <div>Cargando...</div>;
+    }
+
+    if (permissions && permissions.length > 0) {
+        const hasAllPermissions = permissions.every((perm) => hasPermission(perm));
+        if (!hasAllPermissions) {
+            return <Navigate to="/no-autorizado" replace />;
+        }
+    }
+
+    return element;
 };
 
-// Validación de `children` con PropTypes
 ProtectedRoute.propTypes = {
     element: PropTypes.node.isRequired,
+    permissions: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default ProtectedRoute;

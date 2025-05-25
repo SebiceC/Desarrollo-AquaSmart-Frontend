@@ -371,7 +371,7 @@ const Login = () => {
                   onClick={handleRequestNewToken}
                   disabled={isDisabled}
                   className={`px-4 py-2 rounded-lg text-white font-semibold transition-all duration-300 ${
-                    isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-[#365486] hover:bg-[#344663]"
+                    isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-[#2d6a4f] hover:bg-[#325445]"
                   }`}
                 >
                   SOLICITAR NUEVO TOKEN
@@ -379,8 +379,8 @@ const Login = () => {
                 <button
                   onClick={handleTokenSubmit}
                   disabled={isLoading}
-                  className={`bg-[#365486] text-white px-4 py-2 rounded-lg transition-all duration-300 ${
-                    isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#344663]"
+                  className={`bg-[#2d6a4f] text-white px-4 py-2 rounded-lg transition-all duration-300 ${
+                    isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#325445]"
                   }`}
                 >
                   {isLoading ? "ENVIANDO..." : "ENVIAR"}
