@@ -218,7 +218,7 @@ function HistorialIncidencias() {
         },
         {
             key: "accion",
-            label: "Acción",
+            label: "Tipo de Acción",
             render: (item) => {
                 const accion = item.accion?.toLowerCase();
                 const actionStyles = {
