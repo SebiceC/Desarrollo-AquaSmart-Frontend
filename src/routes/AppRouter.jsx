@@ -70,6 +70,7 @@ import CrearMantenimiento from "../app/reportes_y_novedades/informe_mantenimient
 import ControlReportesIntervenciones from "../app/reportes_y_novedades/gestion_gerencia_informe/control-reportes-intervenciones";
 import GestionarInforme from "../app/reportes_y_novedades/gestion_gerencia_informe/gestionar-informe";
 import NotAuthorized from "../app/NotAuthorized";
+import PasarelaPago from "../app/misFacturas/PasarelaPago";
 
 const AppRouter = () => {
     return (
@@ -287,6 +288,7 @@ const AppRouter = () => {
             <Route path="/facturacion/detalle/:id_bill" element={<ProtectedRoute element={<FacturaLoteDetails />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
             <Route path="/facturacion/pagar/:id_bill" element={<ProtectedRoute element={<PagarFactura />} />} />
+            <Route path="/facturacion/pagar/:id_bill/pasarela-pago" element={<ProtectedRoute element={<PasarelaPago />} />} />
             <Route path="/mis-facturas/detalle/:id_bill" element={<ProtectedRoute element={<MisFacturasDetails />} />} />
             <Route path="/reportes-y-novedades/solicitud_caudal" element={<ProtectedRoute element={<ReportesYNovedades />} />} />
             <Route path="/reportes-y-novedades/lote" element={<ProtectedRoute element={<ReportesYNovedadesLotesList />} />} />
@@ -325,6 +327,7 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento />} />} />
             <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
             <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
+
             <Route path="/no-autorizado" element={<NotAuthorized />} />
         </Routes>
     );
