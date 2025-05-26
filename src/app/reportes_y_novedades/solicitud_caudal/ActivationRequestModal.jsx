@@ -12,7 +12,7 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasValve, setHasValve] = useState(true)
   const [loadingIot, setLoadingIot] = useState(true)
-  const [maxFlow, setMaxFlow] = useState(11.7) // Valor máximo por defecto según requerimiento
+  const [maxFlow, setMaxFlow] = useState(180) // Valor máximo por defecto según requerimiento
 
   // Estados para los modales adicionales
   const [showInfoModal, setShowInfoModal] = useState(false)
@@ -75,8 +75,8 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
 
     // Validar que el caudal sea un número válido
     const caudalValue = Number.parseFloat(caudal)
-    if (isNaN(caudalValue) || caudalValue < 1 || caudalValue > 11.7) {
-      setError("El valor ingresado no corresponde, el rango establecido es entre 1 y 11.7.")
+    if (isNaN(caudalValue) || caudalValue < 1 || caudalValue > 180) {
+      setError("El valor ingresado no corresponde, el rango establecido es entre 1 y 180.")
       return
     }
 
@@ -160,6 +160,19 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
           }
         }
 
+        // Manejar el caso específico de solicitud en curso con la nueva estructura
+        if (responseData.errors && responseData.errors.non_field_errors) {
+          if (responseData.errors.non_field_errors.includes("solicitud de activación de caudal en curso")) {
+            setError("El lote elegido ya cuenta con una solicitud de activación de caudal en curso.")
+            setIsSubmitting(false)
+            return
+          }
+          // Para otros errores en non_field_errors
+          setError(responseData.errors.non_field_errors)
+          setIsSubmitting(false)
+          return
+        }
+
         // Comprobamos si hay un array de errores y mostramos todos
         if (responseData.error && Array.isArray(responseData.error)) {
           setError(responseData.error.join(", ")) // Unimos los mensajes de error con coma
@@ -216,10 +229,10 @@ const ActivationRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }
                   value={caudal}
                   onChange={(e) => setCaudal(e.target.value)}
                   className={`w-full px-3 py-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-[#365486]`}
-                  placeholder="Ingrese el caudal deseado (1-11.7)"
+                  placeholder="Ingrese el caudal deseado (1-180)"
                   step="0.1"
                   min="1"
-                  max="11.7"
+                  max="180"
                 />
                 {error && error.includes("rango establecido") && <p className="text-red-500 text-xs mt-1">{error}</p>}
               </div>
