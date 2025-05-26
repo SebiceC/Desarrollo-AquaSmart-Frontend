@@ -105,7 +105,7 @@ const DispositivosIoTList = () => {
         }
       } catch (error) {
         console.error("Error al obtener datos:", error)
-        setModalMessage("Error al cargar los datos. Por favor, intente más tarde.")
+        setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.")
         setShowModal(true)
       }
     }
@@ -122,6 +122,20 @@ const DispositivosIoTList = () => {
 
   const applyFilters = () => {
     try {
+
+      // Verificar conexión a internet
+      if (!navigator.onLine) {
+        throw new Error("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.")
+      }
+
+      // Verificar si los datos base están disponibles
+      if (!dispositivos || dispositivos.length === 0) {
+        throw new Error("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico.")
+      }
+
+      if (!predios || predios.length === 0) {
+        throw new Error("No se pudieron obtener los datos de los predios. Intenta recargar la página.")
+      }
       // Verificamos si hay al menos un filtro aplicado
       const hasActiveFilters =
         filters.iot_id.trim() !== "" ||
@@ -349,7 +363,7 @@ const DispositivosIoTList = () => {
       setShowTotalizacion(false)
     } catch (error) {
       console.error("Error al aplicar filtros:", error)
-      setModalMessage("¡El dispositivo filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…")
+      setModalMessage(error.message || "¡El dispositivo filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…")
       setShowModal(true)
       setFilteredDispositivos([])
     }
