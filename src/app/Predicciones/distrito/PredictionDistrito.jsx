@@ -241,7 +241,7 @@ const PredictionDistrito = () => {
                     setShowErrorModal(false);
                     setError(null); // Limpiar el error al cerrar el modal
                 }}
-                title="Error en la conexión o en la predicción"
+                title="Error"
                 btnMessage="Cerrar"
             >
                 <div className="flex items-start gap-3">
