@@ -21,9 +21,6 @@ const PagarFactura = () => {
   const [modalMessage, setModalMessage] = useState("")
   const [modalTitle, setModalTitle] = useState("")
 
-  // Estado para la URL de redirección a Bold
-  const [boldRedirectUrl, setBoldRedirectUrl] = useState("")
-
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -129,75 +126,16 @@ const PagarFactura = () => {
   }, [API_URL, navigate])
 
   // Función para iniciar el proceso de pago
-  const iniciarProcesoPago = async () => {
-    try {
-      setProcessingPayment(true)
+  const iniciarProcesoPago = () => {
+    setProcessingPayment(true)
 
-      // Simulamos un pequeño retraso para mostrar el estado de procesamiento
-      setTimeout(() => {
-        // Abrir Bold en una nueva pestaña en lugar de redirigir
-        window.open("https://bold.co/", "_blank")
+    setTimeout(() => {
+      const id = factura.id_bill
+      navigate(`/facturacion/pagar/${id}/pasarela-pago`, { state: { factura } })
 
-        // Después de abrir Bold, simulamos que el pago fue exitoso
-        setTimeout(async () => {
-          // Actualizar el estado de la factura en el backend
-          if (factura) {
-            try {
-              const token = localStorage.getItem("token")
-
-              // Realizar la petición al backend para actualizar el estado
-              // Usamos POST como indica el backend
-              const updateResponse = await axios.post(
-                `${API_URL}/billing/bills/update-status`,
-                {
-                  "code": factura.code,
-                  status: "pagada",
-                },
-                {
-                  headers: { Authorization: `Token ${token}` },
-                },
-              )
-
-              // Crear una copia de la factura con estado actualizado
-              const facturaActualizada = {
-                ...factura,
-                status: "Pagada",
-              }
-
-              // Actualizar el estado de la factura en el componente
-              setFactura(facturaActualizada)
-
-              // Marcar el pago como completado
-              setPaymentCompleted(true)
-
-              // Mostrar mensaje de éxito
-              showMessageModal("¡Pago procesado con éxito! La factura ha sido marcada como pagada.", "Pago Exitoso")
-            } catch (error) {
-              console.error("Error al actualizar estado en backend:", error)
-              let errorMessage = "Error al actualizar el estado de la factura. Por favor, contacte a soporte."
-
-              if (error.response && error.response.data && error.response.data.detail) {
-                errorMessage = error.response.data.detail
-              }
-
-              showMessageModal(errorMessage, "Error")
-            } finally {
-              // Finalizar el procesamiento
-              setProcessingPayment(false)
-            }
-          }
-        }, 3000) // Simulamos que el pago toma 3 segundos en procesarse
-      }, 1500)
-    } catch (error) {
-      console.error("Error al iniciar el pago:", error)
-      const errorMessage = "Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico"
-
-      setError(errorMessage)
-      showMessageModal(errorMessage, "ERROR")
       setProcessingPayment(false)
-    }
+    }, 1500)
   }
-
   // Formatear número como moneda en COP
   const formatCurrency = (value) => {
     if (!value) return "$0"
@@ -326,7 +264,7 @@ const PagarFactura = () => {
               {!paymentCompleted && (
                 <div className="bg-gray-50 p-4 rounded-md mb-6">
                   <p className="text-sm text-gray-600">
-                    Al hacer clic en "Proceder al Pago", será redirigido a la pasarela de pago Bold para completar la
+                    Al hacer clic en "Proceder al Pago", será redirigido a la pasarela de pago para completar la
                     transacción de forma segura.
                   </p>
                 </div>
