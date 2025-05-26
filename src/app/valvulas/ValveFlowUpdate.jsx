@@ -366,6 +366,17 @@ const ValveFlowUpdate = () => {
 
       await api.put(`/iot/update-flow/${valve.id}`, updateData)
 
+      // POST al endpoint externo para ajustar ángulo
+      await axios.post(
+        "https://mqtt-flask-api-production.up.railway.app/publicar_comando_lote",
+        {
+          comando: "ajustar",
+          angulo: Number.parseFloat(formData.flow),
+          lote_id: valve.location_id
+        }
+        
+      )
+
       showMessage("Éxito", "El valor en litros ha sido actualizado correctamente.", "success")
 
       // Actualizar datos locales con la fecha actual
@@ -431,6 +442,16 @@ const ValveFlowUpdate = () => {
       const api = createAPI(token)
 
       await api.put(`/iot/update-flow/${valve.id}`, updateData)
+
+      // POST al endpoint externo para abrir/cerrar
+      await axios.post(
+        "https://mqtt-flask-api-production.up.railway.app/publicar_comando_lote",
+        {
+          comando: isOpening ? "abrir" : "cerrar",
+          lote_id: valve.location_id
+        }
+      )
+      // console.log(lote_id)
 
       setShowModal(false)
       showMessage("Éxito", successMessage, "success")
