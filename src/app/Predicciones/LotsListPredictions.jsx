@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InputFilter from "../../components/InputFilterLote";
+import InputFilter from "../../components/InputFilterLotes";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
 
@@ -70,8 +70,13 @@ const LotsListPredictions = () => {
         console.log("Todos los lotes con propietarios:", lotesConPredios);
       } catch (error) {
         console.error("Error al obtener la lista de lotes o predios:", error);
-        setModalMessage("Error al cargar los datos. Por favor, intente más tarde.");
-        setShowModal(true);
+        if (error.response?.status === 401) {
+          setModalMessage("Sesión expirada. Por favor, inicie sesión nuevamente.");
+          setShowModal(true);
+        } else {
+          setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico");
+          setShowModal(true);
+        }
       }
     };
 
@@ -98,7 +103,7 @@ const LotsListPredictions = () => {
         filters.isActive !== "";
       
 
-      // Validación de ID
+      // Validación de ID de predio - aplicando las mismas validaciones del segundo código
       if (filters.id.trim() !== "") {
         // Verifica si es un prefijo válido del formato PR-NNNNNNN
         const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim());
@@ -110,7 +115,7 @@ const LotsListPredictions = () => {
         if (!isPrefixValid && !isOnlyDigits) {
           setModalMessage("El campo ID del predio contiene caracteres no válidos");
           setShowModal(true);
-          setFilteredPredios([]);
+          setFilteredLotes([]);
           return;
         }
       }
@@ -160,10 +165,8 @@ const LotsListPredictions = () => {
         const matchesOwner = filters.ownerDocument.trim() === "" ||
           lots.predioOwner.includes(filters.ownerDocument.trim());
 
-        // Modificado para incluir lotes tanto activos como inactivos
-        const matchesStatus =
-          filters.isActive === "" ||
-          lots.is_activate === (filters.isActive === "true");
+        // Solo mostrar lotes activos
+        const matchesStatus = lots.is_activate === true;
 
         // Manejo de fechas - enfoque idéntico al que funciona en UserList
         let matchesDate = true; // Por defecto asumimos que coincide
@@ -229,7 +232,7 @@ const LotsListPredictions = () => {
 
       setFilteredLotes(filtered); // Actualiza filteredLotes solo cuando se aplican filtros
     } catch (error) {
-      setModalMessage("¡El lote filtrado no se pudo mostrar correctamente! Vuelve a intentarlo más tarde…");
+      setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico");
       setShowModal(true);
       setFilteredLotes([]);
     }
@@ -304,6 +307,9 @@ const LotsListPredictions = () => {
             showModal={showModal}
             onClose={() => {
               setShowModal(false);
+              if (modalMessage.includes("sesión")) {
+                navigate("/login");
+              }
               if (modalMessage === "Por favor, aplica al menos un filtro para ver resultados.") {
                 setFilteredLotes(null);
               }
@@ -335,4 +341,4 @@ const LotsListPredictions = () => {
   );
 };
 
-export default LotsListPredictions  ;
+export default LotsListPredictions;

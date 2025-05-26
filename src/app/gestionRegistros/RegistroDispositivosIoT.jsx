@@ -808,13 +808,13 @@ const RegistroDispositivos = () => {
                   {requiresActualFlow && (
                     <div className="flex flex-col">
                       <label htmlFor="actual_flow" className="block text-sm mb-2">
-                        Posición en litros <span className="text-red-500">*</span>
+                        Caudal en litros (0-180) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         id="actual_flow"
                         name="actual_flow"
-                        placeholder="Ej: 90 (0-180)"
+                        placeholder="Ej: 90"
                         value={formData.actual_flow}
                         onChange={handleChange}
                         className={`w-full border ${errors.actual_flow ? "border-red-300" : "border-gray-300"} rounded px-3 py-2 focus:outline-none`}

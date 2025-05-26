@@ -1,7 +1,7 @@
 import React from "react";
 import { Search } from "lucide-react";
 
-const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true, showStatusFilter = true }) => {
+const InputFilterLote = ({ filters, onFilterChange, onApplyFilters, showPersonTypeFilter = true, showStatusFilter = true }) => {
   const handleIdChange = (e) => {
     onFilterChange("id", e.target.value);
   };
@@ -15,7 +15,7 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
   };
 
   const handleStatusChange = (e) => {
-    onFilterChange("status", e.target.value);
+    onFilterChange("isActive", e.target.value);
   };
 
   const handleDateChange = (e) => {
@@ -31,15 +31,17 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
         </span>
         <input
           type="text"
-          placeholder="Filtrar por ID de factura"
+          placeholder="Filtrar por ID de predio"
           className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
           value={filters.id}
           onChange={handleIdChange}
           maxLength={10}
         />
       </div>
+
+
       
-      {/* Filtro por ID de lote */}
+      {/* Filtro por ID  de lote */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
         <span className="absolute left-3 top-2 text-gray-400">
           <Search size={18} />
@@ -53,31 +55,6 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
           maxLength={12}
         />
       </div>
-      
-      {/* Filtro por Estado */}
-      <div className="relative w-full lg:w-[22%] xl:w-1/5">
-        <select
-          className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
-          value={filters.status}
-          onChange={handleStatusChange}
-        >
-          <option value="">Estado</option>
-          <option value="Pagada">Pagada</option>
-          <option value="Pendiente">Pendiente</option>
-          <option value="Vencida">Vencida</option>
-        </select>
-        <span className="absolute top-3 right-4 text-gray-400">
-          <svg
-            className="w-5 h-5"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </span>
-      </div>
 
       {/* Filtro por documento del propietario */}
       <div className="relative w-full lg:w-[22%] xl:w-1/4">
@@ -85,51 +62,18 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
           <Search size={18} />
         </span>
         <input
-          type="number"
+          type="text"
           placeholder="Documento del propietario"
           className="w-full pl-10 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none text-sm"
           value={filters.owner}
-          maxLength={15}
           onChange={handleOwnerDocumentChange}
-          onKeyDown={(e) => {
-            if (e.key === '-' || e.key === 'e' || e.key === '+' || e.key === '.') {
-              e.preventDefault();
-            }
-          }}
+          maxLength={15}
         />
-
-
       </div>
 
-      {/* Filtro por Estado (Activo/Inactivo) */}
-      {/* {showStatusFilter && (
-        <div className="relative w-full lg:w-[22%] xl:w-1/5">
-          <select
-            className="w-full px-4 py-2 bg-gray-100 text-gray-500 border border-gray-300 rounded-full focus:outline-none appearance-none text-sm"
-            value={filters.isActive}
-            onChange={handleStatusChange}
-          >
-            <option value="">ESTADO</option>
-            <option value="true">Pagada</option>
-            <option value="false">Pendiente</option>
-          </select>
-          <span className="absolute top-3 right-4 text-gray-400">
-            <svg
-              className="w-5 h-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </span>
-        </div>
-      )} */}
-
-      {/* Filtro por Periodo de Facturación */}
+      {/* Filtro por Fecha de Registro */}
       <div className="w-full lg:w-[40%] xl:w-1/3">
-        <p className="text-gray-500 text-sm text-center mb-1">Filtrar por periodo de facturación</p>
+        <p className="text-gray-500 text-sm text-center mb-1">Filtrar por fecha de registro</p>
         <div className="flex items-center bg-gray-100 rounded-full px-1 w-full border border-gray-300">
           {/* Icono de búsqueda */}
           <span className="text-gray-400 px-2 flex-shrink-0">
@@ -174,4 +118,4 @@ const InputFilterFacturas = ({ filters, onFilterChange, onApplyFilters, showPers
   );
 };
 
-export default InputFilterFacturas;
+export default InputFilterLote;

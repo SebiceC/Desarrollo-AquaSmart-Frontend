@@ -153,7 +153,6 @@ const HistorialFacturasLote = () => {
           filters.status === "" ||
           (filters.status === "Pagada" && factura.status?.toLowerCase() === "pagada") ||
           (filters.status === "Pendiente" && factura.status?.toLowerCase() === "pendiente") ||
-          (filters.status === "Validada" && factura.status?.toLowerCase() === "validada") ||
           (filters.status === "Vencida" && factura.status?.toLowerCase() === "vencida");
           
         return matchesId && matchesIdLote && matchesOwner && matchesStatus;
@@ -237,8 +236,6 @@ const HistorialFacturasLote = () => {
       render: (factura) => {
         const statusClass = factura.status?.toLowerCase() === "pendiente" 
           ? "bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200" 
-          : factura.status?.toLowerCase() === "validada"
-          ? "bg-blue-100 text-blue-800 border border-blue-200"
           : factura.status?.toLowerCase() === "pagada"
           ? "bg-green-100 text-green-800 border border-green-200"
           : factura.status?.toLowerCase() === "vencida"
