@@ -231,17 +231,11 @@ const MiPrediccionLoteComponent = ({
       <Modal
         showModal={showPredictionErrorModal}
         onClose={() => setShowPredictionErrorModal(false)}
-        title="Error en la predicción"
+        title="Error"
         btnMessage="Aceptar"
       >
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="text-red-500 mt-1" size={20} />
-          <div>
-            <p className="text-gray-700 mb-2">Ocurrió un error al procesar las predicciones.</p>
-            <p className="text-sm text-gray-600">
-              {error || "Error desconocido. Vuelve a intentarlo más tarde o ponte en contacto con soporte."}
-            </p>
-          </div>
+        <div>
+          <p className="text-gray-700 mb-2">Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico</p>
         </div>
       </Modal>
 

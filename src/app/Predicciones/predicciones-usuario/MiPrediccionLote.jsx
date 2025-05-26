@@ -138,7 +138,7 @@ const MiPrediccionLote = () => {
           setShowAccessDeniedModal(true)
         } else {
           setModalErrorMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
-          setModalTitle("Error de conexión")
+          setModalTitle("Error")
           setShowErrorModal(true)
         }
       }
@@ -427,7 +427,6 @@ const MiPrediccionLote = () => {
         btnMessage="Aceptar"
       >
         <div className="flex items-start gap-3">
-          <AlertTriangle className="text-red-500 mt-1" size={20} />
           <div>
             <p className="text-gray-700 mb-2">No tienes permisos para acceder a las predicciones de este lote.</p>
             <p className="text-sm text-gray-600">Solo puedes ver predicciones de tus propios lotes.</p>
@@ -492,7 +491,6 @@ const MiPrediccionLote = () => {
         btnMessage="Cerrar"
       >
         <div className="flex items-start gap-3">
-          <AlertTriangle className="text-red-500 mt-1" size={20} />
           <div>
             <p className="text-gray-700 mb-2">
               {modalErrorMessage || "Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico"}
