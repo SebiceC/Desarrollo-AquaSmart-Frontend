@@ -72,6 +72,41 @@ const BaseSolicitudModal = ({
     fetchSolicitudDetails();
   }, [solicitudBasica, showModal, API_URL, onError, onClose]);
 
+  // Función para determinar el tipo de comando según el tipo de solicitud
+  const getCommandConfig = (solicitud) => {
+    const flowRequestType = solicitud.flow_request_type;
+    
+    // Normalizar el tipo de solicitud para comparación
+    const normalizedType = flowRequestType?.toLowerCase() || "";
+    
+    if (normalizedType.includes("cancelacion temporal") || normalizedType === "cancelacion temporal de caudal") {
+      // Para cancelación temporal, solo enviar comando "cerrar"
+      return {
+        comando: "cerrar",
+        lote_id: solicitud.lot
+      };
+    } else if (
+      normalizedType.includes("cambio") || 
+      normalizedType.includes("activacion") ||
+      normalizedType === "cambio_caudal" ||
+      normalizedType === "activacion"
+    ) {
+      // Para cambio de caudal y activación, enviar comando "ajustar" con ángulo
+      return {
+        comando: "ajustar",
+        angulo: Number.parseFloat(solicitud.requested_flow),
+        lote_id: solicitud.lot
+      };
+    } else {
+      // Para otros tipos, usar el comportamiento por defecto (ajustar)
+      return {
+        comando: "ajustar",
+        angulo: Number.parseFloat(solicitud.requested_flow),
+        lote_id: solicitud.lot
+      };
+    }
+  };
+
   const handleAccept = async () => {
     try {
       setIsSubmitting(true);
@@ -80,13 +115,12 @@ const BaseSolicitudModal = ({
       
       const token = localStorage.getItem("token");
       
-      // Usar el endpoint de aprobación con axios
+      // Primera solicitud - Aprobar en tu API
       const endpoint = `${API_URL}/communication/flow-request/${solicitud.id}/approve`;
       
-      // Enviar solicitud para aceptar usando axios
       await axios.post(
         endpoint, 
-        {}, // Cuerpo vacío
+        {}, 
         {
           headers: {
             'Authorization': `Token ${token}`,
@@ -94,23 +128,49 @@ const BaseSolicitudModal = ({
           }
         }
       );
+  
+      // Segunda solicitud - Comando al endpoint externo
+      const endpoint2 = "https://mqtt-flask-api-production.up.railway.app/publicar_comando_lote";
+      
+      // Obtener la configuración del comando según el tipo de solicitud
+      const commandConfig = getCommandConfig(solicitud);
+      
+      console.log("Enviando comando externo:", commandConfig);
+      console.log("Tipo de solicitud:", solicitud.flow_request_type);
+  
+      await axios.post(
+        endpoint2,
+        commandConfig,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000 // 10 segundos de timeout
+        }
+      );
+      
+      console.log("Comando externo enviado exitosamente");
       
       setSuccessMessage("Solicitud aceptada exitosamente");
       
-      // Esperar un momento para mostrar el mensaje antes de cerrar
       setTimeout(() => {
         onSuccess("Solicitud aceptada exitosamente");
         onClose();
       }, 500);
       
     } catch (error) {
-      console.error("Error al aceptar la solicitud:", error);
+      console.error("Error al procesar la solicitud:", error);
       
-      // Si es un error de red, mostrar el modal de error de conexión
-      if (axios.isAxiosError(error) && !error.response) {
-        setShowConnectionErrorModal(true);
+      if (axios.isAxiosError(error)) {
+        if (!error.response) {
+          setShowConnectionErrorModal(true);
+        } else if (error.response.status >= 500) {
+          setError("Error en el servidor. Por favor, intente más tarde.");
+        } else {
+          setError(`Error: ${error.response.data?.message || 'Error desconocido'}`);
+        }
       } else {
-        setError("Error al aceptar la solicitud. Por favor, intente más tarde.");
+        setError("Error inesperado. Por favor, intente más tarde.");
       }
     } finally {
       setIsSubmitting(false);
@@ -447,3 +507,4 @@ const BaseSolicitudModal = ({
 };
 
 export default BaseSolicitudModal;
+
