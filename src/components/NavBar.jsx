@@ -207,7 +207,20 @@ function NavBar() {
                         ]}
                     />
 
-                    {showPermisosSection && <NavItem direction="/permisos" text="Permisos" />}
+                    <NavItem direction="/historial-incidencias" text="Historial de Incidencias" />
+                    <NavItem 
+                        direction="/predicciones"
+                        text="Predicciones"
+                        subItems={[
+                            { direction: "/predicciones-distrito", text: "Distrito" },
+                            { direction: "/predicciones", text: "Lotes del Distrito" },
+                            { direction: "/mis-predicciones", text: "Mis lotes" },
+                        ]}
+                    />
+
+                    {showPermisosSection && (
+                        <NavItem direction="/permisos" text="Permisos" />
+                    )}
                 </ul>
 
                 {/* Botón menú móvil */}
@@ -273,6 +286,18 @@ function NavBar() {
                                     direction: "/reportes-y-novedades/atencion_solicitudes-reportes",
                                     text: "Atención de solicitudes y reportes",
                                 },
+                            ]}
+                        />
+
+                        <NavItem direction="/historial-incidencias" text="Historial de Incidencias" />
+
+                        <NavItem 
+                            direction="/predicciones"
+                            text="Predicciones"
+                            subItems={[
+                                { direction: "/predicciones-distrito", text: "Distrito" },
+                                { direction: "/predicciones", text: "Lotes del Distrito" },
+                                { direction: "/mis-predicciones", text: "Mis lotes" },
                             ]}
                         />
 

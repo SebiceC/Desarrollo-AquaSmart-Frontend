@@ -702,6 +702,7 @@ const BaseAsignacionModal = ({
                                 className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 autoFocus
                                 onClick={(e) => e.stopPropagation()}
+                                maxLength={50}
                               />
                               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                             </div>

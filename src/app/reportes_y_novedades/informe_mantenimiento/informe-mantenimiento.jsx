@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import axios from "axios"
-import { Search } from "lucide-react"
+import { Search } from 'lucide-react'
 import DataTable from "../../../components/DataTable"
 
 const InformeMantenimiento = () => {
@@ -43,7 +43,6 @@ const InformeMantenimiento = () => {
     { value: "", label: "ESTADO" },
     { value: "pending", label: "Pendiente de informe" },
     { value: "solved", label: "Con informe" },
-    { value: "reassigned", label: "Reasignado" },
   ]
 
   const handleFilterChange = (name, value) => {
@@ -273,7 +272,6 @@ const InformeMantenimiento = () => {
         const tieneInforme = tieneInformeMantenimiento(asignacion.id)
         if (filters.status === "pending") return !tieneInforme
         if (filters.status === "solved") return tieneInforme
-        if (filters.status === "reassigned") return asignacion.reassigned
         return true
       })
     }
@@ -377,17 +375,12 @@ const InformeMantenimiento = () => {
       render: (asignacion) => {
         return (
           <div className="flex items-center">
-            {asignacion.reassigned && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mr-2">
-                Reasignado
-              </span>
-            )}
             {tieneInformeMantenimiento(asignacion.id) && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Con informe
               </span>
             )}
-            {!tieneInformeMantenimiento(asignacion.id) && !asignacion.reassigned && (
+            {!tieneInformeMantenimiento(asignacion.id) && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 Pendiente
               </span>

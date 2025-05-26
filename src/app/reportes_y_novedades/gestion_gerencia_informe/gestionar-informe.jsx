@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import axios from "axios"
 import BackButton from "../../../components/BackButton"
-import { CheckCircle, RefreshCw, Search, X, AlertCircle, Info, ChevronDown, Eye } from "lucide-react"
+import { CheckCircle, RefreshCw, Search, X, AlertCircle, Info, ChevronDown, Eye } from 'lucide-react'
+import { PermissionsContext } from "../../../app/context/PermissionsContext"
 
 const GestionarInforme = () => {
   const { id } = useParams()
@@ -25,6 +26,8 @@ const GestionarInforme = () => {
   const [showReasignModal, setShowReasignModal] = useState(false)
 
   const API_URL = import.meta.env.VITE_APP_API_URL
+
+  const { hasPermission } = useContext(PermissionsContext)
 
   // Modificar la función fetchInforme para establecer correctamente el modo solo lectura
   const fetchInforme = async () => {
@@ -409,7 +412,12 @@ const GestionarInforme = () => {
       <NavBar />
       <div className="container mx-auto p-4 md:p-8 lg:p-20 mt-[70px] md:mt-[80px]">
         <h1 className="text-center text-xl font-semibold text-[#365486]">
-          {isReadOnly ? "Ver Informe de Mantenimiento" : "Gestionar Informe de Mantenimiento"}
+          {isReadOnly 
+            ? "Ver Informe de Mantenimiento" 
+            : hasPermission('can_manage_reports')
+              ? "Gestionar Informe de Mantenimiento"
+              : "Ver Informe de Mantenimiento"
+          }
         </h1>
 
         {loading ? (
@@ -428,6 +436,19 @@ const GestionarInforme = () => {
               </div>
             )}
 
+            {/* Indicador de falta de permisos para gestionar */}
+            {!isReadOnly && !hasPermission('can_manage_reports') && (
+              <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-center text-amber-700">
+                  <AlertCircle size={18} className="mr-2" />
+                  <p className="font-medium">Modo solo visualización - No tienes permisos para gestionar este informe.</p>
+                </div>
+                <p className="text-sm text-amber-600 mt-1">
+                  Contacta al administrador si necesitas permisos para reasignar o aprobar informes.
+                </p>
+              </div>
+            )}
+
             {/* Información del reporte/solicitud */}
             <div className="mb-8 bg-gray-50 p-5 rounded-lg border border-gray-100">{renderReportInfo()}</div>
 
@@ -438,7 +459,7 @@ const GestionarInforme = () => {
             <div className="flex flex-col md:flex-row justify-between gap-4 mt-8">
               <BackButton to="/reportes-y-novedades/control-reportes-intervenciones" text="Volver" />
 
-              {!isReadOnly && (
+              {!isReadOnly && hasPermission('can_manage_reports') && (
                 <div className="flex flex-col md:flex-row gap-4">
                   <button
                     onClick={handleReasignar}

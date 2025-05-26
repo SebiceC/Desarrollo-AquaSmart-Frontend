@@ -97,6 +97,8 @@ const InputFilterGestionSolRep = ({
           <option value="cancelacion temporal de caudal">Cancelación Temporal de Caudal</option>
           <option value="cancelacion definitiva de caudal">Cancelación Definitiva de Caudal</option>
           <option value="activacion">Activación de Caudal</option>
+          <option value="falla_aplicativo">Falla en Aplicativo</option>
+          <option value="falla_suministro">Falla en Suministro</option>
         </select>
         <span className="absolute top-3 right-4 text-gray-400">
           <svg

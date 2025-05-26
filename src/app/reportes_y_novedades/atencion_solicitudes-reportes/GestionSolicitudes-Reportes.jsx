@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
-import { Eye } from "lucide-react";
 import InputFilterGestionSolRep from "../../../components/InputFilterGestionSolRep";
 // Importar los nuevos modales
 
@@ -25,6 +24,7 @@ const GestionSolicitudes = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [reportes, setReportes] = useState([]);
   const [allData, setAllData] = useState([]);
+  const [maintenanceReports, setMaintenanceReports] = useState([]); // Nuevo estado para informes de mantenimiento
   const [filteredData, setFilteredData] = useState(null); // Inicialmente null para que no muestre datos
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -130,6 +130,54 @@ const GestionSolicitudes = () => {
       return specificType;
     }
     return "";
+  };
+
+  // Nueva función para obtener informes de mantenimiento
+  const fetchMaintenanceReports = async (token) => {
+    try {
+      const response = await axios.get(`${API_URL}/communication/maintenance-reports/list`, {
+        headers: { Authorization: `Token ${token}` }
+      });
+      
+      console.log("Informes de mantenimiento obtenidos:", response.data);
+      setMaintenanceReports(response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener informes de mantenimiento:", error);
+      return [];
+    }
+  };
+
+  // Función para encontrar el ID del informe de mantenimiento correspondiente
+  const findMaintenanceReportId = (item, maintenanceReportsData) => {
+    const itemId = item.id;
+    
+    // Buscar en los informes de mantenimiento
+    const matchingReport = maintenanceReportsData.find(report => {
+      // Verificar si coincide con flow_request
+      if (item.reportType === 'solicitud' && report.assignment_details?.flow_request) {
+        // Si flow_request es un objeto, comparar su id
+        if (typeof report.assignment_details.flow_request === 'object') {
+          return report.assignment_details.flow_request.id === itemId;
+        }
+        // Si flow_request es un ID directo, comparar directamente
+        return report.assignment_details.flow_request === itemId;
+      }
+      
+      // Verificar si coincide con failure_report
+      if (item.reportType === 'reporte' && report.assignment_details?.failure_report) {
+        // Si failure_report es un objeto, comparar su id
+        if (typeof report.assignment_details.failure_report === 'object') {
+          return report.assignment_details.failure_report.id === itemId;
+        }
+        // Si failure_report es un ID directo, comparar directamente
+        return report.assignment_details.failure_report === itemId;
+      }
+      
+      return false;
+    });
+    
+    return matchingReport?.id || null;
   };
 
   // Función para aplicar filtros a datos específicos
@@ -392,7 +440,7 @@ const GestionSolicitudes = () => {
     }
   ];
 
-  // Manejador para el botón Gestionar - MODIFICADO para abrir modal específico
+  // Manejador para el botón Gestionar - MODIFICADO para usar el mapeo de informes de mantenimiento
   const handleGestionar = (item) => {
     // Normalizar el estado para hacer la comparación más robusta
     const normalizedStatus = normalizeStatus(item.status);
@@ -404,6 +452,26 @@ const GestionSolicitudes = () => {
     };
     setSelectedSolicitud(solicitudConTipo);
     
+    // Verificar si necesitamos navegar a la página de aprobación
+    const shouldNavigateToApproval = normalizedStatus === 'a espera de aprobacion';
+    
+    if (shouldNavigateToApproval) {
+      // Buscar el ID del informe de mantenimiento correspondiente
+      const maintenanceReportId = findMaintenanceReportId(item, maintenanceReports);
+      
+      if (maintenanceReportId) {
+        console.log(`Navegando a gestionar informe con ID: ${maintenanceReportId}`);
+        navigate(`/reportes-y-novedades/gestionar-informe/${maintenanceReportId}`);
+        return;
+      } else {
+        // Si no se encuentra el informe de mantenimiento, mostrar error o usar la navegación por defecto
+        console.warn(`No se encontró informe de mantenimiento para el item con ID: ${item.id}`);
+        navigate('/reportes-y-novedades/control-reportes-intervenciones');
+        return;
+      }
+    }
+    
+    // Para otros estados, continuar con la lógica original de modales
     // Determinar qué modal mostrar basado en el tipo de solicitud o reporte
     if (item.reportType === 'solicitud') {
       // Para solicitudes
@@ -414,7 +482,6 @@ const GestionSolicitudes = () => {
         } else {
           setShowGestionModal(true);
           // Mostrar modal con datos de la solicitud
-
         } 
       } else if (item.flow_request_type === 'cancelacion definitiva de caudal') {
         if (normalizedStatus === 'finalizado') {
@@ -423,9 +490,6 @@ const GestionSolicitudes = () => {
         } else if (normalizedStatus === 'pendiente') {
           // Mostrar modal con datos de la solicitud
           setShowCancelacionDefinitivaPModal(true);
-        } else if (normalizedStatus === 'a espera de aprobacion') {
-          // Redirigir a la página de aprobación
-          navigate('/reportes-y-novedades/control-reportes-intervenciones');
         } else if (normalizedStatus === 'en proceso') {
           // Mostrar modal con información y técnico asignado
           setShowCancelacionDefinitivaEModal(true);
@@ -440,9 +504,6 @@ const GestionSolicitudes = () => {
         } else if (normalizedStatus === 'pendiente') {
           // Mostrar modal con datos del reporte
           setShowFallaAplicativoPModal(true);
-        } else if (normalizedStatus === 'a espera de aprobacion') {
-          // Redirigir a la página de aprobación
-          navigate('/reportes-y-novedades/control-reportes-intervenciones');
         } else if (normalizedStatus === 'en proceso') {
           // Mostrar modal con información y técnico asignado
           setShowFallaAplicativoEModal(true);
@@ -454,9 +515,6 @@ const GestionSolicitudes = () => {
         } else if (normalizedStatus === 'pendiente') {
           // Mostrar modal con datos del reporte
           setShowFallaAplicativoPModal(true);
-        } else if (normalizedStatus === 'a espera de aprobacion') {
-          // Redirigir a la página de aprobación
-          navigate('/reportes-y-novedades/control-reportes-intervenciones');
         } else if (normalizedStatus === 'en proceso') {
           // Mostrar modal con información y técnico asignado
           setShowFallaAplicativoEModal(true);
@@ -490,7 +548,7 @@ const GestionSolicitudes = () => {
     setShowModal(true);
   };
 
-  // Función para recargar datos - MODIFICADA para usar el nuevo endpoint unificado
+  // Función para recargar datos - MODIFICADA para incluir informes de mantenimiento
   const fetchData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -506,13 +564,16 @@ const GestionSolicitudes = () => {
         headers: { Authorization: `Token ${token}` }
       };
       
-      // Realizar una única solicitud al nuevo endpoint unificado
-      const response = await axios.get(`${API_URL}/communication/admin/requests-and-reports`, options);
+      // Realizar solicitudes a ambos endpoints de forma paralela
+      const [requestsResponse, maintenanceResponse] = await Promise.all([
+        axios.get(`${API_URL}/communication/admin/requests-and-reports`, options),
+        fetchMaintenanceReports(token)
+      ]);
       
       // Procesar los datos recibidos
-      if (response.data) {
+      if (requestsResponse.data) {
         // Procesamos las solicitudes (flow_requests)
-        const solicitudesData = response.data.flow_requests ? response.data.flow_requests.map(item => {
+        const solicitudesData = requestsResponse.data.flow_requests ? requestsResponse.data.flow_requests.map(item => {
           // Normalizar el subtipo
           let specificType = item.flow_request_type;
           // Convertir "Cancelación Temporal de Caudal" a "cancelacion temporal de caudal"
@@ -537,7 +598,7 @@ const GestionSolicitudes = () => {
         }) : [];
         
         // Procesamos los reportes (failure_reports)
-        const reportesData = response.data.failure_reports ? response.data.failure_reports.map(item => {
+        const reportesData = requestsResponse.data.failure_reports ? requestsResponse.data.failure_reports.map(item => {
           // Normalizar el subtipo
           let specificType = item.failure_type;
           // Convertir "Fallo en el Suministro del Agua" a "falla_suministro"
@@ -565,11 +626,16 @@ const GestionSolicitudes = () => {
         setReportes(reportesData);
         setAllData(allDataCombined);
         
+        // Los informes de mantenimiento ya se actualizaron en fetchMaintenanceReports
+        
         // IMPORTANTE: Mantener filteredData como null para que la tabla esté vacía inicialmente
         // Solo se actualizan los datos filtrados si ya había un filtro aplicado anteriormente
         if (filteredData !== null) {
           applyFiltersToData(allDataCombined);
         }
+        
+        console.log("Datos combinados:", allDataCombined);
+        console.log("Informes de mantenimiento:", maintenanceResponse);
       }
     } catch (error) {
       console.error("Error al obtener los datos:", error);

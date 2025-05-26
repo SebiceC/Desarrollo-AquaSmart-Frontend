@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import NavBar from "../../components/NavBar"
 import Modal from "../../components/Modal"
 import BackButton from "../../components/BackButton"
-import { Search, Loader } from "lucide-react"
+import { Search, Loader } from 'lucide-react'
 import axios from "axios"
 
 // Crear una instancia de axios con configuración base
@@ -49,14 +49,14 @@ const ValveFlowUpdate = () => {
     is_active: false,
     current_flow: 0,
     max_flow: 180,
-    flow_unit: "litros",
+    flow_unit: "litros (L/s)",
     valve_type: "",
     last_update: "",
   }
 
   const initialFormState = {
     flow: "",
-    flow_unit: "litros",
+    flow_unit: "litros (L/s)",
   }
 
   // Usar estos estados iniciales en los useState
@@ -74,7 +74,7 @@ const ValveFlowUpdate = () => {
   const [errorModalMessage, setErrorModalMessage] = useState("")
 
   // Units options
-  const unitOptions = [{ value: "litros", label: "litros" }]
+  const unitOptions = [{ value: "litros", label: "litros (L/s)" }]
 
   const API_URL = import.meta.env.VITE_APP_API_URL
 
@@ -146,7 +146,7 @@ const ValveFlowUpdate = () => {
         is_active: device.is_active,
         current_flow: device.actual_flow || 0,
         max_flow: 180,
-        flow_unit: "litros",
+        flow_unit: "litros (L/s)",
         registration_date: device.registration_date || new Date().toISOString(),
       }
 
@@ -154,7 +154,7 @@ const ValveFlowUpdate = () => {
       setValve(basicValveData)
       setFormData({
         flow: "",
-        flow_unit: "litros",
+        flow_unit: "litros (L/s)",
       })
 
       // Marcar que la carga principal ha terminado
@@ -277,12 +277,12 @@ const ValveFlowUpdate = () => {
 
     // Validar máximo
     if (numValue > 180) {
-      return "ERROR: El valor ingresado no es permitido, valor máximo es 180 litros"
+      return "ERROR: El valor ingresado no es permitido, valor máximo es 180 litros (L/s)"
     }
 
     // Validar mínimo
     if (value !== "" && numValue < 0) {
-      return "ERROR: El valor ingresado no es permitido, valor mínimo es 0 litros"
+      return "ERROR: El valor ingresado no es permitido, valor mínimo es 0 litros (L/s)"
     }
 
     // Validar si es igual al valor actual
@@ -339,7 +339,7 @@ const ValveFlowUpdate = () => {
 
     // Validar si el valor excede el máximo
     if (Number.parseFloat(formData.flow) > 180) {
-      setFlowError(`ERROR: El valor ingresado no es permitido, valor máximo es 180 litros`)
+      setFlowError(`ERROR: El valor ingresado no es permitido, valor máximo es 180 litros (L/s)`)
       return false
     }
 
@@ -365,6 +365,17 @@ const ValveFlowUpdate = () => {
       const api = createAPI(token)
 
       await api.put(`/iot/update-flow/${valve.id}`, updateData)
+
+      // POST al endpoint externo para ajustar ángulo
+      await axios.post(
+        "https://mqtt-flask-api-production.up.railway.app/publicar_comando_lote",
+        {
+          comando: "ajustar",
+          angulo: Number.parseFloat(formData.flow),
+          lote_id: valve.location_id
+        }
+        
+      )
 
       showMessage("Éxito", "El valor en litros ha sido actualizado correctamente.", "success")
 
@@ -432,6 +443,16 @@ const ValveFlowUpdate = () => {
 
       await api.put(`/iot/update-flow/${valve.id}`, updateData)
 
+      // POST al endpoint externo para abrir/cerrar
+      await axios.post(
+        "https://mqtt-flask-api-production.up.railway.app/publicar_comando_lote",
+        {
+          comando: isOpening ? "abrir" : "cerrar",
+          lote_id: valve.location_id
+        }
+      )
+      // console.log(lote_id)
+
       setShowModal(false)
       showMessage("Éxito", successMessage, "success")
 
@@ -491,7 +512,7 @@ const ValveFlowUpdate = () => {
       <NavBar />
       <div className="container mx-auto p-6 mt-24">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Error: </strong>
+          <strong className="font-bold">Error: </strong> 
           <span className="block sm:inline">{error}</span>
           {isConnectivityIssue && (
             <div className="mt-4">
@@ -535,8 +556,8 @@ const ValveFlowUpdate = () => {
 
     return (
       <>
-        <ValveInfoItem label="ID Ubicación" value={location_id} />
-        <ValveInfoItem label="Nombre Ubicación" value={location_name} />
+        <ValveInfoItem label="ID Propiedad" value={location_id} />
+        <ValveInfoItem label="Nombre Propiedad" value={location_name} />
       </>
     )
   }
@@ -620,8 +641,8 @@ const ValveFlowUpdate = () => {
       <div className="flex-1 container mx-auto px-6 pb-6 max-w-7xl shadow-xl rounded-lg bg-white mt-24">
         <div className="pt-4">
           <div className="mb-5 text-center">
-            <h1 className="text-2xl font-semibold text-[#365486] mb-1">Ajuste de posición</h1>
-            <p className="text-sm text-gray-600">Modifique la posición en litros</p>
+            <h1 className="text-2xl font-semibold text-[#365486] mb-1">Ajuste de caudal</h1>
+            <p className="text-sm text-gray-600">Modifique el caudal en litros</p>
             <div className="w-16 h-1 bg-[#365486] mx-auto mt-2 rounded-full"></div>
           </div>
 
@@ -672,7 +693,7 @@ const ValveFlowUpdate = () => {
 
             {/* Formulario de ajuste */}
             <div className="md:w-2/3">
-              <h3 className="text-md font-medium text-[#365486] mb-3">Ajuste de posición</h3>
+              <h3 className="text-md font-medium text-[#365486] mb-3">Ajuste de caudal</h3>
 
               <div className="bg-gray-50 rounded-lg p-5 shadow-md border border-gray-100">
                 <div className="mb-4 flex items-center justify-between">
@@ -690,7 +711,7 @@ const ValveFlowUpdate = () => {
                   </div>
 
                   <div>
-                    <span className="font-medium text-black text-sm mr-2">Posición actual:</span>
+                    <span className="font-medium text-black text-sm mr-2">Caudal actual:</span>
                     <span className="font-bold text-gray-600">
                       {valve.current_flow} {valve.flow_unit}
                     </span>
@@ -698,7 +719,7 @@ const ValveFlowUpdate = () => {
                 </div>
 
                 <div className="mb-4">
-                  <span className="font-medium text-black text-sm mr-2">Posición máxima:</span>
+                  <span className="font-medium text-black text-sm mr-2">Caudal maximo:</span>
                   <span className="text-gray-600">
                     {valve.max_flow} {valve.flow_unit}
                   </span>
@@ -707,7 +728,7 @@ const ValveFlowUpdate = () => {
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="flow">
-                      Posición en litros <span className="text-red-500">*</span>
+                      Caudal en litros (L/s) <span className="text-red-500">*</span>
                     </label>
                     <div className="flex">
                       <div className="relative flex-grow">
@@ -723,7 +744,7 @@ const ValveFlowUpdate = () => {
                           className={`w-full pl-10 py-2 bg-gray-100 text-gray-700 border ${
                             flowError ? "border-red-500" : "border-gray-300"
                           } rounded-l-full focus:outline-none text-sm`}
-                          placeholder="Ingrese la posición en litros (0-180)"
+                          placeholder="Ingrese la caudal en litros (L/s) (0-180)"
                         />
                       </div>
                       <select
@@ -744,7 +765,7 @@ const ValveFlowUpdate = () => {
                     {flowError && <p className="text-[#F90000] text-xs mt-1">{flowError}</p>}
                     {sameFlowError && (
                       <p className="text-[#F90000] text-xs mt-1">
-                        ERROR: La posición que quieres registrar es la misma posición actual
+                        ERROR: El caudal que quieres registrar es el mismo caudal actual
                       </p>
                     )}
                   </div>
@@ -803,7 +824,7 @@ const ValveFlowUpdate = () => {
         title="Éxito"
         btnMessage="Aceptar"
       >
-        <p>La posición ha sido actualizada correctamente.</p>
+        <p>El caudal ha sido actualizado correctamente.</p>
       </Modal>
 
       {/* Modal de error */}
@@ -816,7 +837,7 @@ const ValveFlowUpdate = () => {
         onCancel={() => !isProcessingOpen && setShowConfirmOpenModal(false)}
         onConfirm={handleFullOpen}
         title="¿Estás seguro?"
-        message="¿Estás seguro que deseas abrir completamente la válvula a 180 litros?"
+        message="¿Estás seguro que deseas abrir completamente la válvula a 180 litros (L/s)?"
         isProcessing={isProcessingOpen}
         confirmText="Sí, abrir!"
       />
@@ -826,7 +847,7 @@ const ValveFlowUpdate = () => {
         onCancel={() => !isProcessingClose && setShowConfirmCloseModal(false)}
         onConfirm={handleFullClose}
         title="¿Estás seguro?"
-        message="¿Estás seguro que deseas cerrar completamente la válvula a 0 litros?"
+        message="¿Estás seguro que deseas cerrar completamente la válvula a 0 litros (L/s)?"
         isProcessing={isProcessingClose}
         confirmText="Sí, cerrar!"
       />
