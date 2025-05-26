@@ -132,7 +132,8 @@ const ControlBocatoma = () => {
       // POST al endpoint MQTT para ajustar caudal
       await axios.post('https://mqtt-flask-api-production.up.railway.app/publicar_comando_bocatoma', {
         comando: 'ajustar',
-        angulo: nuevoCaudal // Puedes cambiar este valor si debe ser dinámico
+        angulo: nuevoCaudal, // Puedes cambiar este valor si debe ser dinámico
+        id_valvula: dispositivo.iot_id
       });
 
       setCaudalActual(`${nuevoCaudal} L/min`);
@@ -176,7 +177,8 @@ const ControlBocatoma = () => {
     if (exito) {
       // POST al endpoint MQTT para apertura total
       await axios.post('https://mqtt-flask-api-production.up.railway.app/publicar_comando_bocatoma', {
-        comando: 'abrir'
+        comando: 'abrir',
+        id_valvula: dispositivo.iot_id
       });
       setError(false);
       setSuccessMessage('Apertura total realizada con éxito.');
@@ -195,7 +197,8 @@ const ControlBocatoma = () => {
     if (exito) {
       // POST al endpoint MQTT para cierre total
       await axios.post('https://mqtt-flask-api-production.up.railway.app/publicar_comando_bocatoma', {
-        comando: 'cerrar'
+        comando: 'cerrar',
+        id_valvula: dispositivo.iot_id
       });
       setError(false);
       setSuccessMessage('Cierre total realizado con éxito.');
