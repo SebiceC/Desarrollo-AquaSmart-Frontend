@@ -133,6 +133,8 @@ const HistorialDistrito = () => {
               endDate={currentDateRange.endDate} 
               chartRef={chartRef}
               disabled={!processedData || processedData.length === 0 || loading || error}
+              reportType="distrito"
+              title="HISTORIAL DEL CONSUMO DEL DISTRITO"
             />
           )}
           <CSVDownloadButton 
