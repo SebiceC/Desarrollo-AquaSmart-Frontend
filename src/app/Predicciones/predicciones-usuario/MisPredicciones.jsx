@@ -106,107 +106,117 @@ const MisPredicciones = () => {
   }
 
   const applyFilters = () => {
-    try {
-      // Validación de ID del predio
-      if (filters.id.trim() !== "") {
-        const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim())
-        const isOnlyDigits = /^\d+$/.test(filters.id.trim())
+  try {
+    // Verificar si hay conexión a internet
+    if (!navigator.onLine) {
+      throw new Error("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
+    }
 
-        if (!isPrefixValid && !isOnlyDigits) {
-          setModalMessage("El campo ID del predio contiene caracteres no válidos")
-          setShowModal(true)
-          setFilteredLotes([])
-          return
-        }
+    // Verificar si los datos están disponibles
+    if (!lotes || lotes.length === 0 || !predios || predios.length === 0) {
+      throw new Error("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
+    }
+
+    // Validación de ID del predio
+    if (filters.id.trim() !== "") {
+      const isPrefixValid = /^(P|PR|PR-\d{0,7})$/.test(filters.id.trim())
+      const isOnlyDigits = /^\d+$/.test(filters.id.trim())
+
+      if (!isPrefixValid && !isOnlyDigits) {
+        setModalMessage("El campo ID del predio contiene caracteres no válidos")
+        setShowModal(true)
+        setFilteredLotes([])
+        return
       }
+    }
 
-      // Validación de ID del lote (máximo 11 caracteres según requerimiento)
-      if (filters.lotId.trim() !== "") {
-        if (filters.lotId.trim().length > 11) {
-          setModalMessage("El campo ID del lote no puede tener más de 11 caracteres")
-          setShowModal(true)
-          setFilteredLotes([])
-          return
-        }
-
-        const isValidLoteFormat = /^(\d{1,11}|\d{1,11}-\d{0,3})$/.test(filters.lotId.trim())
-        if (!isValidLoteFormat) {
-          setModalMessage("El campo ID del lote contiene caracteres no válidos")
-          setShowModal(true)
-          setFilteredLotes([])
-          return
-        }
-      }
-
-      // Validación de fechas
-      if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
-        setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.")
+    // Validación de ID del lote
+    if (filters.lotId.trim() !== "") {
+      if (filters.lotId.trim().length > 11) {
+        setModalMessage("El campo ID del lote no puede tener más de 11 caracteres")
         setShowModal(true)
         setFilteredLotes([])
         return
       }
 
-      // Filtrado de lotes
-      const filtered = lotes.filter((lote) => {
-        const matchesId = filters.id.trim() === "" || lote.plot.toLowerCase().includes(filters.id.trim().toLowerCase())
-
-        const matchesIdlote =
-          filters.lotId.trim() === "" ||
-          lote.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) ||
-          lote.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())
-
-        let matchesDate = true
-        if (filters.startDate !== "" || filters.endDate !== "") {
-          const loteDate = new Date(lote.registration_date)
-          const loteDateStr = loteDate.toISOString().split("T")[0]
-
-          if (filters.startDate !== "") {
-            const startDateStr = new Date(filters.startDate).toISOString().split("T")[0]
-            if (loteDateStr < startDateStr) {
-              matchesDate = false
-            }
-          }
-
-          if (matchesDate && filters.endDate !== "") {
-            const endDateStr = new Date(filters.endDate).toISOString().split("T")[0]
-            if (loteDateStr > endDateStr) {
-              matchesDate = false
-            }
-          }
-        }
-
-        return matchesId && matchesIdlote && matchesDate
-      })
-
-      // Validaciones específicas según requerimiento
-      if (filters.id.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El predio filtrado no existe")
+      const isValidLoteFormat = /^(\d{1,11}|\d{1,11}-\d{0,3})$/.test(filters.lotId.trim())
+      if (!isValidLoteFormat) {
+        setModalMessage("El campo ID del lote contiene caracteres no válidos")
         setShowModal(true)
         setFilteredLotes([])
         return
       }
+    }
 
-      if (filters.lotId.trim() !== "" && filtered.length === 0) {
-        setModalMessage("El lote filtrado no existe")
-        setShowModal(true)
-        setFilteredLotes([])
-        return
-      }
-
-      if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
-        setModalMessage("No hay lotes registrados en el rango de fechas especificado.")
-        setShowModal(true)
-        setFilteredLotes([])
-        return
-      }
-
-      setFilteredLotes(filtered)
-    } catch (error) {
-      setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
+    // Validación de fechas
+    if (filters.startDate && filters.endDate && new Date(filters.startDate) > new Date(filters.endDate)) {
+      setModalMessage("La fecha de inicio no puede ser mayor que la fecha de fin.")
       setShowModal(true)
       setFilteredLotes([])
+      return
     }
+
+    // Filtrado
+    const filtered = lotes.filter((lote) => {
+      const matchesId =
+        filters.id.trim() === "" ||
+        lote.plot.toLowerCase().includes(filters.id.trim().toLowerCase())
+
+      const matchesIdlote =
+        filters.lotId.trim() === "" ||
+        lote.id_lot?.toLowerCase().includes(filters.lotId.trim().toLowerCase()) ||
+        lote.id?.toLowerCase().includes(filters.lotId.trim().toLowerCase())
+
+      let matchesDate = true
+      if (filters.startDate !== "" || filters.endDate !== "") {
+        const loteDate = new Date(lote.registration_date)
+        const loteDateStr = loteDate.toISOString().split("T")[0]
+
+        if (filters.startDate !== "") {
+          const startDateStr = new Date(filters.startDate).toISOString().split("T")[0]
+          if (loteDateStr < startDateStr) matchesDate = false
+        }
+
+        if (matchesDate && filters.endDate !== "") {
+          const endDateStr = new Date(filters.endDate).toISOString().split("T")[0]
+          if (loteDateStr > endDateStr) matchesDate = false
+        }
+      }
+
+      return matchesId && matchesIdlote && matchesDate
+    })
+
+    // Validaciones de resultados
+    if (filters.id.trim() !== "" && filtered.length === 0) {
+      setModalMessage("El predio filtrado no existe")
+      setShowModal(true)
+      setFilteredLotes([])
+      return
+    }
+
+    if (filters.lotId.trim() !== "" && filtered.length === 0) {
+      setModalMessage("El lote filtrado no existe")
+      setShowModal(true)
+      setFilteredLotes([])
+      return
+    }
+
+    if (filters.startDate !== "" && filters.endDate !== "" && filtered.length === 0) {
+      setModalMessage("No hay lotes registrados en el rango de fechas especificado.")
+      setShowModal(true)
+      setFilteredLotes([])
+      return
+    }
+
+    setFilteredLotes(filtered)
+  } catch (error) {
+    console.error("Error al aplicar filtros:", error)
+    setModalMessage("Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico")
+    setShowModal(true)
+    setFilteredLotes([])
   }
+}
+
 
   const handleSelectLote = (lote) => {
     navigate(`/mis-predicciones/${lote.id_lot}`)
