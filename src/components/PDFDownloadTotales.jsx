@@ -166,7 +166,7 @@ const PDFDownloadTotales = ({ data, filters, onError }) => {
     // Logo (si existe)
     try {
       const logoImg = new Image()
-      logoImg.src = "../../public/img/aqua.png"
+      logoImg.src = "../../public/img/logo.png"
       doc.addImage(logoImg, "PNG", 15, 15, 80, 25) //define el ancho y el alto donde 15 es el eje x y 15 es el eje y
     } catch (error) {
       // Si no hay logo, dibujar un círculo como placeholder

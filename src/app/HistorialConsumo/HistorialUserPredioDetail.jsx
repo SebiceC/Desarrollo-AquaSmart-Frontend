@@ -257,6 +257,14 @@ const HistorialUserPredioDetail = () => {
                 endDate={endDate} 
                 chartRef={chartRef}
                 disabled={!processedData || processedData.length === 0 || !startDate || !endDate || loading || error}
+                reportType="predio"
+                entityInfo={{
+                  predioId: id_plot,
+                  predioName: plotDetails?.plot_name || `Predio ${id_plot}`,
+                  ownerId: userProfile?.document || plotDetails?.owner || 'N/A',
+                  ownerName: userProfile?.name || plotDetails?.owner_name || 'N/A'
+                }}
+                title={`HISTORIAL DE CONSUMO PREDIO ${id_plot}`}
               />
             )}
             <CSVDownloadButton 

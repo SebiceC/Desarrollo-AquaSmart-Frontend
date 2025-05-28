@@ -83,7 +83,7 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
 
       // Cargar la imagen de marca de agua
       const watermarkImg = new Image()
-      watermarkImg.src = "/img/marca_de_agua.png"
+      watermarkImg.src = "../../public/img/marca_de_agua.png"
 
       // Configurar posición centrada
       const watermarkWidth = 250
@@ -127,7 +127,7 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
     // Logo (si existe)
     try {
       const logoImg = new Image()
-      logoImg.src = "/img/aqua.png"
+      logoImg.src = "/img/logo.png"
       doc.addImage(logoImg, "PNG", 15, 15, 80, 25) //define el ancho y el alto donde 15 es el eje x y 15 es el eje y
     } catch (error) {
       // Si no hay logo, dibujar un círculo como placeholder
@@ -141,9 +141,9 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
     // Información de la empresa (lado derecho)
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(10)
-    doc.text("NIT: 123789456", pageWidth - 15, 20, { align: "right" })
-    doc.text("Teléfono: 1234566789", pageWidth - 15, 28, { align: "right" })
-    doc.text("Dirección: calle 34 #23-07 Br palmas", pageWidth - 15, 36, { align: "right" })
+    doc.text("NIT: 891180084", pageWidth - 15, 20, { align: "right" })
+    doc.text("Teléfono: 88754753", pageWidth - 15, 28, { align: "right" })
+    doc.text("Av. Pastrana Borrero - Carrera 1", pageWidth - 15, 36, { align: "right" })
 
     return 50 // Retorna la posición Y donde termina el header
   }
@@ -267,7 +267,6 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
 
     let currentY = tableY
     let pageNumber = 1
-    const totalPages = Math.ceil(data.length / 20) + 1 // Estimación + página de totales
 
     // Función para dibujar encabezados
     const drawHeaders = () => {
@@ -304,7 +303,8 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
         doc.setTextColor(255, 255, 255)
         doc.setFontSize(12)
         doc.setFont(undefined, "bold")
-        doc.text(`Pagina ${pageNumber} - ${totalPages}`, pageWidth - 50, pageHeight - 15, { align: "right" })
+        // No mostrar total de páginas hasta que sepamos el número real
+        doc.text(`Pagina ${pageNumber}`, pageWidth - 30, pageHeight - 15, { align: "right" })
         
         doc.addPage()
         pageNumber++
@@ -357,11 +357,11 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
       currentY += rowHeight
     })
 
-    return { currentY: currentY + 20, pageNumber, totalPages }
+    return { currentY: currentY + 20, pageNumber }
   }
 
   // Función para dibujar la tabla de totalización
-  const drawTotalizationTable = (doc, totals, startY, pageNumber, totalPages) => {
+  const drawTotalizationTable = (doc, totals, startY, pageNumber) => {
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
 
@@ -372,7 +372,7 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(12)
       doc.setFont(undefined, "bold")
-      doc.text(`Pagina ${pageNumber} - ${totalPages}`, pageWidth - 50, pageHeight - 15, { align: "right" })
+      doc.text(`Pagina ${pageNumber}`, pageWidth - 30, pageHeight - 15, { align: "right" })
       
       doc.addPage()
       pageNumber++
@@ -471,7 +471,7 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
   }
 
   // Función para dibujar gráfica de barras
-  const drawBarChart = (doc, totals, startY, pageNumber, totalPages) => {
+  const drawBarChart = (doc, totals, startY, pageNumber) => {
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
 
@@ -481,7 +481,7 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(12)
       doc.setFont(undefined, "bold")
-      doc.text(`Pagina ${pageNumber} - ${totalPages}`, pageWidth - 50, pageHeight - 15, { align: "right" })
+      doc.text(`Pagina ${pageNumber}`, pageWidth - 30, pageHeight - 15, { align: "right" })
       
       doc.addPage()
       pageNumber++
@@ -648,17 +648,28 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
       const totals = calculateTotals()
       
       // Tabla de totalización
-      const totalizationResult = drawTotalizationTable(doc, totals, detailResult.currentY, detailResult.pageNumber, detailResult.totalPages)
+      const totalizationResult = drawTotalizationTable(doc, totals, detailResult.currentY, detailResult.pageNumber)
       
       // Gráfica de barras
-      const finalPageNumber = drawBarChart(doc, totals, totalizationResult.currentY, totalizationResult.pageNumber, detailResult.totalPages)
+      const finalPageNumber = drawBarChart(doc, totals, totalizationResult.currentY, totalizationResult.pageNumber)
 
-      // Footer final
-      drawWaveFooter(doc)
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(12)
-      doc.setFont(undefined, "bold")
-      doc.text(`Pagina ${finalPageNumber} - ${detailResult.totalPages}`, pageWidth - 50, doc.internal.pageSize.getHeight() - 15, { align: "right" })
+      // Ahora que sabemos el número total de páginas, actualizar todas las páginas
+      const totalPages = finalPageNumber
+      
+      // Recorrer todas las páginas para actualizar la numeración
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i)
+        
+        // Limpiar el área donde estaba la numeración anterior
+        doc.setFillColor(64, 188, 165)
+        doc.rect(pageWidth - 80, doc.internal.pageSize.getHeight() - 25, 80, 25, "F")
+        
+        // Agregar numeración correcta
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(12)
+        doc.setFont(undefined, "bold")
+        doc.text(`Pagina ${i} - ${totalPages}`, pageWidth - 30, doc.internal.pageSize.getHeight() - 15, { align: "right" })
+      }
 
       doc.save(getFileName())
       document.body.removeChild(loadingIndicator)
