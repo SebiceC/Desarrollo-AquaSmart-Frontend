@@ -144,7 +144,7 @@ const PredictionLotChart = () => {
             } else {
                 setError(errorMessage);
                 setModalErrorMessage(errorMessage);
-                setModalTitle('Error al cargar predicciones');
+                setModalTitle('Error');
                 setShowErrorModal(true);
                 setCanGenerate(true);
             }
@@ -429,14 +429,13 @@ const PredictionLotChart = () => {
                     setError(null);
                     setModalErrorMessage('');
                 }}
-                title={modalTitle || "Error en la conexión"}
+                title={modalTitle || "Error"}
                 btnMessage="Cerrar"
             >
                 <div className="flex items-start gap-3">
-                    <AlertTriangle className="text-red-500 mt-1" size={20} />
                     <div>
                         <p className="text-gray-700 mb-2">
-                            {modalErrorMessage || 'Fallo en la conexión, intente de nuevo más tarde o contacte con soporte técnico'}
+                            {'Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico'}
                         </p>
                     </div>
                 </div>

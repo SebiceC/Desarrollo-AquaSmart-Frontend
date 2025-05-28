@@ -109,9 +109,9 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
       return;
     }
     
-    // Validar el rango permitido (1-11.7 L/seg)
-    if (flow < 1 || flow > 11.7) {
-      setError("El caudal solicitado debe estar dentro del rango de 1 L/seg a 11.7 L/seg.");
+    // Validar el rango permitido (1-180 L/seg)
+    if (flow < 1 || flow > 180) {
+      setError("El caudal solicitado debe estar dentro del rango de 1 L/seg a 180 L/seg.");
       return;
     }
 
@@ -197,7 +197,7 @@ const FlowRequestModal = ({ showModal, onClose, lote, onSuccess, API_URL }) => {
               placeholder="Ej: 5.5"
               maxLength={5} // Permitir punto decimal y 4 caracteres
             />
-            <p className="text-gray-500 text-xs mt-1 text-left">Permitido: 1.0 - 11.7 L/seg</p>
+            <p className="text-gray-500 text-xs mt-1 text-left">Permitido: 1.0 - 180 L/seg</p>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md mt-2 text-sm text-left">
                 <p className="flex items-center">
