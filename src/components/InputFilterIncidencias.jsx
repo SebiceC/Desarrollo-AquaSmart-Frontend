@@ -28,6 +28,11 @@ const InputFilterIncidencias = ({ filters, onFilterChange, onApplyFilters }) => 
           value={filters.id}
           onChange={handleIdChange}
           maxLength={12}
+          onKeyDown={(e) => {
+            if ([".", "-", "e", "E"].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
         />
       </div>
 
