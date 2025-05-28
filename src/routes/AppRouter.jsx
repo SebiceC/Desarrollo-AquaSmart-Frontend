@@ -261,8 +261,28 @@ const AppRouter = () => {
             />
             <Route path="/mispredios/historial-consumoPredio/:id_plot" element={<ProtectedRoute element={<HistorialUserPredioDetail />} />} />
             <Route path="/mispredios/historial-consumoPredio/:id_plot/milote/:id_lot" element={<ProtectedRoute element={<HistorialUserLoteDetail />} />} />
-            <Route path="/control-IoT/bocatoma" element={<ProtectedRoute element={<ControlBocatoma />} />} />
-            <Route path="/control-IoT/valvulas" element={<ProtectedRoute element={<ValvesList />} />} />
+            <Route
+                path="/control-IoT/bocatoma"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "change_bocatoma_flow"
+                        ]}
+                        element={<ControlBocatoma />}
+                    />
+                }
+            />
+            <Route
+                path="/control-IoT/valvulas"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "change_all_lots_flow"
+                        ]}
+                        element={<ValvesList />}
+                    />
+                }
+            />
             <Route path="/control-IoT/valvulas/:id_valve" element={<ProtectedRoute element={<ValveDetail />} />} />
             <Route path="/control-IoT/valvulas/:id_valve/update-flow" element={<ProtectedRoute element={<ValveFlowUpdate />} />} />
             <Route
@@ -332,12 +352,45 @@ const AppRouter = () => {
             <Route path="/reportes-y-novedades/crear-informe/:id" element={<ProtectedRoute element={<CrearMantenimiento />} />} />
             <Route path="/reportes-y-novedades/control-reportes-intervenciones" element={<ControlReportesIntervenciones />} />
             <Route path="/reportes-y-novedades/gestionar-informe/:id" element={<GestionarInforme />} />
-            <Route path="/historial-incidencias" element={<HistorialIncidencias />} />
-            <Route path="/predicciones" element={<ProtectedRoute element={<LotsListPredictions />} />} />
+            <Route
+                path="/historial-incidencias"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+
+                        ]}
+                        element={<HistorialIncidencias />}
+                    />
+                }
+            />
+            <Route
+                path="/predicciones"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "ver_predicciones_lotes",
+                            "generar_predicciones_lotes"
+                        ]}
+                        element={<LotsListPredictions />}
+                    />
+                }
+            />
             <Route path="/predicciones/:id_lot" element={<ProtectedRoute element={<PredictionLotChart />} />} />
             <Route path="/predicciones-distrito" element={<ProtectedRoute element={<PredictionDistrito />} />} />
-            <Route path="/mis-predicciones" element={<ProtectedRoute element={<MyLotsListPredictions />} />} />
+            <Route
+                path="/mis-predicciones"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "generar_prediccion_consumo_mi_lote",
+                            "ver_prediccion_consumo_mi_lote"
+                        ]}
+                        element={<MyLotsListPredictions />}
+                    />
+                }
+            />
             <Route path="/mis-predicciones/:id_lot" element={<ProtectedRoute element={<MiPrediccionLote />} />} />
+            <Route path="/no-autorizado" element={<NotAuthorized />} />
         </Routes>
     );
 };
