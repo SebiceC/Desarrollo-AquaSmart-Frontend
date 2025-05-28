@@ -6,6 +6,7 @@ import { validateField } from "../../../../components/ValidationRules";
 import Modal from "../../../../components/Modal";
 import NavBar from "../../../../components/NavBar";
 import BackButton from "../../../../components/BackButton";
+import { KeyRound } from "lucide-react";
 
 const UserUpdateInformation = () => {
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -155,7 +156,7 @@ const UserUpdateInformation = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {user ? (
-          <form onSubmit={handleSubmit}>
+          <form className="flex flex-col items-center justify-center" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <InputItem label="Rol" name="role" placeholder={user?.role} disabled />
@@ -173,6 +174,8 @@ const UserUpdateInformation = () => {
                   required
                   maxLength={50}
                 />
+
+                
 
                 <div className="mt-4">
                   <p className="text-sm font-medium mb-2">Documentos actuales:</p>
@@ -231,11 +234,19 @@ const UserUpdateInformation = () => {
                   maxLength={10}
                   required
                 />
+
+                <button
+                  className=" flex items-center justify-center gap-5 border-2 border-[#365486] text-[#365486] hover:bg-[#d2e2ff] font-medium py-3 px-6 rounded-lg transition-all duration-200"
+                      onClick={() => {navigate('/seguridad/actualizar-contrasena')}}
+                >
+                  <KeyRound className="mr-2" />
+                  Actualizar Contraseña
+                </button>
               </div>
             </div>
 
-            <div className="flex gap-[60%] mt-8 w-full">
-              <BackButton to="/perfil" text="Regresar"/>
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-10 mt-8 w-full justify-center ">
+              <BackButton to="/perfil" text="Regresar" />
 
               <button
                 type="submit"
