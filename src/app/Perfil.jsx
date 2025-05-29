@@ -134,13 +134,17 @@ const Perfil = () => {
                             <div className="bg-[#ebfdfd] w-full rounded-lg shadow-lg px-5 py-5">
                                 <h1 className="text-[#02474a] font-semibold">GUÍA RÁPIDA DEL SISTEMA</h1>
                                 <div className="flex flex-col">
-                                    <button className="px-5 mt-4 bg-[#2ba19b] text-white py-2 hover:cursor-pointer rounded-lg flex items-center gap-5">
+                                    <a
+                                        href="https://drive.google.com/file/d/17pvXEQvGMtHZb8TkEKy3jI1kg0DsPmAA/view?usp=sharing"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-5 mt-4 bg-[#2ba19b] text-white py-2 hover:cursor-pointer rounded-lg flex items-center gap-5"
+                                    >
                                         <div className="bg-white rounded-full w-6 h-6 flex items-center justify-center">
-                                            <IoMdDownload size={20} className="text-[#2ba19b]" />
+                                            <IoMdDownload size={20} className="text-[#2ba19b] text-center ml-0.5" />
                                         </div>
                                         Descargar PDF de guía
-                                    </button>
-
+                                    </a>
                                     <a
                                         href="https://youtu.be/IOoFib27i6U"
                                         target="_blank"
