@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import NavBar from "../../../components/NavBar"
 import DataTable from "../../../components/DataTable"
+import Footer from "../../../components/Footer"
 
 const ReportesYNovedades = () => {
   const navigate = useNavigate()
@@ -92,6 +93,7 @@ const ReportesYNovedades = () => {
           customStyles={customStyles}
         />
       </div>
+      <Footer />
     </div>
   )
 }

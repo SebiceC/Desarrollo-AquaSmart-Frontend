@@ -6,6 +6,7 @@ import Modal from "../../components/Modal"
 import { useNavigate } from "react-router-dom"
 import { ChevronDown, AlertCircle, Info, Search, X, ChevronLeft } from "lucide-react"
 import axios from "axios"
+import Footer from "../../components/Footer"
 
 // Modificar el componente BackButton para que tenga un ancho normal en pantallas web
 const BackButton = ({ to, text }) => {
@@ -739,7 +740,7 @@ const RegistroDispositivos = () => {
           )}
         </div>
 
-        <div className="bg-white p-6 rounded-lg w-full max-w-3xl shadow-md">
+        <div className="bg-white p-6 mb-20 rounded-lg w-full max-w-3xl shadow-md">
           {loading && !showSuccessModal ? (
             <div className="flex justify-center items-center py-10">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#365486]"></div>
@@ -979,6 +980,7 @@ const RegistroDispositivos = () => {
           <p>El dispositivo ha sido registrado con éxito.</p>
         </Modal>
       </div>
+      <Footer />
     </div>
   )
 }

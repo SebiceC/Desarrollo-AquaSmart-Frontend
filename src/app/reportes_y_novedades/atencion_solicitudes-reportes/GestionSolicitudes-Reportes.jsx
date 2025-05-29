@@ -18,6 +18,7 @@ import FallaAplicativoP from "./Falla_aplicativo/FallaAplicativoP";
 import FallaAplicativoE from "./Falla_aplicativo/FallaAplicativoE";
 
 import GestionSolicitudModal from "./GestionSolicitudModal";
+import Footer from "../../../components/Footer";
 
 const GestionSolicitudes = () => {
   const navigate = useNavigate();
@@ -797,6 +798,7 @@ const GestionSolicitudes = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

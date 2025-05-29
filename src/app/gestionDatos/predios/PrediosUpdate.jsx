@@ -10,6 +10,7 @@ import ErrorDisplay from "../../../components/error-display"
 import { useNavigate, useParams } from "react-router-dom"
 import axios from "axios"
 import { ChevronDown } from "lucide-react"
+import Footer from "../../../components/Footer"
 
 const ActualizacionPredios = () => {
   const { id_plot } = useParams()
@@ -671,6 +672,7 @@ const ActualizacionPredios = () => {
       >
         <p>No se detectaron cambios en los datos del predio. Modifique al menos un campo antes de actualizar.</p>
       </Modal>
+      <Footer />
     </div>
   )
 }

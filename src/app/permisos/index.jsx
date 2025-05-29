@@ -4,6 +4,7 @@ import { useState } from "react"
 import RolesSystem from "./roles-system"
 import UsersSystem from "./users-system"
 import NavBar from "../../components/NavBar"
+import Footer from "../../components/Footer"
 
 const PermissionsSystem = () => {
   const [activeTab, setActiveTab] = useState("roles") // "roles" o "users"
@@ -37,6 +38,7 @@ const PermissionsSystem = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

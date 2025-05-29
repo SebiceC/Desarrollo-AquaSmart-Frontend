@@ -7,6 +7,7 @@ import Modal from "../../../../components/Modal";
 import NavBar from "../../../../components/NavBar";
 import BackButton from "../../../../components/BackButton";
 import { KeyRound } from "lucide-react";
+import Footer from "../../../../components/Footer";
 
 const UserUpdateInformation = () => {
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -301,6 +302,7 @@ const UserUpdateInformation = () => {
       >
         <p>No se realizó ningún cambio en su información personal.</p>
       </Modal>
+      <Footer />
     </div>
   );
 };

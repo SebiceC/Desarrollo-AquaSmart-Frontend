@@ -6,6 +6,7 @@ import { FaUser, FaPhone, FaEnvelope } from "react-icons/fa";
 import NavBar from "../../../components/NavBar";
 import Modal from "../../../components/Modal";
 import BackButton from "../../../components/BackButton";
+import Footer from "../../../components/Footer";
 
 const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -54,7 +55,7 @@ function DispositivosIoTInformation() {
             </Modal>
 
             {/* Contenedor principal */}
-            <div className="max-w-4xl mx-auto p-6 mt-8">
+            <div className="max-w-4xl mx-auto p-6 mt-8 mb-20">
                 {/* Título alineado correctamente */}
                 <h2 className="text-center text-2xl font-bold my-12">
                     Información del dispositivo
@@ -111,6 +112,7 @@ function DispositivosIoTInformation() {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

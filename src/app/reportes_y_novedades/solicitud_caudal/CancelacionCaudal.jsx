@@ -6,6 +6,7 @@ import InputFilterLoteReportes from "../../../components/InputFilterLoteReportes
 import Modal from "../../../components/Modal";
 import CancelationRequestModal from "./CancelationRequestModal";
 import DataTable from "../../../components/DataTable";
+import Footer from "../../../components/Footer";
 
 
 const CancelacionCaudal = () => {
@@ -416,6 +417,7 @@ const CancelacionCaudal = () => {
                     </>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }

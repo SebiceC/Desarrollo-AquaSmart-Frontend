@@ -276,10 +276,10 @@ const Login = () => {
                   id="document"
                   labelName={
                     <>
-                      Cédula de Ciudadanía <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
+                      Cédula de Ciudadanía o NIT <PiAsteriskSimpleBold size={12} className="inline text-red-500" />
                     </>
                   }
-                  placeholder="Ingresa tu Cédula de Ciudadanía"
+                  placeholder="Ingresa tu Cédula de Ciudadanía o NIT"
                   type="text"
                   value={document}
                   onChange={(e) => {

@@ -7,6 +7,7 @@ import Modal from "../../../components/Modal"
 import axios from "axios"
 import { Search } from 'lucide-react'
 import DataTable from "../../../components/DataTable"
+import Footer from "../../../components/Footer"
 
 const InformeMantenimiento = () => {
   const navigate = useNavigate()
@@ -607,6 +608,7 @@ const InformeMantenimiento = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

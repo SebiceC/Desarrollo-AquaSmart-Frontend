@@ -8,6 +8,7 @@ import Modal from "../../../components/Modal";
 import ErrorDisplay from "../../../components/error-display";
 import DataTable from "../../../components/DataTable";
 import axios from "axios";
+import Footer from "../../../components/Footer";
 
 const PrediosDetail = () => {
   const { id_plot } = useParams();
@@ -196,7 +197,7 @@ const PrediosDetail = () => {
   return (
     <div>
       <NavBar />
-      <div className="flex-1 container mx-auto px-6 pb-6 max-w-7xl bg-white mt-30">
+      <div className="flex-1 container mx-auto px-6 pb-6 max-w-7xl mb-20 bg-white mt-30">
         <div className="pt-4">
           <div className="mb-5 text-center">
             <h1 className="text-2xl font-semibold text-[#365486] mb-1">Información del Predio</h1>
@@ -296,6 +297,7 @@ const PrediosDetail = () => {
           <p>{modalMessage}</p>
         </Modal>
       )}
+      <Footer />
     </div>
   );
 };

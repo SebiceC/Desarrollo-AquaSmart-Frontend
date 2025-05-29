@@ -8,6 +8,7 @@ import InputFilterLoteReportes from "../../../components/InputFilterLoteReportes
 import Modal from "../../../components/Modal"
 import ActivationRequestModal from "./ActivationRequestModal"
 import DataTable from "../../../components/DataTable"
+import Footer from "../../../components/Footer"
 
 const ActivarCaudal = () => {
   const navigate = useNavigate()
@@ -486,6 +487,7 @@ const ActivarCaudal = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

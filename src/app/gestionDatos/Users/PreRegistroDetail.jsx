@@ -6,6 +6,7 @@ import Modal from "../../../components/Modal"
 import BackButton from "../../../components/BackButton"
 import Button from "../../../components/Button"
 import ErrorDisplay from "../../../components/error-display"
+import Footer from "../../../components/Footer"
 
 const PreRegistroDetail = () => {
   const { document } = useParams()
@@ -261,7 +262,7 @@ const PreRegistroDetail = () => {
   return (
     <div>
       <NavBar />
-      <div className="max-w-3xl mx-auto p-8 mt-32 bg-white rounded-xl shadow-md">
+      <div className="max-w-3xl mx-auto p-8 mt-32 mb-20 bg-white rounded-xl shadow-md">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-[#365486] mb-2">Aprobación de Pre Registro</h1>
           <p className="text-sm text-gray-600">Información enviada por el usuario para su verificación</p>
@@ -453,6 +454,7 @@ const PreRegistroDetail = () => {
           <p>{modalMessage}</p>
         </Modal>
       )}
+      <Footer />
     </div>
   )
 }

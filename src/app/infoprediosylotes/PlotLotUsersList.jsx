@@ -5,6 +5,7 @@ import axios from "axios";
 import InputFilter from "../../components/InputFilterPlotLotUser";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
+import Footer from "../../components/Footer";
 
 const PlotLotUsersList = () => {
   const navigate = useNavigate();
@@ -206,6 +207,7 @@ const PlotLotUsersList = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

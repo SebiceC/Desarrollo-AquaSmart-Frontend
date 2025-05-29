@@ -6,6 +6,7 @@ import InputFilterLoteReportes from "../../../components/InputFilterLoteReportes
 import Modal from "../../../components/Modal";
 import FlowRequestModal from "./FlowRequestModal";
 import DataTable from "../../../components/DataTable";
+import Footer from "../../../components/Footer";
 
 const ReportesYNovedadesLotesList = () => {
   const navigate = useNavigate();
@@ -415,6 +416,7 @@ const ReportesYNovedadesLotesList = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

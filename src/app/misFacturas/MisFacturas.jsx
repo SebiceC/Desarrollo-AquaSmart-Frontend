@@ -5,6 +5,7 @@ import axios from "axios";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
 import InputFilterFacturasUser from "../../components/InputFilterFacturasUser";
+import Footer from "../../components/Footer";
 
 const MisFacturas = () => {
   const navigate = useNavigate();
@@ -327,6 +328,7 @@ const MisFacturas = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

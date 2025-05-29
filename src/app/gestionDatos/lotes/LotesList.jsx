@@ -7,6 +7,7 @@ import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import DeleteLotes from "./DeleteLote";
+import Footer from "../../../components/Footer";
 
 
 const LotesList = () => {
@@ -357,6 +358,7 @@ const LotesList = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

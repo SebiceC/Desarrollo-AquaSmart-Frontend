@@ -190,7 +190,7 @@ function NavBar() {
     const memoizedPrediccionesSubItems = useMemo(
         () =>
             [
-                { direction: "/predicciones-distrito", text: "Distrito" },
+                hasPermission("can_see_predictions_boacatoma") && hasPermission("can_make_predictions_bocatoma") && { direction: "/predicciones-distrito", text: "Distrito" },
                 hasPermission("ver_predicciones_lotes") &&
                 hasPermission("generar_predicciones_lotes") && { direction: "/predicciones", text: "Lotes del Distrito" },
                 hasPermission("generar_prediccion_consumo_mi_lote") &&
@@ -207,6 +207,12 @@ function NavBar() {
             hasPermission("ver_permisos_asignados") &&
             hasPermission("ver_roles_asignados") &&
             hasPermission("asignar_roles_asignados"),
+        [hasPermission],
+    )
+
+    const showHistorialIncidencias = useMemo(
+        () =>
+            hasPermission("can_see_incident_history"),
         [hasPermission],
     )
 
@@ -274,12 +280,8 @@ function NavBar() {
                     },
                 ]
                 : []),
-            {
-                key: "historial-incidencias",
-                direction: "/historial-incidencias",
-                text: "Historial de Incidencias",
-                subItems: [],
-            },
+            ...(showHistorialIncidencias ? [{ key: "historial-incidencias", direction: "/historial-incidencias", text: "Historial de Incidencias", subItems: [] }] : []),
+
             ...(memoizedPrediccionesSubItems.length > 0
                 ? [
                     {
