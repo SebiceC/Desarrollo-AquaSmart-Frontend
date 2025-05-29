@@ -6,6 +6,7 @@ import axios from "axios"
 import NavBar from "../../components/NavBar"
 import Modal from "../../components/Modal"
 import { Search } from "lucide-react"
+import Footer from "../../components/Footer"
 
 const ValvesList = () => {
   const navigate = useNavigate()
@@ -619,6 +620,7 @@ const ValvesList = () => {
           </Modal>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

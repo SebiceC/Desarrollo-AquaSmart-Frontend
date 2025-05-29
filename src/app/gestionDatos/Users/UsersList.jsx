@@ -8,6 +8,7 @@ import Modal from "../../../components/Modal";
 import DeleteUser from "../UserEdit/DeleteUsers";
 import DataTable from "../../../components/DataTable";
 import DeleteSelfModal from "../UserEdit/DeleteSelf";
+import Footer from "../../../components/Footer";
 
 const UserList = () => {
   const navigate = useNavigate();
@@ -302,6 +303,7 @@ const UserList = () => {
           onDelete={handleDeleteClick}
         />
       </div>
+      <Footer />
     </div>
   );
 };

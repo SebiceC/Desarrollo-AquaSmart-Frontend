@@ -3,6 +3,7 @@ import NavBar from '../../components/NavBar';
 import axios from 'axios';
 import Modal from '../../components/Modal'; // Asegúrate de que esta ruta sea correcta
 import { useNavigate } from 'react-router-dom';
+import Footer from '../../components/Footer';
 
 const ControlBocatoma = () => {
   const [estado, setEstado] = useState('inactiva');
@@ -357,6 +358,7 @@ const ControlBocatoma = () => {
       >
         <p>{successMessage}</p>
       </Modal>
+      <Footer />
     </div>
   );
 };

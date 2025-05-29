@@ -5,6 +5,7 @@ import axios from "axios";
 import InputFilter from "../../components/InputFilterPlotLotUser";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
+import Footer from "../../components/Footer";
 
 const HistorialUserPredio = () => {
   const navigate = useNavigate();
@@ -208,6 +209,7 @@ const HistorialUserPredio = () => {
           </>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import Modal from '../../../components/Modal';
 import DataTable from '../../../components/DataTable';
 import InputFilterReporteSolicitudes from '../../../components/InputFilterReporteSolicitudes';
 import axios from 'axios';
+import Footer from '../../../components/Footer';
 
 function ReportesSolicitudes() {
     const navigate = useNavigate();
@@ -344,6 +345,7 @@ function ReportesSolicitudes() {
                     API_URL={API_URL}
                 />
             </div>
+            <Footer />
         </div>
     );
 }

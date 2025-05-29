@@ -4,6 +4,7 @@ import Modal from "../../../components/Modal";
 import PredictionDistritoChartComponent from '../../../components/PredictionDistritoChartComponent';
 import axios from 'axios';
 import { Brain, RefreshCw, AlertTriangle, Building } from 'lucide-react';
+import Footer from '../../../components/Footer';
 
 const PredictionDistrito = () => {
     const [predictionData, setPredictionData] = useState([]);
@@ -368,6 +369,7 @@ const PredictionDistrito = () => {
                     )}
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };

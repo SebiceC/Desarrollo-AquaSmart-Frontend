@@ -5,6 +5,7 @@ import DataTable from '../../../components/DataTable'
 import ReportFailureModal from './ReportFailureModal'
 import ReportSupplyModal from './ReportSupplyModal'
 import Modal from '../../../components/Modal'
+import Footer from '../../../components/Footer'
 
 const ReportarFallosList = () => {
     const navigate = useNavigate();
@@ -118,6 +119,7 @@ const ReportarFallosList = () => {
                     API_URL={API_URL}
                 />
             </div>
+            <Footer />
         </div>
     )
 }

@@ -8,6 +8,7 @@ import InputFilterLote from "../../../components/InputFilterLote"
 import Modal from "../../../components/Modal"
 import DataTable from "../../../components/DataTable"
 import { Brain, User } from "lucide-react"
+import Footer from "../../../components/Footer"
 
 const MisPredicciones = () => {
   const navigate = useNavigate()
@@ -334,6 +335,7 @@ const MisPredicciones = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

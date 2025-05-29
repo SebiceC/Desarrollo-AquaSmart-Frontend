@@ -6,6 +6,7 @@ import InputFilter from "../../components/InputFilterPredio";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import Footer from "../../components/Footer";
 
 const HistorialPredio = () => {
   const navigate = useNavigate();
@@ -277,6 +278,7 @@ const HistorialPredio = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

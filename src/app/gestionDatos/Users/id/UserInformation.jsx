@@ -7,6 +7,7 @@ import NavBar from "../../../../components/NavBar"
 import { FaUser, FaPhone, FaEnvelope } from "react-icons/fa"
 import { IoDocument } from "react-icons/io5"
 import BackButton from "../../../../components/BackButton"
+import Footer from "../../../../components/Footer"
 
 const API_URL = import.meta.env.VITE_APP_API_URL
 
@@ -42,7 +43,7 @@ function UserInformation() {
     return (
         <div className="w-full min-h-screen bg-white">
             <NavBar />
-            <div className="flex flex-col items-center justify-center pt-34 px-4">
+            <div className="flex flex-col items-center justify-center pt-34 mb-20 px-4">
                 <div className="bg-gray-200 rounded-2xl p-8 shadow-md w-full max-w-2xl text-center relative mb-8">
                     <div className="flex flex-col items-center justify-center">
                         <div className="w-24 h-24 rounded-full border-2 border-gray-400 flex items-center justify-center">
@@ -113,6 +114,7 @@ function UserInformation() {
 
                 {/* Botón de regreso */}
             </div>
+            <Footer />
         </div>
     )
 }

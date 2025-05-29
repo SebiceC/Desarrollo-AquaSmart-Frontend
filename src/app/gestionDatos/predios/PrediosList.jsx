@@ -7,6 +7,7 @@ import Modal from "../../../components/Modal";
 import DataTable from "../../../components/DataTable";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import DeletePlots from "./DeletePlots";
+import Footer from "../../../components/Footer";
 
 const PrediosList = () => {
   const navigate = useNavigate();
@@ -303,6 +304,7 @@ const PrediosList = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

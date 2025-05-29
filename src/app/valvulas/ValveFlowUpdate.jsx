@@ -7,6 +7,7 @@ import Modal from "../../components/Modal"
 import BackButton from "../../components/BackButton"
 import { Search, Loader } from 'lucide-react'
 import axios from "axios"
+import Footer from "../../components/Footer"
 
 // Crear una instancia de axios con configuración base
 const createAPI = (token) => {
@@ -851,6 +852,7 @@ const ValveFlowUpdate = () => {
         isProcessing={isProcessingClose}
         confirmText="Sí, cerrar!"
       />
+      <Footer />
     </div>
   )
 }

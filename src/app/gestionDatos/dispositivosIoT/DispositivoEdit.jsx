@@ -7,6 +7,7 @@ import BackButton from "../../../components/BackButton"
 import { useNavigate, useParams } from "react-router-dom"
 import { ChevronDown, Info, Search, X } from "lucide-react"
 import axios from "axios"
+import Footer from "../../../components/Footer"
 
 // Componente SearchableSelect completamente replicado
 const SearchableSelect = ({
@@ -909,6 +910,7 @@ return (
         <p>El dispositivo ha sido actualizado con éxito.</p>
       </Modal>
     </div>
+    <Footer />
   </div>
 )
 }

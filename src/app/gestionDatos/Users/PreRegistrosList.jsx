@@ -7,6 +7,7 @@ import NavBar from "../../../components/NavBar"
 import Modal from "../../../components/Modal"
 import DataTable from "../../../components/DataTable"
 import { Search } from "lucide-react"
+import Footer from "../../../components/Footer"
 
 const PreRegistrosList = () => {
   const navigate = useNavigate()
@@ -329,6 +330,7 @@ const PreRegistrosList = () => {
           <p>{modalMessage}</p>
         </Modal>
       )}
+      <Footer />
     </div>
   )
 }

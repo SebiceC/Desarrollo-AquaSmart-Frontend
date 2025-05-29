@@ -5,6 +5,7 @@ import axios from "axios";
 import InputFilter from "../../components/InputFilterLotes";
 import Modal from "../../components/Modal";
 import DataTable from "../../components/DataTable";
+import Footer from "../../components/Footer";
 
   
 const LotsListPredictions = () => {
@@ -337,6 +338,7 @@ const LotsListPredictions = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import NavBar from "../../components/NavBar";
 import { PDFDownloadButton } from "../../components/PdfGenerator"; 
 import { CSVDownloadButton } from "../../components/CsvGenerator";
 import FlowRateChart from "../../components/FlowRateChart";
+import Footer from '../../components/Footer';
 
 const HistorialDistrito = () => {
   const [rawData, setRawData] = useState([]);
@@ -145,6 +146,7 @@ const HistorialDistrito = () => {
           />
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import NavBar from "../../../components/NavBar"
 import BackButton from "../../../components/BackButton"
 import { ChevronDown } from "lucide-react"
 import { PiAsteriskSimpleBold } from "react-icons/pi"
+import Footer from "../../../components/Footer"
 
 const API_URL = import.meta.env.VITE_APP_API_URL
 
@@ -405,6 +406,7 @@ const LoteEdit = () => {
           <p>El lote ha sido actualizado con éxito.</p>
         </Modal>
       </div>
+      <Footer />
     </div>
   )
 }

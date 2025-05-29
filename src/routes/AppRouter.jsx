@@ -357,7 +357,7 @@ const AppRouter = () => {
                 element={
                     <ProtectedRoute
                         permissions={[
-
+                            "can_see_incident_history"
                         ]}
                         element={<HistorialIncidencias />}
                     />
@@ -376,7 +376,18 @@ const AppRouter = () => {
                 }
             />
             <Route path="/predicciones/:id_lot" element={<ProtectedRoute element={<PredictionLotChart />} />} />
-            <Route path="/predicciones-distrito" element={<ProtectedRoute element={<PredictionDistrito />} />} />
+            <Route
+                path="/predicciones-distrito"
+                element={
+                    <ProtectedRoute
+                        permissions={[
+                            "can_see_predictions_boacatoma",
+                            "can_make_predictions_bocatoma"
+                        ]}
+                        element={<PredictionDistrito />}
+                    />
+                }
+            />
             <Route
                 path="/mis-predicciones"
                 element={

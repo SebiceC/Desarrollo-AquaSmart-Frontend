@@ -12,6 +12,7 @@ import DispositivosTotalTable from "../../../components/DispositivosTotalTable"
 import useDispositivosPDFDownload from "../../../components/useDispositivosPDFDownload"
 import useDispositivosExcelDownload from "../../../components/useDispositivosExcelDownload"
 import { PermissionsContext } from "../../context/PermissionsContext"
+import Footer from "../../../components/Footer"
 
 const DispositivosIoTList = () => {
   const navigate = useNavigate()
@@ -495,7 +496,7 @@ const DispositivosIoTList = () => {
         <InputFilterDispositivos filters={filters} onFilterChange={handleFilterChange} onApplyFilters={applyFilters} />
 
         {/* Botón Totalizar - Solo se muestra cuando hay filtros aplicados */}
-        {filteredDispositivos !== null && filteredDispositivos.length > 0 && (
+        {filteredDispositivos !== null && filteredDispositivos.length > 0 && hasPermission("can_see_iot_totals") && (
           <div className="flex justify-end my-1">
             <button
               onClick={handleTotalizar}
@@ -596,6 +597,7 @@ const DispositivosIoTList = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

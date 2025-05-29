@@ -7,6 +7,7 @@ import Modal from "../../../components/Modal"
 import NavBar from "../../../components/NavBar"
 import BackButton from "../../../components/BackButton"
 import { ChevronDown, Upload } from "lucide-react"
+import Footer from "../../../components/Footer"
 
 const UpdateInformation = () => {
   const API_URL = import.meta.env.VITE_APP_API_URL
@@ -655,6 +656,7 @@ const UpdateInformation = () => {
       >
         <p>No se han detectado cambios en los datos del usuario.</p>
       </Modal>
+      <Footer />
     </div>
   )
 }

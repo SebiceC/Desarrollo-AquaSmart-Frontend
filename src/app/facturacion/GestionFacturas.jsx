@@ -6,6 +6,7 @@ import BackButton from '../../components/BackButton';
 import Modal from '../../components/Modal';
 import axios from 'axios';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import Footer from '../../components/Footer';
 
 const GestionFacturas = () => {
   const [formData, setFormData] = useState({
@@ -330,7 +331,7 @@ const GestionFacturas = () => {
   return (
     <div className='w-full min-h-screen bg-white'>
       <NavBar />
-      <div className='w-full min-h-screen flex flex-col items-center pt-30 bg-white p-6'>
+      <div className='w-full min-h-screen flex flex-col items-center pt-30 mb-20 bg-white p-6'>
         <h1 className='text-center text-[#365486] text-2xl font-bold mb-4'>Gestión de Facturas</h1>
 
         <form onSubmit={handleSubmit} className='w-[80%] lg:w-[60%]'>
@@ -593,6 +594,7 @@ const GestionFacturas = () => {
       >
         <p>{errorMessage}</p>
       </Modal>
+      <Footer />
     </div>
   )
 }

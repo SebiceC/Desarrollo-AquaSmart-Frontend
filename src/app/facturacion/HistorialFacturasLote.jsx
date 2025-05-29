@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import NavBar from "../../components/NavBar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,6 +8,8 @@ import InputFilterFacturas from "../../components/InputFilterFacturas";
 import TotalTable from "../../components/TotalTable";
 import { PDFDownloadTotales } from "../../components/PDFDownloadTotales";
 import { ExcelDownloadTotales } from "../../components/ExcelDownloadTotales";
+import Footer from "../../components/Footer";
+import { PermissionsContext } from "../context/PermissionsContext";
 
 const HistorialFacturasLote = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const HistorialFacturasLote = () => {
   });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
+  const {hasPermission} = useContext(PermissionsContext)
 
   // Usar los hooks de descarga
   const { generatePDF, isGenerating: isGeneratingPDF } = PDFDownloadTotales({
@@ -285,7 +288,7 @@ const HistorialFacturasLote = () => {
         />
 
         {/* Botón Totalizar - Solo se muestra cuando hay filtros aplicados */}
-        {filteredFacturas !== null && filteredFacturas.length > 0 && (
+        {filteredFacturas !== null && filteredFacturas.length > 0 && hasPermission("can_see_invoice_totals") && (
           <div className="flex justify-end my-1">
             <button
               onClick={handleTotalizar}
@@ -338,6 +341,7 @@ const HistorialFacturasLote = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

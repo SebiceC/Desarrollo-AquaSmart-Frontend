@@ -5,6 +5,7 @@ import InputFilterIncidencias from '../../components/InputFilterIncidencias';
 import Modal from '../../components/Modal';
 import DataTable from '../../components/DataTable';
 import axios from 'axios';
+import Footer from '../../components/Footer';
 
 function HistorialIncidencias() {
     const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -617,6 +618,7 @@ function HistorialIncidencias() {
                     />
                 )}
             </div>
+            <Footer />
         </div>
     );
 }
