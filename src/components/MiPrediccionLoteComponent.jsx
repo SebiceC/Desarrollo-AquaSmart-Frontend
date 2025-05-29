@@ -194,7 +194,7 @@ const MiPrediccionLoteComponent = ({
   const NoDataMessage = () => (
     <div className="flex items-center justify-center py-16">
       <div className="text-center max-w-md">
-        <div className="mb-4">
+        <div className="mb-4">Ocurrió un error al procesar las predicciones.
           <Brain className="mx-auto text-blue-400" size={48} />
         </div>
         <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay predicciones disponibles</h3>
@@ -231,11 +231,17 @@ const MiPrediccionLoteComponent = ({
       <Modal
         showModal={showPredictionErrorModal}
         onClose={() => setShowPredictionErrorModal(false)}
-        title="Error"
+        title="Error en la predicción"
         btnMessage="Aceptar"
       >
-        <div>
-          <p className="text-gray-700 mb-2">Fallo en la conexión, intente de nuevo más tarde o contacte a soporte técnico</p>
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="text-red-500 mt-1" size={20} />
+          <div>
+            <p className="text-gray-700 mb-2"></p>
+            <p className="text-sm text-gray-600">
+              {error || "Error desconocido. Vuelve a intentarlo más tarde o ponte en contacto con soporte."}
+            </p>
+          </div>
         </div>
       </Modal>
 

@@ -69,32 +69,339 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
     return date.toLocaleDateString("es-CO")
   }
 
-  // Formatea la fecha para el nombre del archivo
+  // Nombre del archivo
   const getFileName = () => {
     const today = new Date()
     return `inventario-dispositivos-${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}.pdf`
   }
 
-  // Función para dibujar la tabla de resumen
-  const drawSummaryTable = (doc, totals, startY) => {
+  // Función para dibujar la marca de agua
+  const drawWatermark = (doc) => {
+    try {
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+
+      // Cargar la imagen de marca de agua
+      const watermarkImg = new Image()
+      watermarkImg.src = "../../public/img/marca_de_agua.png"
+
+      // Configurar posición centrada
+      const watermarkWidth = 250
+      const watermarkHeight = 100
+      const x = (pageWidth - watermarkWidth) / 2
+      const y = (pageHeight - watermarkHeight) / 2
+
+      const positionConfig = {
+        x: 12,  // Distancia desde el borde izquierdo
+        y: 90   // Distancia desde el borde superior
+      }
+
+      // Guardar estado gráfico actual
+      doc.saveGraphicsState()
+
+      // Aplicar transparencia SOLO a la marca de agua
+      doc.setGState(new doc.GState({ opacity: 0.09 })) // 9% de opacidad
+
+      // Agregar la imagen con transparencia
+      doc.addImage(
+        watermarkImg,
+        "PNG",
+        positionConfig.x,
+        positionConfig.y,
+        watermarkWidth,
+        watermarkHeight
+      )
+
+      // Restaurar estado gráfico anterior (sin transparencia)
+      doc.restoreGraphicsState()
+
+    } catch (error) {
+      console.warn("No se pudo cargar la marca de agua:", error)
+    }
+  }
+
+  // Función para dibujar el encabezado de la empresa
+  const drawHeader = (doc) => {
     const pageWidth = doc.internal.pageSize.getWidth()
+
+    // Logo (si existe)
+    try {
+      const logoImg = new Image()
+      logoImg.src = "/img/logo.png"
+      doc.addImage(logoImg, "PNG", 15, 15, 80, 25) //define el ancho y el alto donde 15 es el eje x y 15 es el eje y
+    } catch (error) {
+      // Si no hay logo, dibujar un círculo como placeholder
+      doc.setFillColor(52, 152, 219)
+      doc.circle(27.5, 27.5, 12, "F")
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(14)
+      doc.text("AS", 27.5, 31, { align: "center" })
+    }
+
+    // Información de la empresa (lado derecho)
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(10)
+    doc.text("NIT: 891180084", pageWidth - 15, 20, { align: "right" })
+    doc.text("Teléfono: 88754753", pageWidth - 15, 28, { align: "right" })
+    doc.text("Av. Pastrana Borrero - Carrera 1", pageWidth - 15, 36, { align: "right" })
+
+    return 50 // Retorna la posición Y donde termina el header
+  }
+
+  // Función para dibujar el fondo ondulado inferior
+  const drawWaveFooter = (doc) => {
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+
+    // Dibujar onda decorativa en la parte inferior
+    doc.setFillColor(64, 188, 165)
+
+    // Crear path de onda
+    const waveHeight = 40
+    const waveY = pageHeight - waveHeight
+
+    doc.setDrawColor(64, 188, 165)
+    doc.setLineWidth(0)
+
+    // Dibujar rectángulo base de la onda
+    doc.rect(0, waveY + 15, pageWidth, waveHeight, "F")
+  }
+
+  // Función para dibujar filtros aplicados
+  const drawFilters = (doc, startY) => {
+    const pageWidth = doc.internal.pageSize.getWidth()
+
+    // Título principal
+    doc.setTextColor(52, 84, 134)
+    doc.setFontSize(18)
+    doc.setFont(undefined, "bold")
+    doc.text("RESUMEN DE DISPOSITIVOS", pageWidth / 2, startY, { align: "center" })
+
+    // Fecha de creación
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(12)
+    doc.setFont(undefined, "bold")
+    doc.text(`Fecha creación de informe: ${formatDate(new Date().toISOString())}`, pageWidth / 2, startY + 15, {
+      align: "center",
+    })
+
+    // Información de filtros en cajas
+    doc.setFontSize(10)
+    doc.setFont(undefined, "normal")
+
+    // Título filtros
+    doc.setTextColor(0, 0, 0)
+    doc.setFont(undefined, "bold")
+    doc.text("Filtros aplicados:", 20, startY + 35)
+
+    // Cajas de filtros - usar el mismo estilo del código de referencia
+    const boxWidth = 30
+    const boxHeight = 20
+    const gap = 1
+    const numBoxes = 5
+
+    const totalBoxWidth = numBoxes * boxWidth + (numBoxes - 1) * gap
+    const startX = (pageWidth - totalBoxWidth) / 2
+    const boxY = startY + 45
+
+    let boxX = startX
+    boxX = drawFilterBox(doc, boxX, boxY, boxWidth, boxHeight, "ID dispositivo:", filters.iot_id || "Todas")
+    boxX += gap // Agregar gap después de cada caja
+    boxX = drawFilterBox(doc, boxX, boxY, boxWidth, boxHeight, "Nombre dispositivo:", filters.name || "Todos")
+    boxX += gap
+    boxX = drawFilterBox(doc, boxX, boxY, boxWidth, boxHeight, "ID predio:", filters.plotId || "Todos")
+    boxX += gap
+    boxX = drawFilterBox(doc, boxX, boxY, boxWidth, boxHeight, "Estado:", filters.isActive === "true" ? "Activo" : filters.isActive === "false" ? "Inactivo" : "Todos")
+    boxX += gap
+    boxX = drawFilterBox(
+      doc,
+      boxX,
+      boxY,
+      boxWidth,
+      boxHeight,
+      "Fecha de creación:",
+      filters.startDate || filters.endDate
+        ? `${formatDate(filters.startDate) || "Todas"} - ${formatDate(filters.endDate) || "Todas"}`
+        : "Todas",
+    )
+
+    return boxY + boxHeight + 20
+  }
+
+  // Función auxiliar para dibujar cajas de filtros
+  const drawFilterBox = (doc, x, y, width, height, label, value) => {
+    // Fondo azul claro
+    doc.setFillColor(230, 240, 255)
+    doc.setDrawColor(200, 220, 240)
+    doc.rect(x, y, width, height, "FD")
+
+    // Texto del label
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(8)
+    doc.setFont(undefined, "bold")
+    doc.text(label, x + 2, y + 8)
+
+    // Texto del valor
+    doc.setFont(undefined, "normal")
+    doc.text(value, x + 2, y + 16)
+
+    return x + width // devuelve solo la posición X sin gap
+  }
+
+  // Función para dibujar la tabla de detalle de dispositivos
+  const drawDetailTable = (doc, data, startY) => {
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+
+    // Título
+    doc.setTextColor(52, 84, 134)
+    doc.setFontSize(16)
+    doc.setFont(undefined, "bold")
+    doc.text("DETALLE DE DISPOSITIVOS", pageWidth / 2, startY, { align: "center" })
+
+    const tableY = startY + 15
     const tableWidth = 170
     const tableX = (pageWidth - tableWidth) / 2
     const rowHeight = 10
-    const colWidths = [60, 35, 35, 40] // Anchos de columnas
+    const colWidths = [25, 30, 35, 25, 25, 30]
 
-    let currentY = startY
+    let currentY = tableY
+    let pageNumber = 1
 
-    // Encabezados
-    doc.setFillColor(240, 240, 240)
-    doc.setDrawColor(200, 200, 200)
-    doc.setTextColor(50, 50, 50)
-    doc.setFontSize(9)
+    // Función para dibujar encabezados
+    const drawHeaders = () => {
+      // Encabezados con fondo verde
+      doc.setFillColor(144, 198, 149)
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(9)
+      doc.setFont(undefined, "bold")
 
-    // Dibujar fondo del encabezado
+      doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
+
+      const headers = ["ID Dispositivo", "Nombre", "Tipo", "ID Predio", "Estado", "Fecha Registro"]
+      let xPos = tableX
+      headers.forEach((header, index) => {
+        doc.text(header, xPos + colWidths[index] / 2, currentY + rowHeight / 2 + 2, { align: "center" })
+        xPos += colWidths[index]
+      })
+
+      currentY += rowHeight
+    }
+
+    // Dibujar encabezados iniciales
+    drawHeaders()
+
+    // Datos de las filas
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(7)
+    doc.setFont(undefined, "normal")
+
+    data.forEach((dispositivo, index) => {
+      // Verificar si necesitamos una nueva página
+      if (currentY > pageHeight - 60) {
+        drawWaveFooter(doc)
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(12)
+        doc.setFont(undefined, "bold")
+        // No mostrar total de páginas hasta que sepamos el número real
+        doc.text(`Pagina ${pageNumber}`, pageWidth - 30, pageHeight - 15, { align: "right" })
+        
+        doc.addPage()
+        pageNumber++
+        drawWatermark(doc)
+        currentY = drawHeader(doc) + 20
+
+        // Redibujar encabezados
+        drawHeaders()
+        doc.setTextColor(0, 0, 0)
+        doc.setFontSize(7)
+        doc.setFont(undefined, "normal")
+      }
+
+      // Alternar colores de fondo (blanco y gris muy claro)
+      if (index % 2 === 1) {
+        doc.setFillColor(248, 248, 248)
+        doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
+      }
+
+      const deviceTypeName = deviceTypeMap[dispositivo.device_type] || "Desconocido"
+      const statusText = dispositivo.is_active ? "Activo" : "Inactivo"
+      const registrationDate = dispositivo.registration_date ? formatDate(dispositivo.registration_date) : "N/A"
+
+      const rowData = [
+        dispositivo.iot_id || "",
+        dispositivo.name || "",
+        deviceTypeName,
+        dispositivo.id_plot || "",
+        statusText,
+        registrationDate,
+      ]
+
+      let xPos = tableX
+      rowData.forEach((cellData, cellIndex) => {
+        const align = "center"
+        const xPosition = xPos + colWidths[cellIndex] / 2
+        // Truncar texto de manera más inteligente según el contenido
+        let truncatedText = cellData
+        if (cellIndex === 1 && cellData.length > 12) { // Nombre
+          truncatedText = cellData.substring(0, 9) + "..."
+        } else if (cellIndex === 2 && cellData.length > 15) { // Tipo
+          truncatedText = cellData.substring(0, 12) + "..."
+        } else if (cellData.length > 12) { // Otros campos
+          truncatedText = cellData.substring(0, 9) + "..."
+        }
+        doc.text(truncatedText, xPosition, currentY + rowHeight / 2 + 2, { align })
+        xPos += colWidths[cellIndex]
+      })
+
+      currentY += rowHeight
+    })
+
+    return { currentY: currentY + 20, pageNumber }
+  }
+
+  // Función para dibujar la tabla de totalización
+  const drawTotalizationTable = (doc, totals, startY, pageNumber) => {
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+
+    // Verificar si necesitamos una nueva página para la tabla de totalización
+    const requiredSpace = 100 + Object.keys(totals).length * 12 // Espacio estimado
+    if (startY + requiredSpace > pageHeight - 60) {
+      drawWaveFooter(doc)
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(12)
+      doc.setFont(undefined, "bold")
+      doc.text(`Pagina ${pageNumber}`, pageWidth - 30, pageHeight - 15, { align: "right" })
+      
+      doc.addPage()
+      pageNumber++
+      drawWatermark(doc)
+      startY = drawHeader(doc) + 20
+    }
+
+    // Título
+    doc.setTextColor(52, 84, 134)
+    doc.setFontSize(16)
+    doc.setFont(undefined, "bold")
+    doc.text("TABLA DE TOTALIZACIÓN", pageWidth / 2, startY, { align: "center" })
+
+    const tableY = startY + 15
+    const tableWidth = 170
+    const tableX = (pageWidth - tableWidth) / 2
+    const rowHeight = 12
+    const colWidths = [60, 37, 37, 36]
+
+    let currentY = tableY
+
+    // Encabezados con fondo verde
+    doc.setFillColor(144, 198, 149)
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(10)
+    doc.setFont(undefined, "bold")
+
     doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
 
-    // Texto de encabezados
     const headers = ["Tipo de Dispositivo", "Activos", "Inactivos", "Total"]
     let xPos = tableX
     headers.forEach((header, index) => {
@@ -106,17 +413,18 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
 
     // Datos de las filas
     doc.setTextColor(0, 0, 0)
-    doc.setFontSize(8)
+    doc.setFontSize(9)
+    doc.setFont(undefined, "normal")
 
-    let rowIndex = 0
     let totalActivos = 0
     let totalInactivos = 0
     let totalDispositivos = 0
 
+    let rowIndex = 0
     Object.entries(totals).forEach(([typeId, typeData]) => {
       // Alternar colores de fondo
-      if (rowIndex % 2 === 0) {
-        doc.setFillColor(250, 250, 250)
+      if (rowIndex % 2 === 1) {
+        doc.setFillColor(248, 248, 248)
         doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
       }
 
@@ -135,10 +443,6 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
         xPos += colWidths[cellIndex]
       })
 
-      // Línea horizontal
-      doc.setDrawColor(230, 230, 230)
-      doc.line(tableX, currentY, tableX + tableWidth, currentY)
-
       totalActivos += typeData.activos
       totalInactivos += typeData.inactivos
       totalDispositivos += typeData.total
@@ -148,7 +452,7 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
     })
 
     // Fila de totales
-    doc.setFontSize(9)
+    doc.setFontSize(10)
     doc.setFont(undefined, "bold")
     doc.setFillColor(220, 220, 220)
     doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
@@ -163,118 +467,153 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
       xPos += colWidths[cellIndex]
     })
 
-    // Líneas finales de la tabla
-    doc.line(tableX, currentY, tableX + tableWidth, currentY)
-    doc.line(tableX, currentY + rowHeight, tableX + tableWidth, currentY + rowHeight)
-
-    return currentY + rowHeight + 15
+    return { currentY: currentY + rowHeight + 20, pageNumber }
   }
 
-  // Función para dibujar la tabla de detalle de dispositivos
-  const drawDetailTable = (doc, data, startY) => {
+  // Función para dibujar gráfica de barras
+  const drawBarChart = (doc, totals, startY, pageNumber) => {
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
-    const tableWidth = 170
-    const tableX = (pageWidth - tableWidth) / 2
-    const rowHeight = 8
-    const colWidths = [25, 35, 35, 25, 25, 25] // Anchos de columnas
 
-    let currentY = startY
-
-    // Verificar si necesitamos una nueva página
-    if (currentY > pageHeight - 50) {
+    // Verificar si necesitamos una nueva página para la gráfica
+    if (startY + 120 > pageHeight - 60) {
+      drawWaveFooter(doc)
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(12)
+      doc.setFont(undefined, "bold")
+      doc.text(`Pagina ${pageNumber}`, pageWidth - 30, pageHeight - 15, { align: "right" })
+      
       doc.addPage()
-      currentY = 20
+      pageNumber++
+      drawWatermark(doc)
+      startY = drawHeader(doc) + 20
     }
 
-    // Título de la segunda tabla
-    doc.setFontSize(12)
+    // Título
+    doc.setTextColor(52, 84, 134)
+    doc.setFontSize(16)
     doc.setFont(undefined, "bold")
-    doc.text("Detalle de Dispositivos", pageWidth / 2, currentY, { align: "center" })
-    currentY += 15
+    doc.text("GRAFICA DE TOTALIZACIÓN", pageWidth / 2, startY, { align: "center" })
 
-    // Encabezados
-    doc.setFillColor(240, 240, 240)
-    doc.setDrawColor(200, 200, 200)
-    doc.setTextColor(50, 50, 50)
-    doc.setFontSize(8)
+    const chartY = startY + 20
 
-    // Dibujar fondo del encabezado
-    doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
+    // Leyenda
+    const legendY = chartY + 10
+    const colors = {
+      activo: [91, 192, 222],
+      inactivo: [52, 84, 134],
+    }
 
-    // Texto de encabezados
-    const headers = ["ID Dispositivo", "Nombre", "Tipo", "ID Predio", "Estado", "Registro"]
-    let xPos = tableX
-    headers.forEach((header, index) => {
-      doc.text(header, xPos + colWidths[index] / 2, currentY + rowHeight / 2 + 2, { align: "center" })
-      xPos += colWidths[index]
+    doc.setFontSize(9)
+    let legendX = pageWidth / 2 - 30
+    Object.entries(colors).forEach(([estado, color]) => {
+      doc.setFillColor(color[0], color[1], color[2])
+      doc.circle(legendX, legendY, 3, "F")
+      doc.setTextColor(0, 0, 0)
+      doc.text(estado.charAt(0).toUpperCase() + estado.slice(1), legendX + 8, legendY + 2)
+      legendX += 40
     })
 
-    currentY += rowHeight
+    // Área del gráfico
+    const graphY = chartY + 25
+    const graphHeight = 70
+    const graphWidth = 150
+    const graphX = (pageWidth - graphWidth) / 2
 
-    // Datos de las filas
-    doc.setTextColor(0, 0, 0)
-    doc.setFontSize(7)
+    // Encontrar valor máximo para escalar
+    let maxValue = 0
+    Object.values(totals).forEach((data) => {
+      maxValue = Math.max(maxValue, data.activos, data.inactivos)
+    })
+    maxValue = Math.max(maxValue, 10) // Mínimo para que se vea bien la gráfica
 
-    data.forEach((dispositivo, index) => {
-      // Verificar si necesitamos una nueva página
-      if (currentY > pageHeight - 20) {
-        doc.addPage()
-        currentY = 20
+    // Dibujar ejes
+    doc.setDrawColor(100, 100, 100)
+    doc.setLineWidth(0.5)
+    doc.line(graphX, graphY + graphHeight, graphX + graphWidth, graphY + graphHeight) // Eje X
+    doc.line(graphX, graphY, graphX, graphY + graphHeight) // Eje Y
 
-        // Redibujar encabezados en la nueva página
-        doc.setFillColor(240, 240, 240)
-        doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
+    // Calcular espacios dinámicamente para mejor organización
+    const numTypes = Object.keys(totals).length
+    const availableWidth = graphWidth - 40 // Márgenes
+    const groupWidth = Math.max(18, availableWidth / numTypes)
+    const barWidth = Math.min(10, groupWidth / 3)
+    
+    let groupIndex = 0
+    Object.entries(totals).forEach(([typeId, typeData]) => {
+      const groupX = graphX + 25 + groupIndex * groupWidth
 
-        xPos = tableX
-        headers.forEach((header, headerIndex) => {
-          doc.text(header, xPos + colWidths[headerIndex] / 2, currentY + rowHeight / 2 + 2, { align: "center" })
-          xPos += colWidths[headerIndex]
-        })
+      // Barra activos
+      const activosHeight = (typeData.activos / maxValue) * (graphHeight - 25)
+      const activosY = graphY + graphHeight - activosHeight
+      doc.setFillColor(colors.activo[0], colors.activo[1], colors.activo[2])
+      doc.rect(groupX, activosY, barWidth, activosHeight, "F")
 
-        currentY += rowHeight
+      // Etiqueta activos
+      if (typeData.activos > 0) {
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(8)
+        doc.setFont(undefined, "bold")
+        doc.text(typeData.activos.toString(), groupX + barWidth / 2, activosY + Math.max(activosHeight / 2, 8) + 1, { align: "center" })
       }
 
-      // Alternar colores de fondo
-      if (index % 2 === 0) {
-        doc.setFillColor(250, 250, 250)
-        doc.rect(tableX, currentY, tableWidth, rowHeight, "F")
+      // Barra inactivos
+      const inactivosHeight = (typeData.inactivos / maxValue) * (graphHeight - 25)
+      const inactivosY = graphY + graphHeight - inactivosHeight
+      doc.setFillColor(colors.inactivo[0], colors.inactivo[1], colors.inactivo[2])
+      doc.rect(groupX + barWidth + 3, inactivosY, barWidth, inactivosHeight, "F")
+
+      // Etiqueta inactivos
+      if (typeData.inactivos > 0) {
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(8)
+        doc.setFont(undefined, "bold")
+        doc.text(typeData.inactivos.toString(), groupX + barWidth + 3 + barWidth / 2, inactivosY + Math.max(inactivosHeight / 2, 8) + 1, { align: "center" })
       }
 
-      const deviceTypeName = deviceTypeMap[dispositivo.device_type] || "Desconocido"
-      const statusText = dispositivo.is_active ? "Activo" : "Inactivo"
-      const registrationDate = dispositivo.registration_date ? formatDate(dispositivo.registration_date) : "N/A"
-
-      const rowData = [
-        dispositivo.iot_id || "",
-        dispositivo.name || "",
-        deviceTypeName,
-        dispositivo.id_plot || "",
-        statusText,
-        registrationDate,
-      ]
-
-      xPos = tableX
-      rowData.forEach((cellData, cellIndex) => {
-        const align = "center"
-        const xPosition = xPos + colWidths[cellIndex] / 2
-        // Truncar texto si es muy largo
-        const truncatedText = cellData.length > 12 ? cellData.substring(0, 12) + "..." : cellData
-        doc.text(truncatedText, xPosition, currentY + rowHeight / 2 + 2, { align })
-        xPos += colWidths[cellIndex]
+      // Etiqueta del tipo de dispositivo (rotada 45 grados como en el PDF original)
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(7)
+      let deviceLabel = typeData.name
+      
+      // Crear etiquetas más cortas y legibles
+      if (deviceLabel.includes('Medidor de Flujo')) {
+        deviceLabel = deviceLabel.replace('Medidor de Flujo', 'Med. Flujo')
+      }
+      if (deviceLabel.length > 18) {
+        deviceLabel = deviceLabel.substring(0, 15) + "..."
+      }
+      
+      const textX = groupX + barWidth / 2
+      const textY = graphY + graphHeight + 20
+      
+      // Rotar texto 45 grados para mejor legibilidad
+      doc.text(deviceLabel, textX, textY, { 
+        align: "left",
+        angle: 45
       })
 
-      // Línea horizontal
-      doc.setDrawColor(230, 230, 230)
-      doc.line(tableX, currentY, tableX + tableWidth, currentY)
-
-      currentY += rowHeight
+      groupIndex++
     })
 
-    // Línea final de la tabla
-    doc.line(tableX, currentY, tableX + tableWidth, currentY)
+    // Escala Y con más detalle
+    doc.setTextColor(100, 100, 100)
+    doc.setFontSize(7)
+    const steps = 5
+    for (let i = 0; i <= steps; i++) {
+      const yValue = Math.round((maxValue / steps) * i)
+      const yPos = graphY + graphHeight - (i * (graphHeight - 20)) / steps
+      doc.text(yValue.toString(), graphX - 8, yPos + 2, { align: "right" })
+      
+      // Líneas de cuadrícula horizontales
+      if (i > 0) {
+        doc.setDrawColor(220, 220, 220)
+        doc.setLineWidth(0.2)
+        doc.line(graphX, yPos, graphX + graphWidth, yPos)
+      }
+    }
 
-    return currentY
+    return pageNumber
   }
 
   // Función principal para generar el PDF
@@ -284,7 +623,6 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
     try {
       setIsGenerating(true)
 
-      // Mostrar indicador de carga
       const loadingIndicator = document.createElement("div")
       loadingIndicator.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -297,68 +635,43 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
 
       const doc = new jsPDF("p", "mm", "a4")
       const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
 
-      // Cargar y agregar logo
-      const logoY = 20
-      try {
-        const logoImg = new Image()
-        logoImg.src = "/img/logopdf.png"
-        await new Promise((resolve, reject) => {
-          logoImg.onload = resolve
-          logoImg.onerror = reject
-        })
-        doc.addImage(logoImg, "PNG", 20, logoY, 20, 20)
-      } catch (error) {
-        console.warn("No se pudo cargar el logo")
-      }
-
-      // Título principal
-      doc.setFontSize(20)
-      doc.setTextColor(0, 0, 0)
-      doc.text("AquaSmart", 45, 30)
-
-      // Subtítulo
-      doc.setFontSize(16)
-      doc.text("Inventario de Dispositivos del Distrito", pageWidth / 2, 50, { align: "center" })
-
-      // Información de fechas
-      doc.setFontSize(10)
-      doc.setTextColor(100, 100, 100)
-      doc.text(`Fecha de creación: ${formatDate(new Date().toISOString())}`, pageWidth / 2, 65, { align: "center" })
-
-      if (filters.startDate || filters.endDate) {
-        const startDateText = filters.startDate ? formatDate(filters.startDate) : "No especificada"
-        const endDateText = filters.endDate ? formatDate(filters.endDate) : "No especificada"
-        doc.text(`Fecha de inventario (inicio): ${startDateText}`, pageWidth / 2, 75, { align: "center" })
-        doc.text(`Fecha de inventario (fin): ${endDateText}`, pageWidth / 2, 85, { align: "center" })
-      }
-
-      // Calcular totales y dibujar primera tabla
+      // Primera página: Filtros y inicio de tabla de dispositivos
+      drawWatermark(doc)
+      let currentY = drawHeader(doc)
+      currentY = drawFilters(doc, currentY + 10)
+      
+      // Tabla de detalles (puede ocupar múltiples páginas)
+      const detailResult = drawDetailTable(doc, data, currentY + 10)
+      
+      // Calcular totales
       const totals = calculateTotals()
-      const firstTableStartY = 100
+      
+      // Tabla de totalización
+      const totalizationResult = drawTotalizationTable(doc, totals, detailResult.currentY, detailResult.pageNumber)
+      
+      // Gráfica de barras
+      const finalPageNumber = drawBarChart(doc, totals, totalizationResult.currentY, totalizationResult.pageNumber)
 
-      // Título de la primera tabla
-      doc.setFontSize(12)
-      doc.setTextColor(0, 0, 0)
-      doc.setFont(undefined, "bold")
-      doc.text("Resumen por Tipo de Dispositivo", pageWidth / 2, firstTableStartY - 10, { align: "center" })
+      // Ahora que sabemos el número total de páginas, actualizar todas las páginas
+      const totalPages = finalPageNumber
+      
+      // Recorrer todas las páginas para actualizar la numeración
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i)
+        
+        // Limpiar el área donde estaba la numeración anterior
+        doc.setFillColor(64, 188, 165)
+        doc.rect(pageWidth - 80, doc.internal.pageSize.getHeight() - 25, 80, 25, "F")
+        
+        // Agregar numeración correcta
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(12)
+        doc.setFont(undefined, "bold")
+        doc.text(`Pagina ${i} - ${totalPages}`, pageWidth - 30, doc.internal.pageSize.getHeight() - 15, { align: "right" })
+      }
 
-      const firstTableEndY = drawSummaryTable(doc, totals, firstTableStartY)
-
-      // Dibujar segunda tabla (detalle de dispositivos)
-      drawDetailTable(doc, data, firstTableEndY)
-
-      // Pie de página en la última página
-      const footerText = `Generado por AquaSmart © ${new Date().getFullYear()}`
-      doc.setFontSize(8)
-      doc.setTextColor(150, 150, 150)
-      doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: "center" })
-
-      // Guardar PDF
       doc.save(getFileName())
-
-      // Remover indicador de carga
       document.body.removeChild(loadingIndicator)
     } catch (error) {
       console.error("Error al generar PDF:", error)
@@ -366,7 +679,6 @@ const useDispositivosPDFDownload = ({ data, filters, onError }) => {
         onError("Error al generar el PDF. Por favor, inténtalo de nuevo.")
       }
 
-      // Remover indicador de carga en caso de error
       const loadingIndicator = document.querySelector('div[style*="position: fixed"]')
       if (loadingIndicator) {
         document.body.removeChild(loadingIndicator)

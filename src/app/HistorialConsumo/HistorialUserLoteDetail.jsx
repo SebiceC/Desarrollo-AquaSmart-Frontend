@@ -196,7 +196,16 @@ const HistorialUserLoteDetail = () => {
                                 endDate={endDate} 
                                 chartRef={chartRef}
                                 disabled={!processedData || processedData.length === 0 || !startDate || !endDate || loading || error}
-                            />
+                                reportType="lote"
+                                entityInfo={{
+                                    loteId: id_lot,
+                                    loteName: `Lote ${id_lot}`,
+                                    ownerId: 'N/A', // Se puede obtener del contexto de usuario
+                                    ownerName: 'N/A' // Se puede obtener del contexto de usuario
+                                }}
+                                title={`HISTORIAL DE CONSUMO LOTE ${id_lot}`}
+                                />
+
                         )}
                         <CSVDownloadButton 
                             data={processedData} 
